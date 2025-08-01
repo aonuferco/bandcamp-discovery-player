@@ -1,4 +1,6 @@
-import { app } from "./app.js";
+import { app, PORT } from "./app.js";
 
-// For Vercel serverless deployment
-export default app;
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
+  console.log(`Health check available at http://localhost:${PORT}/health`);
+});
