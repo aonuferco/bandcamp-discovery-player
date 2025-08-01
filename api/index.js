@@ -1,20 +1,42 @@
 import express from "express";
-import path from "path";
-import { fileURLToPath } from "url";
-import { app } from "../src/server/app.js";
+import cors from "cors";
+import albumsRouter from "../src/server/routes/albums.js";
+import { staticMiddleware } from "../src/server/middleware/static.js";
 
-// Get __dirname equivalent for ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const app = express();
 
-// Create a new app instance for Vercel
-const vercelApp = express();
+// Middleware
+app.use(cors());
+app.use(staticMiddleware(express));
 
-// Serve static files from the public directory (Vercel will build this)
-vercelApp.use(express.static(path.join(__dirname, "../public")));
+// Debugging
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
 
-// Use the main app for all routes
-vercelApp.use(app);
+// Routes
+app.use("/api", albumsRouter);
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
 
-// Export the Vercel app
-export default vercelApp;
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err);
+  res.status(500).json({
+    error: "Internal server error",
+    message:
+      process.env.NODE_ENV === "development"
+        ? err.message
+        : "Something went wrong",
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ error: "Not found" });
+});
+
+// Export the Express app for Vercel
+export default app;
