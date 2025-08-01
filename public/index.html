@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Breakcore Discover</title>
+    <link rel="preconnect" href="https://f4.bcbits.com" />
+    <link rel="dns-prefetch" href="https://f4.bcbits.com" />
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+    <!-- Mode selection buttons -->
+    <div class="mode-buttons">
+      <button id="new-releases-btn" class="mode-btn active">New</button>
+      <button id="hot-btn" class="mode-btn">Hot</button>
+    </div>
+
+    <!-- Help button -->
+    <button id="help-btn" class="help-button" title="Keyboard shortcuts">
+      ?
+    </button>
+
+    <div id="album">
+      <img id="cover" src="" alt="Cover" />
+      <h2 id="title"></h2>
+      <h3 id="artist"></h3>
+      <div id="track-info" class="track-info"></div>
+      <div id="label-info" class="label-info"></div>
+      <div id="track-count" class="track-count"></div>
+      <div class="player" id="player"></div>
+    </div>
+    <div>
+      <button id="prev-btn">Previous</button>
+      <button id="next-btn">Next</button>
+    </div>
+
+    <!-- Toast notification container -->
+    <div id="toast-container"></div>
+
+    <!-- Help modal -->
+    <div id="help-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Keyboard Shortcuts</h2>
+          <button id="close-modal" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="shortcut-item">
+            <kbd>Q</kbd>
+            <span>Navigate to previous track</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>E</kbd>
+            <span>Navigate to next track</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>W</kbd>
+            <span>Copy album link to clipboard</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>S</kbd>
+            <span>Open album page in new tab</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>Space</kbd>
+            <span>Play/pause current track</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>←</kbd>
+            <span>Seek backward 10 seconds</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>→</kbd>
+            <span>Seek forward 10 seconds</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>↑</kbd>
+            <span>Increase volume</span>
+          </div>
+          <div class="shortcut-item">
+            <kbd>↓</kbd>
+            <span>Decrease volume</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/app.js"></script>
+  </body>
+</html>
