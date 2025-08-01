@@ -5,8 +5,26 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export function staticMiddleware(express) {
-  const projectRoot = path.resolve(__dirname, "../../../");
-  return express.static(path.join(projectRoot, "public"), {
+  // Try multiple possible paths for Vercel compatibility
+  const possiblePaths = [
+    path.resolve(__dirname, "../../../public"),
+    path.resolve(__dirname, "../../public"),
+    path.resolve(process.cwd(), "public"),
+    "./public",
+  ];
+
+  const publicPath =
+    possiblePaths.find((p) => {
+      try {
+        return require("fs").existsSync(p);
+      } catch {
+        return false;
+      }
+    }) || possiblePaths[0];
+
+  console.log("Serving static files from:", publicPath);
+
+  return express.static(publicPath, {
     setHeaders: function (res, filePath) {
       if (filePath.endsWith("index.html")) {
         res.set("Cache-Control", "no-cache, no-store, must-revalidate");

@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import path from "path";
 import albumsRouter from "./routes/albums.js";
 import { staticMiddleware } from "./middleware/static.js";
 
@@ -20,6 +21,11 @@ app.use((req, res, next) => {
 app.use("/api", albumsRouter);
 app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+// Serve index.html for root path
+app.get("/", (req, res) => {
+  res.sendFile(path.resolve(process.cwd(), "public/index.html"));
 });
 
 // Error handling middleware
