@@ -1,0 +1,23 @@
+{
+  "name": "bandcamp-scraper-webapp",
+  "version": "1.0.0",
+  "description": "A simple webapp to scrape and display the latest Breakcore albums from Bandcamp Discover.",
+  "main": "src/server/index.js",
+  "scripts": {
+    "start": "node src/server/index.js",
+    "dev": "nodemon src/server/index.js",
+    "lint": "eslint src/",
+    "format": "prettier --write src/ public/"
+  },
+  "type": "module",
+  "author": "No Name",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
