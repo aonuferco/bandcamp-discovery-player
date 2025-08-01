@@ -1,5 +1,6 @@
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,7 +17,6 @@ export function staticMiddleware(express) {
   const publicPath =
     possiblePaths.find((p) => {
       try {
-        const fs = require("fs");
         return fs.existsSync(p);
       } catch {
         return false;
@@ -25,10 +25,13 @@ export function staticMiddleware(express) {
 
   console.log("Serving static files from:", publicPath);
   console.log("Current working directory:", process.cwd());
-  console.log(
-    "Available files in public:",
-    require("fs").readdirSync(publicPath).join(", ")
-  );
+
+  try {
+    const files = fs.readdirSync(publicPath);
+    console.log("Available files in public:", files.join(", "));
+  } catch (error) {
+    console.log("Could not read public directory:", error.message);
+  }
 
   return express.static(publicPath, {
     setHeaders: function (res, filePath) {
