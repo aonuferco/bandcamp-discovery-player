@@ -16,13 +16,19 @@ export function staticMiddleware(express) {
   const publicPath =
     possiblePaths.find((p) => {
       try {
-        return require("fs").existsSync(p);
+        const fs = require("fs");
+        return fs.existsSync(p);
       } catch {
         return false;
       }
     }) || possiblePaths[0];
 
   console.log("Serving static files from:", publicPath);
+  console.log("Current working directory:", process.cwd());
+  console.log(
+    "Available files in public:",
+    require("fs").readdirSync(publicPath).join(", ")
+  );
 
   return express.static(publicPath, {
     setHeaders: function (res, filePath) {

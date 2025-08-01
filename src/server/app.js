@@ -23,9 +23,14 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// Serve index.html for root path
+// Serve index.html for root path (fallback for API routes)
 app.get("/", (req, res) => {
-  res.sendFile(path.resolve(process.cwd(), "public/index.html"));
+  try {
+    res.sendFile(path.resolve(process.cwd(), "public/index.html"));
+  } catch (error) {
+    console.error("Error serving index.html:", error);
+    res.status(500).json({ error: "Could not serve index.html" });
+  }
 });
 
 // Error handling middleware
