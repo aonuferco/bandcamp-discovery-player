@@ -52,6 +52,7 @@ function transformAlbumData(item) {
     label_name: item.label_name || null,
     track_count: item.track_count || 0,
     band_name: item.band_name,
+    release_date: item.release_date || null,
   };
 }
 

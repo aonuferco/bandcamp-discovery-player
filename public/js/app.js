@@ -85,6 +85,7 @@ const createUIManager = () => {
     trackInfo: document.getElementById("track-info"),
     labelInfo: document.getElementById("label-info"),
     trackCount: document.getElementById("track-count"),
+    releaseDate: document.getElementById("release-date"),
     player: document.getElementById("player"),
     nextBtn: document.getElementById("next-btn"),
     prevBtn: document.getElementById("prev-btn"),
@@ -119,6 +120,8 @@ const createUIManager = () => {
     updateLabelInfo(album);
 
     updateTrackCount(album);
+
+    updateReleaseDate(album);
 
     updateAudioPlayer(album);
   };
@@ -172,6 +175,20 @@ const createUIManager = () => {
       elements.trackCount.innerHTML = `<strong>Track Count:</strong> ${album.track_count}`;
     } else {
       elements.trackCount.innerHTML = "";
+    }
+  };
+
+  const updateReleaseDate = (album) => {
+    if (album.release_date) {
+      const dateObj = new Date(album.release_date);
+      const formattedDate = dateObj.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+      elements.releaseDate.innerHTML = `<strong>Release Date:</strong> ${formattedDate}`;
+    } else {
+      elements.releaseDate.innerHTML = "";
     }
   };
 

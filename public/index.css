@@ -136,7 +136,8 @@ body {
 
 .track-info,
 .label-info,
-.track-count {
+.track-count,
+.release-date {
   margin: 0.5rem 0;
   font-size: 0.9rem;
   color: #cbd5e1;
@@ -193,7 +194,8 @@ body {
 /* Strong text styling for labels */
 .track-info strong,
 .label-info strong,
-.track-count strong {
+.track-count strong,
+.release-date strong {
   color: #10b981;
   font-weight: 600;
 }
