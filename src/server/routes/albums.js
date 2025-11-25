@@ -40,7 +40,7 @@ function transformAlbumData(item) {
     id: item.id,
     title: item.title,
     artist: item.album_artist || item.band_name,
-    img: `https://f4.bcbits.com/img/a${item.item_image_id}_10.jpg`,
+    img: `https://f4.bcbits.com/img/a${item.primary_image.image_id}_10.jpg`,
     link: item.item_url,
     stream_url: item?.featured_track?.stream_url ?? "",
     featured_track: item?.featured_track
