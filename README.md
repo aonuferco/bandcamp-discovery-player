@@ -1,6 +1,6 @@
-# Bandcamp Breakcore Discover
+# Bandcamp Discovery Player
 
-A modern web application for discovering and streaming Breakcore music from Bandcamp with enhanced listening controls and quick navigation. Built for music enthusiasts who want to efficiently explore new artists and tracks.
+A modern web application for discovering and streaming music from Bandcamp with enhanced listening controls and quick navigation. Built for music enthusiasts who want to efficiently explore new artists and tracks.
 
 ## What This App Does
 
@@ -47,17 +47,16 @@ bandcamp-scraper/
 │   │   │   └── albums.js       # Album API routes
 │   │   └── middleware/
 │   │       └── static.js       # Static file serving middleware
-│   └── js/
-│       └── app.js              # Modular client-side JavaScript
 ├── public/
 │   ├── index.html              # Main HTML file
 │   ├── index.css               # Styles
 │   ├── js/
-│   │   └── app.js              # Client-side app (moved from src/)
+│   │   └── app.js              # Client-side app
+|   |   └── genres.js           # Predefined genre list
 │   └── loading.gif             # Loading animation
-├── server.js                   # Legacy server file (deprecated)
 ├── package.json
 └── README.md
+└── vercel.json             
 ```
 
 ## Getting Started
