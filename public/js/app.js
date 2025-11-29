@@ -1,3 +1,5 @@
+import { GENRES, ALL_GENRES } from "./genres.js";
+
 // App state management
 const createAppState = () => {
   let albums = [];
@@ -7,6 +9,7 @@ const createAppState = () => {
   let isFetching = false;
   let seenLinks = new Set();
   let currentMode = "new"; // "new" or "hot"
+  let currentTag = ""; // empty string means "all" / "discover"
 
   return {
     addAlbums: (newAlbums) => {
@@ -32,6 +35,7 @@ const createAppState = () => {
     getCurrentPage: () => currentPage,
     getIsFetching: () => isFetching,
     getCurrentMode: () => currentMode,
+    getCurrentTag: () => currentTag,
 
     setCurrentIndex: (index) => {
       currentIndex = index;
@@ -44,6 +48,9 @@ const createAppState = () => {
     },
     setCurrentMode: (mode) => {
       currentMode = mode;
+    },
+    setCurrentTag: (tag) => {
+      currentTag = tag;
     },
     incrementCurrentIndex: () => {
       currentIndex++;
@@ -65,8 +72,11 @@ const createAppState = () => {
 
 // API service
 const createAlbumService = () => {
-  const fetchAlbums = async (page = 1, mode = "new") => {
-    const response = await fetch(`/api/albums?page=${page}&slice=${mode}`);
+  const fetchAlbums = async (page = 1, mode = "new", tag = "") => {
+    const tagParam = tag ? `&tag=${encodeURIComponent(tag)}` : "";
+    const response = await fetch(
+      `/api/albums?page=${page}&slice=${mode}${tagParam}`
+    );
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -95,6 +105,8 @@ const createUIManager = () => {
     toastContainer: document.getElementById("toast-container"),
     newReleasesBtn: document.getElementById("new-releases-btn"),
     hotBtn: document.getElementById("hot-btn"),
+    genreSearch: document.getElementById("genre-search"),
+    genreDropdown: document.getElementById("genre-dropdown"),
   };
 
   const showAlbum = (album) => {
@@ -263,6 +275,79 @@ const createUIManager = () => {
     document.body.style.overflow = "auto";
   };
 
+  const renderGenreDropdown = (filter = "") => {
+    const dropdown = elements.genreDropdown;
+    dropdown.innerHTML = "";
+
+    const filterLower = filter.toLowerCase();
+    let hasResults = false;
+
+    // Helper to create genre item
+    const createItem = (genre) => {
+      const div = document.createElement("div");
+      div.className = "genre-item";
+      if (genre === window.appState.getCurrentTag()) {
+        div.classList.add("selected");
+      }
+      div.textContent = genre;
+      div.dataset.genre = genre;
+      return div;
+    };
+
+    // If filtering, show flat list
+    if (filter) {
+      const matches = ALL_GENRES.filter((g) =>
+        g.toLowerCase().includes(filterLower)
+      );
+
+      if (matches.length > 0) {
+        matches.forEach((genre) => {
+          dropdown.appendChild(createItem(genre));
+        });
+        hasResults = true;
+      } else {
+        const noRes = document.createElement("div");
+        noRes.className = "genre-item";
+        noRes.style.cursor = "default";
+        noRes.style.color = "#64748b";
+        noRes.textContent = "No genres found";
+        dropdown.appendChild(noRes);
+      }
+    } else {
+      // Show grouped list
+      Object.entries(GENRES).forEach(([category, genres]) => {
+        const groupDiv = document.createElement("div");
+        groupDiv.className = "genre-group";
+
+        const title = document.createElement("div");
+        title.className = "genre-group-title";
+        title.textContent = category;
+        groupDiv.appendChild(title);
+
+        genres.forEach((genre) => {
+          groupDiv.appendChild(createItem(genre));
+        });
+
+        dropdown.appendChild(groupDiv);
+      });
+      hasResults = true;
+    }
+
+    return hasResults;
+  };
+
+  const toggleDropdown = (show) => {
+    if (show) {
+      elements.genreDropdown.classList.add("show");
+    } else {
+      elements.genreDropdown.classList.remove("show");
+    }
+  };
+
+  const updateSearchInput = (tag) => {
+    elements.genreSearch.value = tag;
+  };
+
   return {
     elements,
     showAlbum,
@@ -274,6 +359,9 @@ const createUIManager = () => {
     showToast,
     openModal,
     closeModal,
+    renderGenreDropdown,
+    toggleDropdown,
+    updateSearchInput,
   };
 };
 
@@ -286,7 +374,11 @@ const createAppController = () => {
   const fetchAlbums = async (page = 1) => {
     state.setIsFetching(true);
     try {
-      const data = await service.fetchAlbums(page, state.getCurrentMode());
+      const data = await service.fetchAlbums(
+        page,
+        state.getCurrentMode(),
+        state.getCurrentTag()
+      );
       state.addAlbums(data);
     } catch (error) {
       console.error("Error fetching albums:", error);
@@ -311,6 +403,21 @@ const createAppController = () => {
     ui.showToast(`Switching to ${modeText}...`, "success");
 
     // Fetch new data
+    await fetchAlbums(1);
+    showCurrentAlbum();
+  };
+
+  const selectGenre = async (genre) => {
+    if (genre === state.getCurrentTag()) return;
+
+    state.setCurrentTag(genre);
+    state.resetState();
+    ui.updateSearchInput(genre);
+    ui.toggleDropdown(false);
+
+    const genreText = genre || "all genres";
+    ui.showToast(`Loading ${genreText}...`, "success");
+
     await fetchAlbums(1);
     showCurrentAlbum();
   };
@@ -469,6 +576,42 @@ const createAppController = () => {
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         ui.closeModal();
+      }
+    });
+
+    // Search dropdown events
+    const searchInput = ui.elements.genreSearch;
+    const dropdown = ui.elements.genreDropdown;
+
+    searchInput.addEventListener("focus", () => {
+      ui.renderGenreDropdown(searchInput.value);
+      ui.toggleDropdown(true);
+    });
+
+    searchInput.addEventListener("input", (e) => {
+      ui.renderGenreDropdown(e.target.value);
+      ui.toggleDropdown(true);
+    });
+
+    // Click outside to close dropdown
+    document.addEventListener("click", (e) => {
+      if (
+        !searchInput.contains(e.target) &&
+        !dropdown.contains(e.target)
+      ) {
+        ui.toggleDropdown(false);
+        // Reset input to current tag if user didn't select anything
+        if (searchInput.value !== state.getCurrentTag()) {
+          searchInput.value = state.getCurrentTag();
+        }
+      }
+    });
+
+    // Genre selection
+    dropdown.addEventListener("click", (e) => {
+      const item = e.target.closest(".genre-item");
+      if (item && item.dataset.genre) {
+        selectGenre(item.dataset.genre);
       }
     });
   };

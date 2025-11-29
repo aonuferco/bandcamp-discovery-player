@@ -8,16 +8,33 @@
     <link rel="stylesheet" href="index.css" />
   </head>
   <body>
-    <!-- Mode selection buttons -->
-    <div class="mode-buttons">
-      <button id="new-releases-btn" class="mode-btn active">New</button>
-      <button id="hot-btn" class="mode-btn">Hot</button>
-    </div>
+    <!-- Sticky Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="mode-buttons">
+          <button id="new-releases-btn" class="mode-btn active">New</button>
+          <button id="hot-btn" class="mode-btn">Hot</button>
+        </div>
+      </div>
 
-    <!-- Help button -->
-    <button id="help-btn" class="help-button" title="Keyboard shortcuts">
-      ?
-    </button>
+      <div class="header-center">
+        <div class="search-container">
+          <input
+            type="text"
+            id="genre-search"
+            placeholder="Search genres..."
+            autocomplete="off"
+          />
+          <div id="genre-dropdown" class="genre-dropdown"></div>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <button id="help-btn" class="help-button" title="Keyboard shortcuts">
+          ?
+        </button>
+      </div>
+    </header>
 
     <div id="album">
       <img id="cover" src="" alt="Cover" />
@@ -85,6 +102,6 @@
       </div>
     </div>
 
-    <script src="js/app.js"></script>
+    <script type="module" src="js/app.js"></script>
   </body>
 </html>

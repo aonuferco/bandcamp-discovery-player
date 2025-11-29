@@ -19,20 +19,78 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  padding-top: 80px; /* Space for sticky header */
 }
 
 /* ==========================================================================
-   MODE SELECTION BUTTONS
+   HEADER & NAVIGATION
    ========================================================================== */
 
-.mode-buttons {
+.app-header {
   position: fixed;
-  top: 10px;
-  left: 10px;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 70px;
+  background: rgba(15, 15, 35, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
-  gap: 6px;
-  z-index: 100;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.header-left,
+.header-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.header-right {
+  justify-content: flex-end;
+}
+
+.header-center {
+  flex: 2;
+  display: flex;
+  justify-content: center;
+}
+
+/* Mode Buttons in Header */
+.mode-buttons {
+  position: static; /* Reset fixed positioning */
+  display: flex;
+  gap: 8px;
+}
+
+/* Help Button in Header */
+.help-button {
+  position: static; /* Reset fixed positioning */
+  margin: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #e2e8f0;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.help-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .mode-btn {
@@ -369,39 +427,123 @@ a:hover {
   color: #ef4444;
 }
 
+
+
 /* ==========================================================================
-   HELP BUTTON
+   SEARCH DROPDOWN
    ========================================================================== */
 
-.help-button {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+.search-container {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+}
+
+#genre-search {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  font-size: 0.95rem;
   background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
   color: #e2e8f0;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  z-index: 100;
   transition: all 0.2s ease;
+  text-align: center;
+}
+
+#genre-search:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+#genre-search::placeholder {
+  color: #94a3b8;
+}
+
+.genre-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  max-height: 400px;
+  overflow-y: auto;
+  background: #1e1e38;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  margin-top: 8px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.2s ease;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  z-index: 1001;
+}
+
+.genre-dropdown.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.genre-group {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.genre-group:last-child {
+  border-bottom: none;
+}
+
+.genre-group-title {
+  padding: 4px 16px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.genre-item {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.1s ease;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
 }
 
-.help-button:hover {
+.genre-item:hover,
+.genre-item.selected {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  padding-left: 20px;
+}
+
+.genre-item.selected::after {
+  content: "✓";
+  font-weight: bold;
+}
+
+/* Scrollbar for dropdown */
+.genre-dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+.genre-dropdown::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.genre-dropdown::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.genre-dropdown::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.help-button:active {
-  transform: scale(0.95);
 }
 
 /* ==========================================================================
@@ -537,8 +679,13 @@ a:hover {
    ========================================================================== */
 
 @media (min-width: 481px) and (max-width: 768px) {
+  .app-header {
+    padding: 0 15px;
+    height: 60px;
+  }
+
   body {
-    padding: 1.5rem;
+    padding-top: 70px;
   }
 
   #album {
@@ -560,24 +707,21 @@ a:hover {
     max-width: 340px;
   }
 
-  .mode-buttons {
-    top: 15px;
-    left: 15px;
-    gap: 8px;
-  }
-
   .mode-btn {
-    padding: 0.7rem 1.2rem;
-    font-size: 0.9rem;
-    min-width: 85px;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.8rem;
+    min-width: 60px;
   }
 
   .help-button {
-    top: 15px;
-    right: 15px;
-    width: 38px;
-    height: 38px;
-    font-size: 17px;
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  #genre-search {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.85rem;
   }
 
   #next-btn,
@@ -593,7 +737,12 @@ a:hover {
 
 @media (min-width: 769px) {
   body {
-    padding: 2rem;
+    padding-top: 90px;
+  }
+
+  .app-header {
+    height: 80px;
+    padding: 0 30px;
   }
 
   #album {
@@ -615,12 +764,6 @@ a:hover {
     max-width: 360px;
   }
 
-  .mode-buttons {
-    top: 20px;
-    left: 20px;
-    gap: 8px;
-  }
-
   .mode-btn {
     padding: 0.75rem 1.25rem;
     font-size: 0.9rem;
@@ -628,8 +771,6 @@ a:hover {
   }
 
   .help-button {
-    top: 20px;
-    right: 20px;
     width: 40px;
     height: 40px;
     font-size: 18px;
@@ -663,8 +804,31 @@ a:hover {
    ========================================================================== */
 
 @media (max-width: 360px) {
+  .app-header {
+    padding: 0 10px;
+    flex-wrap: wrap;
+    height: auto;
+    padding-bottom: 10px;
+  }
+
+  .header-left {
+    order: 1;
+    width: 50%;
+  }
+
+  .header-right {
+    order: 2;
+    width: 50%;
+  }
+
+  .header-center {
+    order: 3;
+    width: 100%;
+    margin-top: 10px;
+  }
+
   body {
-    padding: 0.75rem;
+    padding-top: 120px;
   }
 
   #album {
@@ -687,25 +851,16 @@ a:hover {
     max-width: 240px;
   }
 
-  .mode-buttons {
-    top: 8px;
-    left: 8px;
-    gap: 4px;
-  }
-
   .mode-btn {
-    padding: 0.5rem 0.8rem;
-    font-size: 0.8rem;
-    min-width: 60px;
-    border-radius: 6px;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.75rem;
+    min-width: 50px;
   }
 
   .help-button {
-    top: 8px;
-    right: 8px;
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
   }
 
   #next-btn,

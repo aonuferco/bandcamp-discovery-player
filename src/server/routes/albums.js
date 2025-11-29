@@ -16,10 +16,10 @@ const API_HEADERS = {
   Referer: "https://bandcamp.com/discover",
 };
 
-const getApiBody = (slice = "new") => {
+const getApiBody = (slice = "new", tag = "breakcore") => {
   const body = {
     category_id: 0,
-    tag_norm_names: ["breakcore"],
+    tag_norm_names: tag ? [tag] : [],
     geoname_id: 0,
     time_facet_id: null,
     size: 60,
@@ -56,12 +56,12 @@ function transformAlbumData(item) {
   };
 }
 
-async function fetchFromBandcamp(cursor, slice = "new") {
+async function fetchFromBandcamp(cursor, slice = "new", tag = "breakcore") {
   const response = await fetch(BANDCAMP_API_URL, {
     method: "POST",
     headers: API_HEADERS,
     body: JSON.stringify({
-      ...getApiBody(slice),
+      ...getApiBody(slice, tag),
       cursor: cursor,
     }),
   });
@@ -83,6 +83,7 @@ router.get("/albums", async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const slice = req.query.slice || "new";
+    const tag = req.query.tag || null;
 
     // Reset cursor if it's page 1 (fresh request/page reload)
     if (page === 1) {
@@ -90,7 +91,7 @@ router.get("/albums", async (req, res) => {
       cachedAlbums = [];
     }
 
-    const data = await fetchFromBandcamp(lastCursor, slice);
+    const data = await fetchFromBandcamp(lastCursor, slice, tag);
 
     if (!data.results || !Array.isArray(data.results)) {
       throw new Error("Unexpected response format from Bandcamp API");
