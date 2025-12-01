@@ -528,6 +528,19 @@ a:hover {
   font-weight: bold;
 }
 
+.genre-item.no-results {
+  cursor: default;
+  color: #64748b;
+  justify-content: center;
+  font-style: italic;
+}
+
+.genre-item.no-results:hover {
+  background: transparent;
+  color: #64748b;
+  padding-left: 16px;
+}
+
 /* Scrollbar for dropdown */
 .genre-dropdown::-webkit-scrollbar {
   width: 8px;

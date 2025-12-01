@@ -307,9 +307,7 @@ const createUIManager = () => {
         hasResults = true;
       } else {
         const noRes = document.createElement("div");
-        noRes.className = "genre-item";
-        noRes.style.cursor = "default";
-        noRes.style.color = "#64748b";
+        noRes.className = "genre-item no-results";
         noRes.textContent = "No genres found";
         dropdown.appendChild(noRes);
       }
