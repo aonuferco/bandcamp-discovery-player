@@ -137,10 +137,21 @@ body {
    MAIN ALBUM CONTAINER
    ========================================================================== */
 
+/* Content wrapper - holds nav buttons and album */
+.content-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
 #album {
   width: 100%;
   max-width: 360px;
-  margin: 0 auto;
+  margin: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -306,36 +317,57 @@ a:hover {
    NAVIGATION BUTTONS
    ========================================================================== */
 
-#next-btn,
-#prev-btn {
-  margin-top: 1.5rem;
-  padding: 0.75rem 1.5rem;
-  font-size: clamp(0.85rem, 3vw, 0.95rem);
-  font-weight: 600;
+.nav-btn {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   border: none;
-  border-radius: 8px;
   cursor: pointer;
   color: white;
-  min-width: 110px;
-  transition: all 0.2s ease;
+  font-size: 2rem;
+  width: 70px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-  margin-left: 0.4rem;
-  margin-right: 0.4rem;
+  position: relative;
+  flex-shrink: 0;
+  user-select: none;
 }
 
-#next-btn:hover,
-#prev-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+/* Previous button - triangle pointing left */
+.nav-btn-prev {
+  clip-path: polygon(100% 0%, 100% 100%, 0% 50%);
+  padding-right: 6px; /* Optical alignment */
+}
+
+/* Next button - triangle pointing right */
+.nav-btn-next {
+  clip-path: polygon(0% 0%, 100% 50%, 0% 100%);
+  padding-left: 6px; /* Optical alignment */
+}
+
+.nav-btn:hover {
+  transform: scale(1.15);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
 }
 
-#next-btn:active,
-#prev-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+.nav-btn:active {
+  transform: scale(1.05);
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.4);
 }
+
+/* Pulse effect for emphasis */
+@keyframes nav-pulse {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.6);
+  }
+}
+
 
 /* ==========================================================================
    LOADING ANIMATION
@@ -737,10 +769,15 @@ a:hover {
     font-size: 0.85rem;
   }
 
-  #next-btn,
-  #prev-btn {
-    min-width: 120px;
-    padding: 0.8rem 1.6rem;
+  .content-wrapper {
+    gap: 1.5rem;
+    max-width: 500px;
+  }
+
+  .nav-btn {
+    width: 60px;
+    height: 60px;
+    font-size: 1.8rem;
   }
 }
 
@@ -789,11 +826,15 @@ a:hover {
     font-size: 18px;
   }
 
-  #next-btn,
-  #prev-btn {
-    min-width: 130px;
-    padding: 0.875rem 1.75rem;
-    margin-top: 2rem;
+  .content-wrapper {
+    gap: 2.5rem;
+    max-width: 700px;
+  }
+
+  .nav-btn {
+    width: 80px;
+    height: 80px;
+    font-size: 2.2rem;
   }
 
   #toast-container {
@@ -876,13 +917,15 @@ a:hover {
     font-size: 12px;
   }
 
-  #next-btn,
-  #prev-btn {
-    padding: 0.65rem 1.2rem;
-    min-width: 100px;
-    margin-top: 1.25rem;
-    margin-left: 0.3rem;
-    margin-right: 0.3rem;
+  .content-wrapper {
+    gap: 1rem;
+    max-width: 400px;
+  }
+
+  .nav-btn {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
   }
 
   .modal-header {
@@ -948,10 +991,28 @@ a:hover {
     margin-top: 1rem;
   }
 
-  #next-btn,
+  .content-wrapper {
+    gap: 0.75rem;
+    flex-direction: column;
+  }
+
+  .nav-btn {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+  }
+
+  /* Stack buttons vertically in landscape */
   #prev-btn {
-    padding: 0.6rem 1.2rem;
-    margin-top: 1rem;
+    order: -1;
+  }
+  
+  #next-btn {
+    order: 1;
+  }
+  
+  #album {
+    order: 0;
   }
 
   .mode-buttons {
@@ -972,8 +1033,7 @@ a:hover {
 @media print {
   .mode-buttons,
   .help-button,
-  #next-btn,
-  #prev-btn,
+  .nav-btn,
   .player,
   #toast-container,
   #help-modal {

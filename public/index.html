@@ -36,19 +36,22 @@
       </div>
     </header>
 
-    <div id="album">
-      <img id="cover" src="" alt="Cover" />
-      <h2 id="title"></h2>
-      <h3 id="artist"></h3>
-      <div id="track-info" class="track-info"></div>
-      <div id="label-info" class="label-info"></div>
-      <div id="track-count" class="track-count"></div>
-      <div id="release-date" class="release-date"></div>
-      <div class="player" id="player"></div>
-    </div>
-    <div>
-      <button id="prev-btn">Previous</button>
-      <button id="next-btn">Next</button>
+    <!-- Main content wrapper with navigation -->
+    <div class="content-wrapper">
+      <button id="prev-btn" class="nav-btn nav-btn-prev" title="Previous (Q)">◀</button>
+      
+      <div id="album">
+        <img id="cover" src="" alt="Cover" />
+        <h2 id="title"></h2>
+        <h3 id="artist"></h3>
+        <div id="track-info" class="track-info"></div>
+        <div id="label-info" class="label-info"></div>
+        <div id="track-count" class="track-count"></div>
+        <div id="release-date" class="release-date"></div>
+        <div class="player" id="player"></div>
+      </div>
+      
+      <button id="next-btn" class="nav-btn nav-btn-next" title="Next (E)">▶</button>
     </div>
 
     <!-- Toast notification container -->
