@@ -107,18 +107,20 @@ const createUIManager = () => {
     hotBtn: document.getElementById("hot-btn"),
     genreSearch: document.getElementById("genre-search"),
     genreDropdown: document.getElementById("genre-dropdown"),
+    loadingSpinner: document.getElementById("loading-spinner"),
   };
 
   const showAlbum = (album) => {
     if (!album) return;
 
-    // Show loading state
-    elements.cover.src = "./loading.gif";
+    // Show loading spinner
+    elements.loadingSpinner.classList.remove("hidden");
 
     // Load image asynchronously
     const tempImg = new Image();
     tempImg.onload = () => {
       elements.cover.src = tempImg.src;
+      elements.loadingSpinner.classList.add("hidden");
     };
     tempImg.src = album.img;
 
