@@ -51,9 +51,10 @@ bandcamp-scraper/
 │   ├── index.html              # Main HTML file
 │   ├── index.css               # Styles
 │   ├── js/
+│   │   ├── api.js              # API service
+│   │   ├── state.js            # App state management
 │   │   └── app.js              # Client-side app
 |   |   └── genres.js           # Predefined genre list
-│   └── loading.gif             # Loading animation
 ├── package.json
 └── README.md
 └── vercel.json             
