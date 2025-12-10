@@ -74,6 +74,32 @@ async function fetchFromBandcamp(cursor, slice = "new", tag = "breakcore") {
 }
 
 router.get("/albums", async (req, res) => {
+  // Validate page parameter
+  const pageParam = req.query.page;
+  if (pageParam !== undefined) {
+    const pageNum = parseInt(pageParam, 10);
+    if (isNaN(pageNum) || pageNum < 1 || !Number.isInteger(Number(pageParam))) {
+      return res.status(400).json({ error: "Invalid page parameter. Must be a positive integer." });
+    }
+  }
+
+  // Validate slice parameter
+  const sliceParam = req.query.slice;
+  const validSlices = ["new", "hot"];
+  if (sliceParam !== undefined && !validSlices.includes(sliceParam)) {
+    return res.status(400).json({ error: "Invalid slice parameter. Must be 'new' or 'hot'." });
+  }
+
+  // Sanitize tag parameter
+  let tagParam = req.query.tag;
+  if (tagParam !== undefined) {
+    tagParam = tagParam.trim().toLowerCase().slice(0, 50);
+    const tagPattern = /^[a-z0-9\-\s]*$/;
+    if (!tagPattern.test(tagParam)) {
+      return res.status(400).json({ error: "Invalid tag parameter. Only letters, numbers, hyphens, and spaces allowed." });
+    }
+  }
+
   if (isFetching) {
     return res.status(429).json({ error: "Already fetching" });
   }
@@ -81,9 +107,9 @@ router.get("/albums", async (req, res) => {
   isFetching = true;
 
   try {
-    const page = parseInt(req.query.page) || 1;
-    const slice = req.query.slice || "new";
-    const tag = req.query.tag || null;
+    const page = pageParam !== undefined ? parseInt(pageParam, 10) : 1;
+    const slice = sliceParam || "new";
+    const tag = tagParam || null;
 
     // Reset cursor if it's page 1 (fresh request/page reload)
     if (page === 1) {
