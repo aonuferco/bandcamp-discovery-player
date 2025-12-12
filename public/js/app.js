@@ -183,14 +183,63 @@ const createUIManager = () => {
     }, 3000);
   };
 
+  // Track previously focused element for modal focus management
+  let previouslyFocusedElement = null;
+
   const openModal = () => {
+    // Store the currently focused element to restore later
+    previouslyFocusedElement = document.activeElement;
+    
     elements.helpModal.classList.add("show");
+    elements.helpModal.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
+    
+    // Move focus to the close button
+    elements.closeModal.focus();
+    
+    // Add focus trap event listener
+    elements.helpModal.addEventListener("keydown", trapFocus);
   };
 
   const closeModal = () => {
     elements.helpModal.classList.remove("show");
+    elements.helpModal.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "auto";
+    
+    // Remove focus trap event listener
+    elements.helpModal.removeEventListener("keydown", trapFocus);
+    
+    // Restore focus to the previously focused element
+    if (previouslyFocusedElement) {
+      previouslyFocusedElement.focus();
+      previouslyFocusedElement = null;
+    }
+  };
+
+  const trapFocus = (e) => {
+    if (e.key !== "Tab") return;
+    
+    // Get all focusable elements within the modal
+    const focusableElements = elements.helpModal.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+    
+    if (e.shiftKey) {
+      // Shift + Tab: if on first element, move to last
+      if (document.activeElement === firstElement) {
+        e.preventDefault();
+        lastElement.focus();
+      }
+    } else {
+      // Tab: if on last element, move to first
+      if (document.activeElement === lastElement) {
+        e.preventDefault();
+        firstElement.focus();
+      }
+    }
   };
 
   const renderGenreDropdown = (filter = "") => {
@@ -258,6 +307,8 @@ const createUIManager = () => {
     } else {
       elements.genreDropdown.classList.remove("show");
     }
+    // Update aria-expanded on the combobox input
+    elements.genreSearch.setAttribute("aria-expanded", show.toString());
   };
 
   const updateSearchInput = (tag) => {
@@ -310,9 +361,12 @@ const createAppController = () => {
     state.setCurrentMode(mode);
     state.resetState();
 
-    // Update button states
-    ui.elements.newReleasesBtn.classList.toggle("active", mode === "new");
-    ui.elements.hotBtn.classList.toggle("active", mode === "hot");
+    // Update button states and aria-pressed
+    const isNew = mode === "new";
+    ui.elements.newReleasesBtn.classList.toggle("active", isNew);
+    ui.elements.hotBtn.classList.toggle("active", !isNew);
+    ui.elements.newReleasesBtn.setAttribute("aria-pressed", isNew.toString());
+    ui.elements.hotBtn.setAttribute("aria-pressed", (!isNew).toString());
 
     // Show loading state
     const modeText = mode === "new" ? "new releases" : "hot releases";

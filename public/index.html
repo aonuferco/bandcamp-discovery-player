@@ -11,9 +11,9 @@
     <!-- Sticky Header -->
     <header class="app-header">
       <div class="header-left">
-        <div class="mode-buttons">
-          <button id="new-releases-btn" class="mode-btn active">New</button>
-          <button id="hot-btn" class="mode-btn">Hot</button>
+        <div class="mode-buttons" role="group" aria-label="Album filter mode">
+          <button id="new-releases-btn" class="mode-btn active" aria-label="Show new releases" aria-pressed="true">New</button>
+          <button id="hot-btn" class="mode-btn" aria-label="Show hot albums" aria-pressed="false">Hot</button>
         </div>
       </div>
 
@@ -24,13 +24,18 @@
             id="genre-search"
             placeholder="Search genres..."
             autocomplete="off"
+            role="combobox"
+            aria-label="Search for a music genre"
+            aria-haspopup="listbox"
+            aria-expanded="false"
+            aria-controls="genre-dropdown"
           />
-          <div id="genre-dropdown" class="genre-dropdown"></div>
+          <div id="genre-dropdown" class="genre-dropdown" role="listbox" aria-label="Genre options"></div>
         </div>
       </div>
 
       <div class="header-right">
-        <button id="help-btn" class="help-button" title="Keyboard shortcuts">
+        <button id="help-btn" class="help-button" title="Keyboard shortcuts" aria-label="Open keyboard shortcuts help">
           ?
         </button>
       </div>
@@ -38,7 +43,7 @@
 
     <!-- Main content wrapper with navigation -->
     <div class="content-wrapper">
-      <button id="prev-btn" class="nav-btn nav-btn-prev" title="Previous (Q)">◀</button>
+      <button id="prev-btn" class="nav-btn nav-btn-prev" title="Previous (Q)" aria-label="Go to previous album">◀</button>
       
       <div id="album">
         <div class="cover-container">
@@ -56,18 +61,18 @@
         <div class="player" id="player"></div>
       </div>
       
-      <button id="next-btn" class="nav-btn nav-btn-next" title="Next (E)">▶</button>
+      <button id="next-btn" class="nav-btn nav-btn-next" title="Next (E)" aria-label="Go to next album">▶</button>
     </div>
 
     <!-- Toast notification container -->
     <div id="toast-container"></div>
 
     <!-- Help modal -->
-    <div id="help-modal" class="modal">
+    <div id="help-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-hidden="true">
       <div class="modal-content">
         <div class="modal-header">
-          <h2>Keyboard Shortcuts</h2>
-          <button id="close-modal" class="close-btn">&times;</button>
+          <h2 id="modal-title">Keyboard Shortcuts</h2>
+          <button id="close-modal" class="close-btn" aria-label="Close dialog">&times;</button>
         </div>
         <div class="modal-body">
           <div class="shortcut-item">
