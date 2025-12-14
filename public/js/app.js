@@ -24,6 +24,8 @@ const createUIManager = () => {
     genreSearch: document.getElementById("genre-search"),
     genreDropdown: document.getElementById("genre-dropdown"),
     loadingSpinner: document.getElementById("loading-spinner"),
+    errorOverlay: document.getElementById("error-overlay"),
+    retryBtn: document.getElementById("retry-btn"),
   };
 
   const showAlbum = (album) => {
@@ -183,6 +185,19 @@ const createUIManager = () => {
     }, 3000);
   };
 
+  const showError = (message = "Failed to load albums") => {
+    const errorMessage = elements.errorOverlay.querySelector(".error-message");
+    if (errorMessage) {
+      errorMessage.textContent = message;
+    }
+    elements.errorOverlay.classList.remove("hidden");
+    elements.loadingSpinner.classList.add("hidden");
+  };
+
+  const hideError = () => {
+    elements.errorOverlay.classList.add("hidden");
+  };
+
   // Track previously focused element for modal focus management
   let previouslyFocusedElement = null;
 
@@ -324,6 +339,8 @@ const createUIManager = () => {
     updateAudioPlayer,
     preloadNextImages,
     showToast,
+    showError,
+    hideError,
     openModal,
     closeModal,
     renderGenreDropdown,
@@ -340,18 +357,53 @@ const createAppController = () => {
 
   const fetchAlbums = async (page = 1) => {
     state.setIsFetching(true);
+    ui.hideError();
+    
     try {
       const data = await service.fetchAlbums(
         page,
         state.getCurrentMode(),
         state.getCurrentTag()
       );
-      state.addAlbums(data);
+      
+      // Filter out albums with missing stream URLs
+      const validAlbums = data.filter((album) => {
+        if (!album.stream_url) {
+          console.warn("Skipping album with missing stream URL:", album.title);
+          return false;
+        }
+        return true;
+      });
+      
+      state.addAlbums(validAlbums);
+      state.setLastError(null);
+      
+      // If no valid albums after filtering, show error
+      if (validAlbums.length === 0 && state.getAlbums().length === 0) {
+        ui.showError("No playable albums found. Try a different genre.");
+      }
     } catch (error) {
       console.error("Error fetching albums:", error);
-      ui.showToast("Failed to load albums", "error");
+      state.setLastError(error.message || "Failed to load albums");
+      
+      // Show error overlay if we have no albums to display
+      if (state.getAlbums().length === 0) {
+        ui.showError("Failed to load albums. Please try again.");
+      } else {
+        // Just show toast if we already have some albums loaded
+        ui.showToast("Failed to load more albums", "error");
+      }
     } finally {
       state.setIsFetching(false);
+    }
+  };
+
+  const retryFetch = async () => {
+    ui.elements.loadingSpinner.classList.remove("hidden");
+    ui.hideError();
+    await fetchAlbums(state.getCurrentPage(), true);
+    if (state.getAlbums().length > 0) {
+      showCurrentAlbum();
     }
   };
 
@@ -527,6 +579,9 @@ const createAppController = () => {
     ui.elements.prevBtn.addEventListener("click", () => prevAlbum());
     ui.elements.helpBtn.addEventListener("click", () => ui.openModal());
     ui.elements.closeModal.addEventListener("click", () => ui.closeModal());
+    
+    // Retry button for error recovery
+    ui.elements.retryBtn.addEventListener("click", () => retryFetch());
 
     // Mode button events
     ui.elements.newReleasesBtn.addEventListener("click", () =>
@@ -596,6 +651,7 @@ const createAppController = () => {
     service,
     ui,
     fetchAlbums,
+    retryFetch,
     showCurrentAlbum,
     nextAlbum,
     prevAlbum,

@@ -7,6 +7,7 @@ export const createAppState = () => {
   let seenLinks = new Set();
   let currentMode = "new"; // "new" or "hot"
   let currentTag = ""; // empty string means "all" / "discover"
+  let lastError = null; // track last error for recovery UI
 
   return {
     addAlbums: (newAlbums) => {
@@ -33,6 +34,7 @@ export const createAppState = () => {
     getIsFetching: () => isFetching,
     getCurrentMode: () => currentMode,
     getCurrentTag: () => currentTag,
+    getLastError: () => lastError,
 
     setCurrentIndex: (index) => {
       currentIndex = index;
@@ -49,6 +51,9 @@ export const createAppState = () => {
     setCurrentTag: (tag) => {
       currentTag = tag;
     },
+    setLastError: (error) => {
+      lastError = error;
+    },
     incrementCurrentIndex: () => {
       currentIndex++;
     },
@@ -63,6 +68,7 @@ export const createAppState = () => {
       currentIndex = 0;
       currentPage = 1;
       seenLinks = new Set();
+      lastError = null;
     },
   };
 };
