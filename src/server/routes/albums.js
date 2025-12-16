@@ -56,21 +56,37 @@ function transformAlbumData(item) {
   };
 }
 
+// Request timeout configuration (10 seconds)
+const REQUEST_TIMEOUT_MS = 10000;
+
 async function fetchFromBandcamp(cursor, slice = "new", tag = "breakcore") {
-  const response = await fetch(BANDCAMP_API_URL, {
-    method: "POST",
-    headers: API_HEADERS,
-    body: JSON.stringify({
-      ...getApiBody(slice, tag),
-      cursor: cursor,
-    }),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-  if (!response.ok) {
-    throw new Error(`Bandcamp API error: ${response.status}`);
+  try {
+    const response = await fetch(BANDCAMP_API_URL, {
+      method: "POST",
+      headers: API_HEADERS,
+      body: JSON.stringify({
+        ...getApiBody(slice, tag),
+        cursor: cursor,
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Bandcamp API error: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new Error("Request timed out after 10 seconds");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  return await response.json();
 }
 
 router.get("/albums", async (req, res) => {
