@@ -35,6 +35,7 @@ Bandcamp's discovery page is great for finding new music, but their featured tra
 - **→**: Seek forward 10 seconds
 - **↑**: Increase volume
 - **↓**: Decrease volume
+- **/**: Focus genre search
 - **Escape**: Close help modal
 
 ## Project Structure

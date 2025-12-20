@@ -570,6 +570,10 @@ const createAppController = () => {
         e.preventDefault();
         adjustVolume(-0.1);
         break;
+      case "/":
+        e.preventDefault();
+        ui.elements.genreSearch.focus();
+        break;
     }
   };
 
@@ -616,6 +620,16 @@ const createAppController = () => {
     searchInput.addEventListener("input", (e) => {
       ui.renderGenreDropdown(e.target.value);
       ui.toggleDropdown(true);
+    });
+
+    // Escape to close dropdown and unfocus search
+    searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        ui.toggleDropdown(false);
+        // Reset input to current tag
+        searchInput.value = state.getCurrentTag();
+        searchInput.blur();
+      }
     });
 
     // Click outside to close dropdown
