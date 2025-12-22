@@ -2,6 +2,31 @@ import { GENRES, ALL_GENRES } from "./genres.js";
 import { createAppState } from "./state.js";
 import { createAlbumService } from "./api.js";
 
+// URL utilities for shareable links
+const isValidGenre = (genre) => genre && ALL_GENRES.includes(genre);
+const isValidMode = (mode) => mode === "new" || mode === "hot";
+
+const parseUrlParams = () => {
+  const params = new URLSearchParams(window.location.search);
+  const genre = params.get("genre") || "";
+  const mode = params.get("mode") || "new";
+  return {
+    genre: isValidGenre(genre) ? genre : "",
+    mode: isValidMode(mode) ? mode : "new",
+  };
+};
+
+const updateUrl = (genre, mode) => {
+  const params = new URLSearchParams();
+  if (genre) params.set("genre", genre);
+  if (mode !== "new") params.set("mode", mode);
+  const queryString = params.toString();
+  const newUrl = queryString
+    ? `${window.location.pathname}?${queryString}`
+    : window.location.pathname;
+  window.history.replaceState(null, "", newUrl);
+};
+
 // UI manager
 const createUIManager = () => {
   const elements = {
@@ -412,6 +437,7 @@ const createAppController = () => {
 
     state.setCurrentMode(mode);
     state.resetState();
+    updateUrl(state.getCurrentTag(), mode);
 
     // Update button states and aria-pressed
     const isNew = mode === "new";
@@ -434,6 +460,7 @@ const createAppController = () => {
 
     state.setCurrentTag(genre);
     state.resetState();
+    updateUrl(genre, state.getCurrentMode());
     ui.updateSearchInput(genre);
     ui.toggleDropdown(false);
 
@@ -656,6 +683,22 @@ const createAppController = () => {
   };
 
   const init = async () => {
+    // Apply URL params before first fetch
+    const { genre, mode } = parseUrlParams();
+    
+    if (mode !== "new") {
+      state.setCurrentMode(mode);
+      ui.elements.newReleasesBtn.classList.remove("active");
+      ui.elements.hotBtn.classList.add("active");
+      ui.elements.newReleasesBtn.setAttribute("aria-pressed", "false");
+      ui.elements.hotBtn.setAttribute("aria-pressed", "true");
+    }
+    
+    if (genre) {
+      state.setCurrentTag(genre);
+      ui.updateSearchInput(genre);
+    }
+    
     await fetchAlbums(state.getCurrentPage());
     showCurrentAlbum();
   };
