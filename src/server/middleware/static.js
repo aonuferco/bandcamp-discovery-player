@@ -9,7 +9,7 @@ export function staticMiddleware(express) {
     ? path.resolve(process.cwd(), "public")
     : path.resolve(__dirname, "../../../../public");
   return express.static(projectRoot, {
-    setHeaders: function (res, filePath) {
+    setHeaders (res, filePath) {
       if (filePath.endsWith("index.html")) {
         res.set("Cache-Control", "no-cache, no-store, must-revalidate");
         res.set("Pragma", "no-cache");

@@ -69,7 +69,7 @@ async function fetchFromBandcamp(cursor, slice = "new", tag = "breakcore") {
       headers: API_HEADERS,
       body: JSON.stringify({
         ...getApiBody(slice, tag),
-        cursor: cursor,
+        cursor,
       }),
       signal: controller.signal,
     });
