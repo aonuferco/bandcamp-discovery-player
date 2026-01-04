@@ -41,63 +41,63 @@ Bandcamp's discovery page is great for finding new music, but their featured tra
 ## Project Structure
 
 ```
-bandcamp-scraper/
+bandcamp-discovery-player/
+├── api/
+│   └── index.ts                # Vercel serverless entry point
 ├── src/
 │   ├── server/
-│   │   ├── app.js              # Main Express app configuration
-│   │   ├── index.js            # Server entry point
+│   │   ├── app.ts              # Main Express app configuration
+│   │   ├── index.ts            # Server entry point
+│   │   ├── types.ts            # Shared TypeScript types
 │   │   ├── routes/
-│   │   │   └── albums.js       # Album API routes
+│   │   │   └── albums.ts       # Album API routes
 │   │   └── middleware/
-│   │       └── static.js       # Static file serving middleware
-├── public/
-│   ├── index.html              # Main HTML file
-│   ├── index.css               # Styles
-│   ├── js/
-│   │   ├── api.js              # API service
-│   │   ├── state.js            # App state management
-│   │   └── app.js              # Client-side app
-|   |   └── genres.js           # Predefined genre list
+│   │       └── static.ts       # Static file serving middleware
+├── public/                     # Frontend static assets
+├── dist/                       # Compiled production code (gitignored)
 ├── package.json
+├── tsconfig.json               # TypeScript configuration
 └── README.md
-└── vercel.json             
 ```
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js (v14 or higher)
+- Node.js (v18 or higher)
 - npm or yarn
 
 ### Installation
 
 1. Clone the repository:
-
-```bash
-git clone <repository-url>
-cd bandcamp-scraper
-```
+   ```bash
+   git clone <repository-url>
+   cd bandcamp-discovery-player
+   ```
 
 2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-```bash
-npm install
-```
+3. Build the project:
+   ```bash
+   npm run build
+   ```
 
-3. Start the development server:
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-```bash
-npm run dev
-```
-
-4. Open your browser and navigate to `http://localhost:3000`
+5. Open your browser and navigate to `http://localhost:3000`
 
 ### Available Scripts
 
-- `npm start`: Start the production server
-- `npm run dev`: Start the development server with auto-reload
-- `npm run lint`: Run ESLint for code quality checks
+- `npm run build`: Compile TypeScript to JavaScript in the `dist/` directory
+- `npm start`: Start the production server using the compiled code
+- `npm run dev`: Start the development server with `tsx` for real-time updates
+- `npm run lint`: Run ESLint with TypeScript support
 - `npm run format`: Format code with Prettier
 
 ## API Endpoints
