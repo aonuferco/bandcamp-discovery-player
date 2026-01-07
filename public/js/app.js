@@ -234,6 +234,11 @@ const createUIManager = () => {
     elements.helpModal.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
     
+    const header = document.querySelector(".app-header");
+    const contentWrapper = document.querySelector(".content-wrapper");
+    if (header) header.setAttribute("inert", "");
+    if (contentWrapper) contentWrapper.setAttribute("inert", "");
+    
     // Move focus to the close button
     elements.closeModal.focus();
     
@@ -245,6 +250,11 @@ const createUIManager = () => {
     elements.helpModal.classList.remove("show");
     elements.helpModal.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "auto";
+    
+    const header = document.querySelector(".app-header");
+    const contentWrapper = document.querySelector(".content-wrapper");
+    if (header) header.removeAttribute("inert");
+    if (contentWrapper) contentWrapper.removeAttribute("inert");
     
     // Remove focus trap event listener
     elements.helpModal.removeEventListener("keydown", trapFocus);
