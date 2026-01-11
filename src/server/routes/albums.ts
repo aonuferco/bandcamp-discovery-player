@@ -10,6 +10,17 @@ import {
 
 const router = express.Router();
 
+function isBandcampApiResponse(data: unknown): data is BandcampApiResponse {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    "results" in data &&
+    Array.isArray((data as { results: unknown }).results) &&
+    "cursor" in data &&
+    typeof (data as { cursor: unknown }).cursor === "string"
+  );
+}
+
 // In-memory cache (in production, consider Redis or similar)
 let cachedAlbums: Album[] = [];
 let lastCursor = "*";
@@ -92,7 +103,11 @@ async function fetchFromBandcamp(
       throw new Error(`Bandcamp API error: ${response.status}`);
     }
 
-    return (await response.json()) as BandcampApiResponse;
+    const data: unknown = await response.json();
+    if (!isBandcampApiResponse(data)) {
+      throw new Error("Invalid response structure from Bandcamp API");
+    }
+    return data;
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
       throw new Error("Request timed out after 10 seconds");
