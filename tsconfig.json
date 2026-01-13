@@ -16,6 +16,6 @@
     "allowJs": true,
     "checkJs": false
   },
-  "include": ["src/**/*", "api/**/*"],
-  "exclude": ["node_modules", "dist", "public"]
+  "include": ["src/**/*", "api/**/*", "public/js/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
