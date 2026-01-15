@@ -10,7 +10,7 @@ import { staticMiddleware } from "./middleware/static.js";
 import type { HealthCheckResponse, ApiErrorResponse } from "./types.js";
 
 const app = express();
-const PORT: string | number = process.env.PORT || 3000;
+const PORT: number = parseInt(process.env.PORT || "3000", 10);
 
 // Middleware
 app.use(cors());
