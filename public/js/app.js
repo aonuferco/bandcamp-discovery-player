@@ -2,10 +2,164 @@ import { GENRES, ALL_GENRES } from "./genres.js";
 import { createAppState } from "./state.js";
 import { createAlbumService } from "./api.js";
 
-// URL utilities for shareable links
+// ============================================================================
+// JSDoc Type Definitions
+// ============================================================================
+
+/**
+ * @typedef {"new" | "hot"} DiscoveryMode
+ */
+
+/**
+ * @typedef {"success" | "error"} ToastType
+ */
+
+/**
+ * @typedef {Object} FeaturedTrack
+ * @property {string} title
+ * @property {number} [duration]
+ */
+
+/**
+ * @typedef {Object} Album
+ * @property {string} title
+ * @property {string} artist
+ * @property {string} img
+ * @property {string} link
+ * @property {string} stream_url
+ * @property {FeaturedTrack} [featured_track]
+ * @property {string} [band_name]
+ * @property {number} [track_count]
+ * @property {string} [release_date]
+ */
+
+/**
+ * @typedef {Object} AppState
+ * @property {(newAlbums: Album[]) => void} addAlbums
+ * @property {() => Album | undefined} getCurrentAlbum
+ * @property {() => boolean} canGoNext
+ * @property {() => boolean} canGoPrev
+ * @property {() => boolean} needsMoreData
+ * @property {() => Album[]} getAlbums
+ * @property {() => number} getCurrentIndex
+ * @property {() => number} getCurrentPage
+ * @property {() => boolean} getIsFetching
+ * @property {() => DiscoveryMode} getCurrentMode
+ * @property {() => string} getCurrentTag
+ * @property {() => string | null} getLastError
+ * @property {(index: number) => void} setCurrentIndex
+ * @property {(page: number) => void} setCurrentPage
+ * @property {(fetching: boolean) => void} setIsFetching
+ * @property {(mode: DiscoveryMode) => void} setCurrentMode
+ * @property {(tag: string) => void} setCurrentTag
+ * @property {(error: string | null) => void} setLastError
+ * @property {() => void} incrementCurrentIndex
+ * @property {() => void} decrementCurrentIndex
+ * @property {() => void} incrementCurrentPage
+ * @property {() => void} resetState
+ */
+
+/**
+ * @typedef {Object} AlbumService
+ * @property {(page?: number, mode?: DiscoveryMode, tag?: string) => Promise<Album[]>} fetchAlbums
+ */
+
+/**
+ * @typedef {Object} UIElements
+ * @property {HTMLImageElement | null} cover
+ * @property {HTMLElement | null} title
+ * @property {HTMLElement | null} artist
+ * @property {HTMLElement | null} trackInfo
+ * @property {HTMLElement | null} labelInfo
+ * @property {HTMLElement | null} trackCount
+ * @property {HTMLElement | null} releaseDate
+ * @property {HTMLElement | null} player
+ * @property {HTMLButtonElement | null} nextBtn
+ * @property {HTMLButtonElement | null} prevBtn
+ * @property {HTMLButtonElement | null} helpBtn
+ * @property {HTMLElement | null} helpModal
+ * @property {HTMLButtonElement | null} closeModal
+ * @property {HTMLElement | null} toastContainer
+ * @property {HTMLButtonElement | null} newReleasesBtn
+ * @property {HTMLButtonElement | null} hotBtn
+ * @property {HTMLInputElement | null} genreSearch
+ * @property {HTMLElement | null} genreDropdown
+ * @property {HTMLElement | null} loadingSpinner
+ * @property {HTMLElement | null} errorOverlay
+ * @property {HTMLButtonElement | null} retryBtn
+ */
+
+/**
+ * @typedef {Object} UIManager
+ * @property {UIElements} elements
+ * @property {(album: Album | undefined) => void} showAlbum
+ * @property {(album: Album) => void} updateTrackInfo
+ * @property {(album: Album) => void} updateLabelInfo
+ * @property {(album: Album) => void} updateTrackCount
+ * @property {(album: Album) => void} updateAudioPlayer
+ * @property {(count?: number) => void} preloadNextImages
+ * @property {(message: string, type?: ToastType) => void} showToast
+ * @property {(message?: string) => void} showError
+ * @property {() => void} hideError
+ * @property {() => void} openModal
+ * @property {() => void} closeModal
+ * @property {(filter?: string) => boolean} renderGenreDropdown
+ * @property {(show: boolean) => void} toggleDropdown
+ * @property {(tag: string) => void} updateSearchInput
+ */
+
+/**
+ * @typedef {Object} AppController
+ * @property {AppState} state
+ * @property {AlbumService} service
+ * @property {UIManager} ui
+ * @property {(page?: number) => Promise<void>} fetchAlbums
+ * @property {() => Promise<void>} retryFetch
+ * @property {() => void} showCurrentAlbum
+ * @property {() => Promise<void>} nextAlbum
+ * @property {() => void} prevAlbum
+ * @property {() => Promise<void>} copyAlbumLink
+ * @property {() => void} toggleAudio
+ * @property {(mode: DiscoveryMode) => Promise<void>} switchMode
+ * @property {() => void} setupEventListeners
+ * @property {() => Promise<void>} init
+ */
+
+// Extend the Window interface for global app state
+/**
+ * @global
+ * @type {AppState | null}
+ */
+let appStateGlobal;
+
+/**
+ * @global
+ * @type {AppController | null}
+ */
+let appControllerGlobal;
+
+// ============================================================================
+// URL Utilities for shareable links
+// ============================================================================
+
+/**
+ * Validates if a genre is in the list of known genres
+ * @param {string | null | undefined} genre - The genre to validate
+ * @returns {boolean}
+ */
 const isValidGenre = (genre) => genre && ALL_GENRES.includes(genre);
+
+/**
+ * Validates if a mode is either "new" or "hot"
+ * @param {string | null | undefined} mode - The mode to validate
+ * @returns {mode is DiscoveryMode}
+ */
 const isValidMode = (mode) => mode === "new" || mode === "hot";
 
+/**
+ * Parse URL parameters for genre and mode
+ * @returns {{ genre: string, mode: DiscoveryMode }}
+ */
 const parseUrlParams = () => {
   const params = new URLSearchParams(window.location.search);
   const genre = params.get("genre") || "";
@@ -16,6 +170,12 @@ const parseUrlParams = () => {
   };
 };
 
+/**
+ * Update the URL with genre and mode parameters
+ * @param {string} genre - The genre tag to set
+ * @param {DiscoveryMode} mode - The discovery mode
+ * @returns {void}
+ */
 const updateUrl = (genre, mode) => {
   const params = new URLSearchParams();
   if (genre) params.set("genre", genre);
@@ -27,10 +187,18 @@ const updateUrl = (genre, mode) => {
   window.history.replaceState(null, "", newUrl);
 };
 
-// UI manager
+// ============================================================================
+// UI Manager
+// ============================================================================
+
+/**
+ * Creates the UI manager for handling DOM updates and user interface
+ * @returns {UIManager}
+ */
 const createUIManager = () => {
+  /** @type {UIElements} */
   const elements = {
-    cover: document.getElementById("cover"),
+    cover: /** @type {HTMLImageElement | null} */ (document.getElementById("cover")),
     title: document.getElementById("title"),
     artist: document.getElementById("artist"),
     trackInfo: document.getElementById("track-info"),
@@ -38,21 +206,26 @@ const createUIManager = () => {
     trackCount: document.getElementById("track-count"),
     releaseDate: document.getElementById("release-date"),
     player: document.getElementById("player"),
-    nextBtn: document.getElementById("next-btn"),
-    prevBtn: document.getElementById("prev-btn"),
-    helpBtn: document.getElementById("help-btn"),
+    nextBtn: /** @type {HTMLButtonElement | null} */ (document.getElementById("next-btn")),
+    prevBtn: /** @type {HTMLButtonElement | null} */ (document.getElementById("prev-btn")),
+    helpBtn: /** @type {HTMLButtonElement | null} */ (document.getElementById("help-btn")),
     helpModal: document.getElementById("help-modal"),
-    closeModal: document.getElementById("close-modal"),
+    closeModal: /** @type {HTMLButtonElement | null} */ (document.getElementById("close-modal")),
     toastContainer: document.getElementById("toast-container"),
-    newReleasesBtn: document.getElementById("new-releases-btn"),
-    hotBtn: document.getElementById("hot-btn"),
-    genreSearch: document.getElementById("genre-search"),
+    newReleasesBtn: /** @type {HTMLButtonElement | null} */ (document.getElementById("new-releases-btn")),
+    hotBtn: /** @type {HTMLButtonElement | null} */ (document.getElementById("hot-btn")),
+    genreSearch: /** @type {HTMLInputElement | null} */ (document.getElementById("genre-search")),
     genreDropdown: document.getElementById("genre-dropdown"),
     loadingSpinner: document.getElementById("loading-spinner"),
     errorOverlay: document.getElementById("error-overlay"),
-    retryBtn: document.getElementById("retry-btn"),
+    retryBtn: /** @type {HTMLButtonElement | null} */ (document.getElementById("retry-btn")),
   };
 
+  /**
+   * Display an album in the UI
+   * @param {Album | undefined} album - The album to display
+   * @returns {void}
+   */
   const showAlbum = (album) => {
     if (!album) return;
 
@@ -83,6 +256,11 @@ const createUIManager = () => {
     updateAudioPlayer(album);
   };
 
+  /**
+   * Update the featured track info display
+   * @param {Album} album - The album data
+   * @returns {void}
+   */
   const updateTrackInfo = (album) => {
     if (!album.featured_track) {
       elements.trackInfo.innerHTML = "";
@@ -119,6 +297,11 @@ const createUIManager = () => {
     }
   };
 
+  /**
+   * Update the label info display
+   * @param {Album} album - The album data
+   * @returns {void}
+   */
   const updateLabelInfo = (album) => {
     if (album.band_name) {
       elements.labelInfo.innerHTML = `<strong>Label:</strong> ${album.band_name}`;
@@ -127,6 +310,11 @@ const createUIManager = () => {
     }
   };
 
+  /**
+   * Update the track count display
+   * @param {Album} album - The album data
+   * @returns {void}
+   */
   const updateTrackCount = (album) => {
     if (album.track_count > 0) {
       elements.trackCount.innerHTML = `<strong>Track Count:</strong> ${album.track_count}`;
@@ -135,6 +323,11 @@ const createUIManager = () => {
     }
   };
 
+  /**
+   * Update the release date display
+   * @param {Album} album - The album data
+   * @returns {void}
+   */
   const updateReleaseDate = (album) => {
     if (album.release_date) {
       const dateObj = new Date(album.release_date);
