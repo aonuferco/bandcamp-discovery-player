@@ -1,6 +1,9 @@
-import { GENRES, ALL_GENRES } from "./genres.js";
+import { ALL_GENRES } from "./genres.js";
 import { createAppState } from "./state.js";
 import { createAlbumService } from "./api.js";
+import { createModalManager } from "./ui/modal.js";
+import { createToastManager } from "./ui/toast.js";
+import { createGenreDropdownManager } from "./ui/genre-dropdown.js";
 
 // ============================================================================
 // JSDoc Type Definitions
@@ -380,183 +383,25 @@ const createUIManager = () => {
     }
   };
 
-  const showToast = (message, type = "success") => {
-    const toast = document.createElement("div");
-    toast.className = `toast toast-${type}`;
-    toast.innerHTML = `
-      <div class="toast-content">
-        <span class="toast-message">${message}</span>
-      </div>
-    `;
+  // Create sub-managers for modal, toast, and genre dropdown
+  const modalManager = createModalManager({
+    helpModal: elements.helpModal,
+    closeModal: elements.closeModal,
+  });
 
-    elements.toastContainer.appendChild(toast);
+  const toastManager = createToastManager({
+    toastContainer: elements.toastContainer,
+    loadingSpinner: elements.loadingSpinner,
+    errorOverlay: elements.errorOverlay,
+  });
 
-    setTimeout(() => toast.classList.add("show"), 10);
-
-    setTimeout(() => {
-      toast.classList.remove("show");
-      setTimeout(() => {
-        if (toast.parentNode) {
-          toast.parentNode.removeChild(toast);
-        }
-      }, 300);
-    }, 3000);
-  };
-
-  const showError = (message = "Failed to load albums") => {
-    const errorMessage = elements.errorOverlay.querySelector(".error-message");
-    if (errorMessage) {
-      errorMessage.textContent = message;
-    }
-    elements.errorOverlay.classList.remove("hidden");
-    elements.loadingSpinner.classList.add("hidden");
-  };
-
-  const hideError = () => {
-    elements.errorOverlay.classList.add("hidden");
-  };
-
-  // Track previously focused element for modal focus management
-  let previouslyFocusedElement = null;
-
-  const openModal = () => {
-    // Store the currently focused element to restore later
-    previouslyFocusedElement = document.activeElement;
-    
-    elements.helpModal.classList.add("show");
-    elements.helpModal.setAttribute("aria-hidden", "false");
-    document.body.style.overflow = "hidden";
-    
-    const header = document.querySelector(".app-header");
-    const contentWrapper = document.querySelector(".content-wrapper");
-    if (header) header.setAttribute("inert", "");
-    if (contentWrapper) contentWrapper.setAttribute("inert", "");
-    
-    // Move focus to the close button
-    elements.closeModal.focus();
-    
-    // Add focus trap event listener
-    elements.helpModal.addEventListener("keydown", trapFocus);
-  };
-
-  const closeModal = () => {
-    elements.helpModal.classList.remove("show");
-    elements.helpModal.setAttribute("aria-hidden", "true");
-    document.body.style.overflow = "auto";
-    
-    const header = document.querySelector(".app-header");
-    const contentWrapper = document.querySelector(".content-wrapper");
-    if (header) header.removeAttribute("inert");
-    if (contentWrapper) contentWrapper.removeAttribute("inert");
-    
-    // Remove focus trap event listener
-    elements.helpModal.removeEventListener("keydown", trapFocus);
-    
-    // Restore focus to the previously focused element
-    if (previouslyFocusedElement) {
-      previouslyFocusedElement.focus();
-      previouslyFocusedElement = null;
-    }
-  };
-
-  const trapFocus = (e) => {
-    if (e.key !== "Tab") return;
-    
-    // Get all focusable elements within the modal
-    const focusableElements = elements.helpModal.querySelectorAll(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
-    
-    const firstElement = focusableElements[0];
-    const lastElement = focusableElements[focusableElements.length - 1];
-    
-    if (e.shiftKey) {
-      // Shift + Tab: if on first element, move to last
-      if (document.activeElement === firstElement) {
-        e.preventDefault();
-        lastElement.focus();
-      }
-    } else {
-      // Tab: if on last element, move to first
-      if (document.activeElement === lastElement) {
-        e.preventDefault();
-        firstElement.focus();
-      }
-    }
-  };
-
-  const renderGenreDropdown = (filter = "") => {
-    const dropdown = elements.genreDropdown;
-    dropdown.innerHTML = "";
-
-    const filterLower = filter.toLowerCase();
-    let hasResults = false;
-
-    // Helper to create genre item
-    const createItem = (genre) => {
-      const div = document.createElement("div");
-      div.className = "genre-item";
-      if (genre === window.appState.getCurrentTag()) {
-        div.classList.add("selected");
-      }
-      div.textContent = genre;
-      div.dataset.genre = genre;
-      return div;
-    };
-
-    // If filtering, show flat list
-    if (filter) {
-      const matches = ALL_GENRES.filter((g) =>
-        g.toLowerCase().includes(filterLower)
-      );
-
-      if (matches.length > 0) {
-        matches.forEach((genre) => {
-          dropdown.appendChild(createItem(genre));
-        });
-        hasResults = true;
-      } else {
-        const noRes = document.createElement("div");
-        noRes.className = "genre-item no-results";
-        noRes.textContent = "No genres found";
-        dropdown.appendChild(noRes);
-      }
-    } else {
-      // Show grouped list
-      Object.entries(GENRES).forEach(([category, genres]) => {
-        const groupDiv = document.createElement("div");
-        groupDiv.className = "genre-group";
-
-        const title = document.createElement("div");
-        title.className = "genre-group-title";
-        title.textContent = category;
-        groupDiv.appendChild(title);
-
-        genres.forEach((genre) => {
-          groupDiv.appendChild(createItem(genre));
-        });
-
-        dropdown.appendChild(groupDiv);
-      });
-      hasResults = true;
-    }
-
-    return hasResults;
-  };
-
-  const toggleDropdown = (show) => {
-    if (show) {
-      elements.genreDropdown.classList.add("show");
-    } else {
-      elements.genreDropdown.classList.remove("show");
-    }
-    // Update aria-expanded on the combobox input
-    elements.genreSearch.setAttribute("aria-expanded", show.toString());
-  };
-
-  const updateSearchInput = (tag) => {
-    elements.genreSearch.value = tag;
-  };
+  const genreDropdownManager = createGenreDropdownManager(
+    {
+      genreSearch: elements.genreSearch,
+      genreDropdown: elements.genreDropdown,
+    },
+    () => window.appState?.getCurrentTag() || ""
+  );
 
   return {
     elements,
@@ -566,14 +411,15 @@ const createUIManager = () => {
     updateTrackCount,
     updateAudioPlayer,
     preloadNextImages,
-    showToast,
-    showError,
-    hideError,
-    openModal,
-    closeModal,
-    renderGenreDropdown,
-    toggleDropdown,
-    updateSearchInput,
+    // Delegate to sub-managers
+    showToast: toastManager.showToast,
+    showError: toastManager.showError,
+    hideError: toastManager.hideError,
+    openModal: modalManager.openModal,
+    closeModal: modalManager.closeModal,
+    renderGenreDropdown: genreDropdownManager.renderGenreDropdown,
+    toggleDropdown: genreDropdownManager.toggleDropdown,
+    updateSearchInput: genreDropdownManager.updateSearchInput,
   };
 };
 
