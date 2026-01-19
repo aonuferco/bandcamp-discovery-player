@@ -1,0 +1,7 @@
+{
+  "entry": [
+    "api/index.ts",
+    "public/js/app.js"
+  ],
+  "project": ["**/*.{ts,js}"]
+}
