@@ -24,8 +24,13 @@ app.use((req: Request, res: Response, next: NextFunction): void => {
 
 // Routes
 app.use("/api", albumsRouter);
+
 app.get("/health", (req: Request, res: Response<HealthCheckResponse>): void => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+app.get("/favicon.ico", (req: Request, res: Response): void => {
+  res.status(204).end();
 });
 
 // Error handling middleware
