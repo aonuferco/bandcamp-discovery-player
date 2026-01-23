@@ -10,7 +10,7 @@ import {
 
 const router = express.Router();
 
-function isBandcampApiResponse(data: unknown): data is BandcampApiResponse {
+export function isBandcampApiResponse(data: unknown): data is BandcampApiResponse {
   return (
     typeof data === "object" &&
     data !== null &&
@@ -34,7 +34,7 @@ const API_HEADERS: Record<string, string> = {
   Referer: "https://bandcamp.com/discover",
 };
 
-const getApiBody = (
+export const getApiBody = (
   slice: "new" | "hot" = "new",
   tag: string | null = "breakcore"
 ): BandcampApiBody => {
@@ -56,7 +56,7 @@ const getApiBody = (
   return body;
 };
 
-function transformAlbumData(item: BandcampAlbumItem): Album {
+export function transformAlbumData(item: BandcampAlbumItem): Album {
   return {
     id: item.id,
     title: item.title,
