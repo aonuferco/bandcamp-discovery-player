@@ -1,4 +1,4 @@
-import type { Album, AlbumsApiResponse, DiscoveryMode } from '../../src/shared/types';
+import type { Album, DiscoveryMode } from '../../src/shared/types';
 
 export interface AlbumService {
   fetchAlbums(page?: number, mode?: DiscoveryMode, tag?: string): Promise<Album[]>;
@@ -19,8 +19,8 @@ export function createAlbumService(): AlbumService {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     
-    const data: AlbumsApiResponse = await response.json();
-    return data.albums;
+    const data: Album[] = await response.json();
+    return data;
   }
 
   return { fetchAlbums };

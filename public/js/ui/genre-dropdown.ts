@@ -1,33 +1,37 @@
-import { GENRES, ALL_GENRES } from "../genres.js";
+import { GENRES, ALL_GENRES } from "../genres";
+import type { Genre } from "../genres";
 
-/**
- * @typedef {Object} GenreDropdownElements
- * @property {HTMLInputElement | null} genreSearch
- * @property {HTMLElement | null} genreDropdown
- */
+export interface GenreDropdownElements {
+  genreSearch: HTMLInputElement | null;
+  genreDropdown: HTMLElement | null;
+}
 
-/**
- * @typedef {Object} GenreDropdownManager
- * @property {(filter?: string) => boolean} renderGenreDropdown
- * @property {(show: boolean) => void} toggleDropdown
- * @property {(tag: string) => void} updateSearchInput
- */
+export interface GenreDropdownManager {
+  renderGenreDropdown(filter?: string): boolean;
+  toggleDropdown(show: boolean): void;
+  updateSearchInput(tag: string): void;
+}
 
 /**
  * Creates the genre dropdown manager for handling genre selection
- * @param {GenreDropdownElements} elements - DOM elements for dropdown
- * @param {() => string} getCurrentTag - Callback to get current tag from state
- * @returns {GenreDropdownManager}
+ * @param elements - DOM elements for dropdown
+ * @param getCurrentTag - Callback to get current tag from state
+ * @returns GenreDropdownManager
  */
-export const createGenreDropdownManager = (elements, getCurrentTag) => {
+export const createGenreDropdownManager = (
+  elements: GenreDropdownElements,
+  getCurrentTag: () => string
+): GenreDropdownManager => {
   const { genreSearch, genreDropdown } = elements;
 
   /**
    * Render the genre dropdown with optional filtering
-   * @param {string} filter - Filter string for searching genres
-   * @returns {boolean} - Whether any results were found
+   * @param filter - Filter string for searching genres
+   * @returns Whether any results were found
    */
-  const renderGenreDropdown = (filter = "") => {
+  const renderGenreDropdown = (filter: string = ""): boolean => {
+    if (!genreDropdown) return false;
+    
     genreDropdown.innerHTML = "";
 
     const filterLower = filter.toLowerCase();
@@ -35,10 +39,10 @@ export const createGenreDropdownManager = (elements, getCurrentTag) => {
 
     /**
      * Helper to create a genre item element
-     * @param {string} genre
-     * @returns {HTMLDivElement}
+     * @param genre
+     * @returns HTMLDivElement
      */
-    const createItem = (genre) => {
+    const createItem = (genre: string): HTMLDivElement => {
       const div = document.createElement("div");
       div.className = "genre-item";
       if (genre === getCurrentTag()) {
@@ -91,9 +95,11 @@ export const createGenreDropdownManager = (elements, getCurrentTag) => {
 
   /**
    * Toggle dropdown visibility
-   * @param {boolean} show - Whether to show the dropdown
+   * @param show - Whether to show the dropdown
    */
-  const toggleDropdown = (show) => {
+  const toggleDropdown = (show: boolean) => {
+    if (!genreDropdown || !genreSearch) return;
+
     if (show) {
       genreDropdown.classList.add("show");
     } else {
@@ -105,10 +111,12 @@ export const createGenreDropdownManager = (elements, getCurrentTag) => {
 
   /**
    * Update the search input value
-   * @param {string} tag - The tag value to set
+   * @param tag - The tag value to set
    */
-  const updateSearchInput = (tag) => {
-    genreSearch.value = tag;
+  const updateSearchInput = (tag: string) => {
+    if (genreSearch) {
+      genreSearch.value = tag;
+    }
   };
 
   return {

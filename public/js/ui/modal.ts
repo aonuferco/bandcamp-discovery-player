@@ -1,41 +1,40 @@
-/**
- * @typedef {Object} ModalElements
- * @property {HTMLElement | null} helpModal
- * @property {HTMLButtonElement | null} closeModal
- */
+export interface ModalElements {
+  helpModal: HTMLElement | null;
+  closeModal: HTMLButtonElement | null;
+}
 
-/**
- * @typedef {Object} ModalManager
- * @property {() => void} openModal
- * @property {() => void} closeModal
- */
+export interface ModalManager {
+  openModal(): void;
+  closeModal(): void;
+}
 
 /**
  * Creates the modal manager for handling help modal interactions
- * @param {ModalElements} elements - DOM elements for modal
- * @returns {ModalManager}
+ * @param elements - DOM elements for modal
+ * @returns ModalManager
  */
-export const createModalManager = (elements) => {
+export const createModalManager = (elements: ModalElements): ModalManager => {
   const { helpModal, closeModal } = elements;
 
   // Track previously focused element for focus management
-  /** @type {Element | null} */
-  let previouslyFocusedElement = null;
+  let previouslyFocusedElement: Element | null = null;
 
   /**
    * Trap focus within the modal when Tab is pressed
-   * @param {KeyboardEvent} e
+   * @param e
    */
-  const trapFocus = (e) => {
-    if (e.key !== "Tab") return;
+  const trapFocus = (e: KeyboardEvent) => {
+    if (e.key !== "Tab" || !helpModal) return;
 
     // Get all focusable elements within the modal
-    const focusableElements = helpModal.querySelectorAll(
+    const focusableElements = helpModal.querySelectorAll<HTMLElement>(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
     );
 
-    const firstElement = /** @type {HTMLElement} */ (focusableElements[0]);
-    const lastElement = /** @type {HTMLElement} */ (focusableElements[focusableElements.length - 1]);
+    if (focusableElements.length === 0) return;
+
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
 
     if (e.shiftKey) {
       // Shift + Tab: if on first element, move to last
@@ -53,6 +52,8 @@ export const createModalManager = (elements) => {
   };
 
   const openModal = () => {
+    if (!helpModal || !closeModal) return;
+
     // Store the currently focused element to restore later
     previouslyFocusedElement = document.activeElement;
 
@@ -69,10 +70,12 @@ export const createModalManager = (elements) => {
     closeModal.focus();
 
     // Add focus trap event listener
-    helpModal.addEventListener("keydown", trapFocus);
+    helpModal.addEventListener("keydown", trapFocus as EventListener);
   };
 
   const closeModalFn = () => {
+    if (!helpModal) return;
+
     helpModal.classList.remove("show");
     helpModal.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "auto";
@@ -83,11 +86,11 @@ export const createModalManager = (elements) => {
     if (contentWrapper) contentWrapper.removeAttribute("inert");
 
     // Remove focus trap event listener
-    helpModal.removeEventListener("keydown", trapFocus);
+    helpModal.removeEventListener("keydown", trapFocus as EventListener);
 
     // Restore focus to the previously focused element
-    if (previouslyFocusedElement && /** @type {HTMLElement} */ (previouslyFocusedElement).focus) {
-      /** @type {HTMLElement} */ (previouslyFocusedElement).focus();
+    if (previouslyFocusedElement && (previouslyFocusedElement as HTMLElement).focus) {
+      (previouslyFocusedElement as HTMLElement).focus();
       previouslyFocusedElement = null;
     }
   };

@@ -1,35 +1,33 @@
-/**
- * @typedef {"success" | "error"} ToastType
- */
+export type ToastType = "success" | "error";
 
-/**
- * @typedef {Object} ToastElements
- * @property {HTMLElement | null} toastContainer
- * @property {HTMLElement | null} loadingSpinner
- * @property {HTMLElement | null} errorOverlay
- */
+export interface ToastElements {
+  toastContainer: HTMLElement | null;
+  loadingSpinner: HTMLElement | null;
+  errorOverlay: HTMLElement | null;
+}
 
-/**
- * @typedef {Object} ToastManager
- * @property {(message: string, type?: ToastType) => void} showToast
- * @property {(message?: string) => void} showError
- * @property {() => void} hideError
- */
+export interface ToastManager {
+  showToast(message: string, type?: ToastType): void;
+  showError(message?: string): void;
+  hideError(): void;
+}
 
 /**
  * Creates the toast manager for handling notifications and error display
- * @param {ToastElements} elements - DOM elements for toast/error
- * @returns {ToastManager}
+ * @param elements - DOM elements for toast/error
+ * @returns ToastManager
  */
-export const createToastManager = (elements) => {
+export const createToastManager = (elements: ToastElements): ToastManager => {
   const { toastContainer, loadingSpinner, errorOverlay } = elements;
 
   /**
    * Show a toast notification
-   * @param {string} message - Message to display
-   * @param {ToastType} type - Toast type (success or error)
+   * @param message - Message to display
+   * @param type - Toast type (success or error)
    */
-  const showToast = (message, type = "success") => {
+  const showToast = (message: string, type: ToastType = "success") => {
+    if (!toastContainer) return;
+
     const toast = document.createElement("div");
     toast.className = `toast toast-${type}`;
     toast.innerHTML = `
@@ -54,9 +52,11 @@ export const createToastManager = (elements) => {
 
   /**
    * Show the error overlay
-   * @param {string} message - Error message to display
+   * @param message - Error message to display
    */
-  const showError = (message = "Failed to load albums") => {
+  const showError = (message: string = "Failed to load albums") => {
+    if (!errorOverlay || !loadingSpinner) return;
+
     const errorMessage = errorOverlay.querySelector(".error-message");
     if (errorMessage) {
       errorMessage.textContent = message;
@@ -69,6 +69,7 @@ export const createToastManager = (elements) => {
    * Hide the error overlay
    */
   const hideError = () => {
+    if (!errorOverlay) return;
     errorOverlay.classList.add("hidden");
   };
 

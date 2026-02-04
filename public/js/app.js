@@ -1,6 +1,6 @@
-import { ALL_GENRES } from "./genres.js";
-import { createAppState } from "./state.js";
-import { createAlbumService } from "./api.js";
+import { ALL_GENRES } from "./genres";
+import { createAppState } from "./state";
+import { createAlbumService } from "./api";
 import { createModalManager } from "./ui/modal.js";
 import { createToastManager } from "./ui/toast.js";
 import { createGenreDropdownManager } from "./ui/genre-dropdown.js";
