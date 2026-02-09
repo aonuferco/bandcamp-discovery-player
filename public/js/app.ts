@@ -42,6 +42,7 @@ export interface UIManager {
   updateTrackInfo(album: Album): void;
   updateLabelInfo(album: Album): void;
   updateTrackCount(album: Album): void;
+  updateReleaseDate(album: Album): void;
   updateAudioPlayer(album: Album): void;
   preloadNextImages(count?: number): void;
   showToast(message: string, type?: ToastType): void;
@@ -139,30 +140,171 @@ const createUIManager = (): UIManager => {
     localStorage.setItem("bandcamp-volume", volume.toString());
   };
 
-  // Placeholder implementations for Day 2
-  const showAlbum = (album: Album | undefined) => {};
-  const updateTrackInfo = (album: Album) => {};
-  const updateLabelInfo = (album: Album) => {};
-  const updateTrackCount = (album: Album) => {};
-  const updateAudioPlayer = (album: Album) => {};
-  const preloadNextImages = (count = 3) => {};
+  // Main UI update methods
+  const showAlbum = (album: Album | undefined) => {
+    if (!album) return;
 
-  // Delegate logic placeholders (to be connected in Day 2)
+    if (elements.loadingSpinner) {
+      elements.loadingSpinner.classList.remove("hidden");
+    }
+
+    const tempImg = new Image();
+    tempImg.onload = () => {
+      if (elements.cover) elements.cover.src = tempImg.src;
+      if (elements.loadingSpinner) elements.loadingSpinner.classList.add("hidden");
+    };
+    tempImg.src = album.img;
+
+    if (elements.title) {
+      elements.title.textContent = album.title;
+      elements.title.title = album.title;
+    }
+    if (elements.artist) {
+      elements.artist.textContent = `by ${album.artist}`;
+    }
+
+    updateTrackInfo(album);
+    updateLabelInfo(album);
+    updateTrackCount(album);
+    updateReleaseDate(album);
+    updateAudioPlayer(album);
+  };
+
+  const updateTrackInfo = (album: Album) => {
+    if (!elements.trackInfo) return;
+
+    if (!album.featured_track) {
+      elements.trackInfo.innerHTML = "";
+      elements.trackInfo.className = "track-info";
+      return;
+    }
+
+    const trackText = album.featured_track.title;
+    const fullText = `<strong>Featured Track:</strong> ${trackText}`;
+
+    // Check if text needs marquee
+    const tempElement = document.createElement("div");
+    tempElement.style.cssText =
+      "position: absolute; visibility: hidden; white-space: nowrap; font-size: 0.9rem; font-weight: 500;";
+    tempElement.innerHTML = fullText;
+    document.body.appendChild(tempElement);
+
+    const textWidth = tempElement.offsetWidth;
+    document.body.removeChild(tempElement);
+
+    if (textWidth > 280) {
+      elements.trackInfo.className = "track-info marquee";
+      elements.trackInfo.innerHTML = `
+        <div class="static-label">Featured Track:</div>
+        <div class="marquee-container">
+          <div class="marquee-content" data-text="${trackText}">
+            ${trackText}
+          </div>
+        </div>
+      `;
+    } else {
+      elements.trackInfo.className = "track-info";
+      elements.trackInfo.innerHTML = fullText;
+    }
+  };
+
+  const updateLabelInfo = (album: Album) => {
+    if (!elements.labelInfo) return;
+    elements.labelInfo.innerHTML = album.band_name 
+      ? `<strong>Label:</strong> ${album.band_name}` 
+      : "";
+  };
+
+  const updateTrackCount = (album: Album) => {
+    if (!elements.trackCount) return;
+    elements.trackCount.innerHTML = album.track_count && album.track_count > 0
+      ? `<strong>Track Count:</strong> ${album.track_count}`
+      : "";
+  };
+
+  const updateReleaseDate = (album: Album) => {
+    if (!elements.releaseDate) return;
+    if (album.release_date) {
+      const dateObj = new Date(album.release_date);
+      const formattedDate = dateObj.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+      elements.releaseDate.innerHTML = `<strong>Release Date:</strong> ${formattedDate}`;
+    } else {
+      elements.releaseDate.innerHTML = "";
+    }
+  };
+
+  const updateAudioPlayer = (album: Album) => {
+    if (!elements.player) return;
+    elements.player.innerHTML = `
+      <audio controls autoplay style="width: 100%; height: 40px;">
+        <source src="${album.stream_url}" type="audio/mp3" />
+        Your browser does not support the audio element.
+      </audio>
+    `;
+
+    const audio = elements.player.querySelector("audio");
+    if (audio) {
+      audio.volume = getSavedVolume();
+      audio.addEventListener("volumechange", () => {
+        saveVolume(audio.volume);
+      });
+    }
+  };
+
+  const preloadNextImages = (count = 3) => {
+    const state = (window as any).appState;
+    if (!state) return;
+
+    for (let i = 1; i <= count; i++) {
+      const albums = state.getAlbums();
+      const nextItem = albums[state.getCurrentIndex() + i];
+      if (nextItem?.img) {
+        const img = new Image();
+        img.src = nextItem.img;
+      }
+    }
+  };
+
+  // Create sub-managers
+  const modalManager = createModalManager({
+    helpModal: elements.helpModal,
+    closeModal: elements.closeModal,
+  });
+
+  const toastManager = createToastManager({
+    toastContainer: elements.toastContainer,
+    loadingSpinner: elements.loadingSpinner,
+    errorOverlay: elements.errorOverlay,
+  });
+
+  const genreDropdownManager = createGenreDropdownManager(
+    {
+      genreSearch: elements.genreSearch,
+      genreDropdown: elements.genreDropdown,
+    },
+    () => (window as any).appState?.getCurrentTag() || ""
+  );
+
   return {
     elements,
     showAlbum,
     updateTrackInfo,
     updateLabelInfo,
     updateTrackCount,
+    updateReleaseDate,
     updateAudioPlayer,
     preloadNextImages,
-    showToast: (message, type) => {},
-    showError: (message) => {},
-    hideError: () => {},
-    openModal: () => {},
-    closeModal: () => {},
-    renderGenreDropdown: () => false,
-    toggleDropdown: () => {},
-    updateSearchInput: () => {},
+    showToast: toastManager.showToast,
+    showError: toastManager.showError,
+    hideError: toastManager.hideError,
+    openModal: modalManager.openModal,
+    closeModal: modalManager.closeModal,
+    renderGenreDropdown: genreDropdownManager.renderGenreDropdown,
+    toggleDropdown: genreDropdownManager.toggleDropdown,
+    updateSearchInput: genreDropdownManager.updateSearchInput,
   };
 };
