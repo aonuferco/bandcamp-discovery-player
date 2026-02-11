@@ -1,0 +1,62 @@
+﻿
+Running 5 tests using 1 worker
+
+  Γ£ÿ  1 tests\e2e\player.spec.ts:4:3 ΓÇ║ Bandcamp Discovery Player ΓÇ║ loads and displays album (5.4s)
+  Γ£ÿ  2 tests\e2e\player.spec.ts:10:3 ΓÇ║ Bandcamp Discovery Player ΓÇ║ keyboard navigation (E/Q) (30.1s)
+  Γ£ô  3 tests\e2e\player.spec.ts:22:3 ΓÇ║ Bandcamp Discovery Player ΓÇ║ genre search filters dropdown (353ms)
+  Γ£ô  4 tests\e2e\player.spec.ts:29:3 ΓÇ║ Bandcamp Discovery Player ΓÇ║ mode toggle updates URL (299ms)
+  Γ£ô  5 tests\e2e\player.spec.ts:36:3 ΓÇ║ Bandcamp Discovery Player ΓÇ║ help modal opens and closes (285ms)
+
+
+  1) tests\e2e\player.spec.ts:4:3 ΓÇ║ Bandcamp Discovery Player ΓÇ║ loads and displays album ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).not.[22mtoBeEmpty[2m([22m[2m)[22m failed
+
+    Locator:  locator('#title')
+    Expected: not empty
+    Received: empty
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "not toBeEmpty" with timeout 5000ms[22m
+    [2m  - waiting for locator('#title')[22m
+    [2m    9 ├ù locator resolved to <h2 id="title"></h2>[22m
+    [2m      - unexpected value "empty"[22m
+
+
+       5 |     await page.goto('/');
+       6 |     await expect(page.locator('#cover')).toBeVisible();
+    >  7 |     await expect(page.locator('#title')).not.toBeEmpty();
+         |                                              ^
+       8 |   });
+       9 |
+      10 |   test('keyboard navigation (E/Q)', async ({ page }) => {
+        at C:\Users\User\VSCodeProjects\python\bandcamp-discovery-player\tests\e2e\player.spec.ts:7:46
+
+    Error Context: test-results\player-Bandcamp-Discovery-Player-loads-and-displays-album\error-context.md
+
+  2) tests\e2e\player.spec.ts:10:3 ΓÇ║ Bandcamp Discovery Player ΓÇ║ keyboard navigation (E/Q) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('#title') to be visible[22m
+    [2m    63 ├ù locator resolved to hidden <h2 id="title"></h2>[22m
+
+
+      10 |   test('keyboard navigation (E/Q)', async ({ page }) => {
+      11 |     await page.goto('/');
+    > 12 |     await page.waitForSelector('#title');
+         |                ^
+      13 |     const firstTitle = await page.locator('#title').textContent();
+      14 |     
+      15 |     await page.keyboard.press('e');
+        at C:\Users\User\VSCodeProjects\python\bandcamp-discovery-player\tests\e2e\player.spec.ts:12:16
+
+    Error Context: test-results\player-Bandcamp-Discovery-Player-keyboard-navigation-E-Q-\error-context.md
+
+  2 failed
+    tests\e2e\player.spec.ts:4:3 ΓÇ║ Bandcamp Discovery Player ΓÇ║ loads and displays album ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    tests\e2e\player.spec.ts:10:3 ΓÇ║ Bandcamp Discovery Player ΓÇ║ keyboard navigation (E/Q) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  3 passed (44.4s)

@@ -1,6 +1,6 @@
 import { ALL_GENRES, type Genre, isValidGenre } from './genres';
-import { createAppState } from './state';
-import { createAlbumService } from './api';
+import { createAppState, type AppState } from './state';
+import { createAlbumService, type AlbumService } from './api';
 import { createModalManager } from './ui/modal';
 import { createToastManager } from './ui/toast';
 import { createGenreDropdownManager } from './ui/genre-dropdown';
@@ -56,8 +56,8 @@ export interface UIManager {
 }
 
 export interface AppController {
-  state: any; // Will be properly typed when state.ts is fully integrated
-  service: any; // Will be properly typed when api.ts is fully integrated
+  state: AppState;
+  service: AlbumService;
   ui: UIManager;
   fetchAlbums(page?: number): Promise<void>;
   retryFetch(): Promise<void>;
@@ -65,8 +65,10 @@ export interface AppController {
   nextAlbum(): Promise<void>;
   prevAlbum(): void;
   copyAlbumLink(): Promise<void>;
+  openAlbumPage(): void;
   toggleAudio(): void;
   switchMode(mode: DiscoveryMode): Promise<void>;
+  selectGenre(genre: string): Promise<void>;
   setupEventListeners(): void;
   init(): Promise<void>;
 }
@@ -308,3 +310,383 @@ const createUIManager = (): UIManager => {
     updateSearchInput: genreDropdownManager.updateSearchInput,
   };
 };
+
+// ============================================================================
+// App Controller
+// ============================================================================
+
+const createAppController = (): AppController => {
+  const state = createAppState();
+  const service = createAlbumService();
+  const ui = createUIManager();
+
+  const fetchAlbums = async (page = 1) => {
+    state.setIsFetching(true);
+    ui.hideError();
+
+    try {
+      const data = await service.fetchAlbums(
+        page,
+        state.getCurrentMode(),
+        state.getCurrentTag()
+      );
+
+      // Filter out albums with missing stream URLs
+      const validAlbums = data.filter((album) => {
+        if (!album.stream_url) {
+          console.warn("Skipping album with missing stream URL:", album.title);
+          return false;
+        }
+        return true;
+      });
+
+      state.addAlbums(validAlbums);
+      state.setLastError(null);
+
+      // If no valid albums after filtering, show error
+      if (validAlbums.length === 0 && state.getAlbums().length === 0) {
+        ui.showError("No playable albums found. Try a different genre.");
+      }
+    } catch (error: any) {
+      console.error("Error fetching albums:", error);
+      state.setLastError(error instanceof Error ? error : new Error(error.message || "Failed to load albums"));
+
+      // Show error overlay if we have no albums to display
+      if (state.getAlbums().length === 0) {
+        ui.showError("Failed to load albums. Please try again.");
+      } else {
+        // Just show toast if we already have some albums loaded
+        ui.showToast("Failed to load more albums", "error");
+      }
+    } finally {
+      state.setIsFetching(false);
+    }
+  };
+
+  const retryFetch = async () => {
+    if (ui.elements.loadingSpinner) {
+      ui.elements.loadingSpinner.classList.remove("hidden");
+    }
+    ui.hideError();
+    await fetchAlbums(state.getCurrentPage());
+    if (state.getAlbums().length > 0) {
+      showCurrentAlbum();
+    }
+  };
+
+  const switchMode = async (mode: DiscoveryMode) => {
+    if (mode === state.getCurrentMode()) return;
+
+    state.setCurrentMode(mode);
+    state.resetState();
+    updateUrl(state.getCurrentTag(), mode);
+
+    // Update button states and aria-pressed
+    const isNew = mode === "new";
+    if (ui.elements.newReleasesBtn) {
+      ui.elements.newReleasesBtn.classList.toggle("active", isNew);
+      ui.elements.newReleasesBtn.setAttribute("aria-pressed", isNew.toString());
+    }
+    if (ui.elements.hotBtn) {
+      ui.elements.hotBtn.classList.toggle("active", !isNew);
+      ui.elements.hotBtn.setAttribute("aria-pressed", (!isNew).toString());
+    }
+
+    // Show loading state
+    const modeText = mode === "new" ? "new releases" : "hot releases";
+    ui.showToast(`Switching to ${modeText}...`, "success");
+
+    // Fetch new data
+    await fetchAlbums(1);
+    showCurrentAlbum();
+  };
+
+  const selectGenre = async (genre: string) => {
+    if (genre === state.getCurrentTag()) return;
+
+    state.setCurrentTag(genre);
+    state.resetState();
+    updateUrl(genre, state.getCurrentMode());
+    ui.updateSearchInput(genre);
+    ui.toggleDropdown(false);
+
+    const genreText = genre || "all genres";
+    ui.showToast(`Loading ${genreText}...`, "success");
+
+    await fetchAlbums(1);
+    showCurrentAlbum();
+  };
+
+  const showCurrentAlbum = () => {
+    const album = state.getCurrentAlbum();
+    ui.showAlbum(album);
+    ui.preloadNextImages();
+  };
+
+  const nextAlbum = async () => {
+    state.incrementCurrentIndex();
+
+    if (state.needsMoreData() && !state.getIsFetching()) {
+      state.incrementCurrentPage();
+      await fetchAlbums(state.getCurrentPage());
+    }
+
+    if (state.getCurrentIndex() >= state.getAlbums().length) {
+      state.setCurrentIndex(state.getAlbums().length - 1);
+    }
+
+    showCurrentAlbum();
+  };
+
+  const prevAlbum = () => {
+    if (state.canGoPrev()) {
+      state.decrementCurrentIndex();
+      showCurrentAlbum();
+    }
+  };
+
+  const copyAlbumLink = async () => {
+    const album = state.getCurrentAlbum();
+    if (album?.link) {
+      try {
+        await navigator.clipboard.writeText(album.link);
+        ui.showToast("Album link copied to clipboard!", "success");
+      } catch (err) {
+        console.error("Failed to copy album link", err);
+        ui.showToast("Failed to copy album link", "error");
+      }
+    }
+  };
+
+  const openAlbumPage = () => {
+    const album = state.getCurrentAlbum();
+    if (album?.link) {
+      try {
+        const url = new URL(album.link);
+        if (
+          url.hostname === "bandcamp.com" ||
+          url.hostname.endsWith(".bandcamp.com")
+        ) {
+          window.open(album.link, "_blank");
+          ui.showToast("Opening album page in new tab", "success");
+        } else {
+          ui.showToast("Invalid album URL", "error");
+        }
+      } catch (error) {
+        ui.showToast("Invalid album URL", "error");
+      }
+    }
+  };
+
+  const toggleAudio = () => {
+    const audio = document.querySelector("audio");
+    if (audio) {
+      if (audio.paused) {
+        audio.play();
+      } else {
+        audio.pause();
+      }
+    }
+  };
+
+  const seekAudio = (seconds: number) => {
+    const audio = document.querySelector("audio");
+    if (audio) {
+      const newTime = audio.currentTime + seconds;
+      audio.currentTime = Math.max(0, Math.min(newTime, audio.duration));
+    }
+  };
+
+  const adjustVolume = (change: number) => {
+    const audio = document.querySelector("audio");
+    if (audio) {
+      const newVolume = Math.max(0, Math.min(1, audio.volume + change));
+      audio.volume = newVolume;
+    }
+  };
+
+  const handleKeydown = (e: KeyboardEvent) => {
+    const target = e.target as HTMLElement;
+    const tag = target.tagName.toLowerCase();
+    if (tag === "input" || tag === "textarea") return;
+
+    switch (e.key.toLowerCase()) {
+      case "e":
+        nextAlbum();
+        break;
+      case "q":
+        prevAlbum();
+        break;
+      case "w":
+        copyAlbumLink();
+        break;
+      case "s":
+        openAlbumPage();
+        break;
+      case " ":
+        e.preventDefault();
+        toggleAudio();
+        break;
+      case "arrowleft":
+        e.preventDefault();
+        seekAudio(-10);
+        break;
+      case "arrowright":
+        e.preventDefault();
+        seekAudio(10);
+        break;
+      case "arrowup":
+        e.preventDefault();
+        adjustVolume(0.1);
+        break;
+      case "arrowdown":
+        e.preventDefault();
+        adjustVolume(-0.1);
+        break;
+      case "/":
+        e.preventDefault();
+        if (ui.elements.genreSearch) {
+          ui.elements.genreSearch.focus();
+        }
+        break;
+    }
+  };
+
+  const setupEventListeners = () => {
+    // Button events
+    ui.elements.nextBtn?.addEventListener("click", () => nextAlbum());
+    ui.elements.prevBtn?.addEventListener("click", () => prevAlbum());
+    ui.elements.helpBtn?.addEventListener("click", () => ui.openModal());
+    ui.elements.closeModal?.addEventListener("click", () => ui.closeModal());
+    ui.elements.retryBtn?.addEventListener("click", () => retryFetch());
+
+    // Mode button events
+    ui.elements.newReleasesBtn?.addEventListener("click", () => switchMode("new"));
+    ui.elements.hotBtn?.addEventListener("click", () => switchMode("hot"));
+
+    // Modal events
+    ui.elements.helpModal?.addEventListener("click", (e) => {
+      if ((e.target as HTMLElement).id === "help-modal") {
+        ui.closeModal();
+      }
+    });
+
+    // Keyboard events
+    document.addEventListener("keydown", handleKeydown);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        ui.closeModal();
+        ui.toggleDropdown(false);
+      }
+    });
+
+    // Search dropdown events
+    const searchInput = ui.elements.genreSearch;
+    const dropdown = ui.elements.genreDropdown;
+
+    if (searchInput && dropdown) {
+      searchInput.addEventListener("focus", () => {
+        ui.renderGenreDropdown(searchInput.value);
+        ui.toggleDropdown(true);
+      });
+
+      searchInput.addEventListener("input", (e) => {
+        ui.renderGenreDropdown((e.target as HTMLInputElement).value);
+        ui.toggleDropdown(true);
+      });
+
+      searchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          ui.toggleDropdown(false);
+          searchInput.value = state.getCurrentTag();
+          searchInput.blur();
+        }
+      });
+
+      // Click outside to close dropdown
+      document.addEventListener("click", (e) => {
+        if (
+          !searchInput.contains(e.target as Node) &&
+          !dropdown.contains(e.target as Node)
+        ) {
+          ui.toggleDropdown(false);
+          if (searchInput.value !== state.getCurrentTag()) {
+            searchInput.value = state.getCurrentTag();
+          }
+        }
+      });
+
+      // Genre selection
+      dropdown.addEventListener("click", (e) => {
+        const item = (e.target as HTMLElement).closest(".genre-item") as HTMLElement;
+        if (item && item.dataset.genre) {
+          selectGenre(item.dataset.genre);
+        }
+      });
+    }
+  };
+
+  const init = async () => {
+    const { genre, mode } = parseUrlParams();
+
+    if (mode !== "new") {
+      state.setCurrentMode(mode);
+      if (ui.elements.newReleasesBtn) {
+        ui.elements.newReleasesBtn.classList.remove("active");
+        ui.elements.newReleasesBtn.setAttribute("aria-pressed", "false");
+      }
+      if (ui.elements.hotBtn) {
+        ui.elements.hotBtn.classList.add("active");
+        ui.elements.hotBtn.setAttribute("aria-pressed", "true");
+      }
+    }
+
+    if (genre) {
+      state.setCurrentTag(genre);
+      ui.updateSearchInput(genre);
+    }
+
+    await fetchAlbums(state.getCurrentPage());
+    showCurrentAlbum();
+  };
+
+  return {
+    state,
+    service,
+    ui,
+    fetchAlbums,
+    retryFetch,
+    showCurrentAlbum,
+    nextAlbum,
+    prevAlbum,
+    copyAlbumLink,
+    openAlbumPage,
+    toggleAudio,
+    switchMode,
+    selectGenre,
+    setupEventListeners,
+    init,
+  };
+};
+
+// ============================================================================
+// Initialization
+// ============================================================================
+
+declare global {
+  interface Window {
+    appState: AppState | null;
+    appController: AppController | null;
+  }
+}
+
+window.appState = null;
+window.appController = null;
+
+document.addEventListener("DOMContentLoaded", () => {
+  const controller = createAppController();
+  window.appController = controller;
+  window.appState = controller.state;
+  controller.setupEventListeners();
+  controller.init();
+});
