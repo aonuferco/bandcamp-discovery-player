@@ -4,9 +4,13 @@
   "description": "A simple webapp to scrape and display the latest Breakcore albums from Bandcamp Discover.",
   "main": "dist/src/server/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && vite build",
+    "build:backend": "tsc",
+    "build:frontend": "vite build",
     "start": "node dist/src/server/index.js",
-    "dev": "tsx watch src/server/index.ts",
+    "dev": "concurrently \"tsx watch src/server/index.ts\" \"vite\"",
+    "dev:backend": "tsx watch src/server/index.ts",
+    "dev:frontend": "vite",
     "lint": "eslint src/",
     "format": "prettier --write src/ public/",
     "test": "vitest",
@@ -29,7 +33,9 @@
     "@types/node": "^25.0.3",
     "@typescript-eslint/eslint-plugin": "^8.50.1",
     "@typescript-eslint/parser": "^8.50.1",
+    "@vitejs/plugin-legacy": "^7.2.1",
     "@vitest/coverage-v8": "^4.0.17",
+    "concurrently": "^9.2.1",
     "eslint": "^9.39.2",
     "globals": "^16.5.0",
     "knip": "^5.82.1",
@@ -37,6 +43,7 @@
     "prettier": "^3.8.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
+    "vite": "^7.3.1",
     "vitest": "^4.0.17"
   }
 }

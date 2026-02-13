@@ -183,3 +183,6 @@ typings/
 .Trashes
 ehthumbs.db
 Thumbs.db 
+# Vite build artifacts
+dist-frontend/
+.vite/
