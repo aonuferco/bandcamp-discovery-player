@@ -194,7 +194,7 @@ router.get(
       res.status(500).json({
         error: "Failed to load albums",
         details:
-          process.env.NODE_ENV === "development" && error instanceof Error
+          process.env['NODE_ENV'] === "development" && error instanceof Error
             ? error.message
             : undefined,
       });

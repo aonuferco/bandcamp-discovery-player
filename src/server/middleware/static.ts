@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export function staticMiddleware(expressModule: typeof express): Handler {
-  const projectRoot = process.env.VERCEL
+  const projectRoot = process.env['VERCEL']
     ? path.resolve(process.cwd(), "public")
     : path.resolve(__dirname, "../../../../public");
 

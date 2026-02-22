@@ -49,7 +49,7 @@ export const createGenreDropdownManager = (
         div.classList.add("selected");
       }
       div.textContent = genre;
-      div.dataset.genre = genre;
+      div.dataset['genre'] = genre;
       return div;
     };
 

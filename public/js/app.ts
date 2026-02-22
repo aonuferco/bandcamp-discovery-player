@@ -264,7 +264,7 @@ const createUIManager = (): UIManager => {
     for (let i = 1; i <= count; i++) {
       const albums = state.getAlbums();
       const nextItem = albums[state.getCurrentIndex() + i];
-      if (nextItem?.img) {
+      if (nextItem && nextItem.img) {
         const img = new Image();
         img.src = nextItem.img;
       }
@@ -619,8 +619,8 @@ const createAppController = (): AppController => {
       // Genre selection
       dropdown.addEventListener("click", (e) => {
         const item = (e.target as HTMLElement).closest(".genre-item") as HTMLElement;
-        if (item && item.dataset.genre) {
-          selectGenre(item.dataset.genre);
+        if (item && item.dataset['genre']) {
+          selectGenre(item.dataset['genre']);
         }
       });
     }

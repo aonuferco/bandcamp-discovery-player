@@ -10,7 +10,7 @@ import { staticMiddleware } from "./middleware/static.js";
 import type { HealthCheckResponse, ApiErrorResponse } from "./types.js";
 
 const app = express();
-const PORT: number = parseInt(process.env.PORT || "3000", 10);
+const PORT: number = parseInt(process.env['PORT'] || "3000", 10);
 
 // Middleware
 app.use(cors());
@@ -44,7 +44,7 @@ const errorHandler: ErrorRequestHandler = (
   res.status(500).json({
     error: "Internal server error",
     details:
-      process.env.NODE_ENV === "development"
+      process.env['NODE_ENV'] === "development"
         ? err.message
         : "Something went wrong",
   });

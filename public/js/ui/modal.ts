@@ -36,6 +36,8 @@ export const createModalManager = (elements: ModalElements): ModalManager => {
     const firstElement = focusableElements[0];
     const lastElement = focusableElements[focusableElements.length - 1];
 
+    if (!firstElement || !lastElement) return;
+
     if (e.shiftKey) {
       // Shift + Tab: if on first element, move to last
       if (document.activeElement === firstElement) {
