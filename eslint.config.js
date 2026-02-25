@@ -29,6 +29,8 @@ export default [
       "no-var": "error",
       "object-shorthand": "error",
       "prefer-template": "error",
+      "no-duplicate-imports": "error",
+      "eqeqeq": ["error", "always"],
     },
   },
   {

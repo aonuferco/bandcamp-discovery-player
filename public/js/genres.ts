@@ -135,5 +135,5 @@ export const ALL_GENRES = Object.values(GENRES).flat().sort();
 export type Genre = typeof ALL_GENRES[number];
 
 export function isValidGenre(genre: string | null | undefined): genre is Genre {
-  return genre != null && ALL_GENRES.includes(genre as Genre);
+  return genre !== null && genre !== undefined && ALL_GENRES.includes(genre as Genre);
 }
