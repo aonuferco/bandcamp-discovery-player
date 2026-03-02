@@ -8,9 +8,9 @@ import cors from "cors";
 import albumsRouter from "./routes/albums.js";
 import { staticMiddleware } from "./middleware/static.js";
 import type { HealthCheckResponse, ApiErrorResponse } from "./types.js";
+import { PORT } from "./config.js";
 
 const app = express();
-const PORT: number = parseInt(process.env['PORT'] || "3000", 10);
 
 // Middleware
 app.use(cors());

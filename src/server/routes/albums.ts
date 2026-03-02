@@ -7,6 +7,7 @@ import {
   BandcampApiBody,
   BandcampApiResponse,
 } from "../types.js";
+import { BANDCAMP_API_URL, API_HEADERS, REQUEST_TIMEOUT_MS } from "../config.js";
 
 const router = express.Router();
 
@@ -25,14 +26,6 @@ export function isBandcampApiResponse(data: unknown): data is BandcampApiRespons
 let cachedAlbums: Album[] = [];
 let lastCursor = "*";
 let isFetching = false;
-
-// Bandcamp API configuration
-const BANDCAMP_API_URL = "https://bandcamp.com/api/discover/1/discover_web";
-const API_HEADERS: Record<string, string> = {
-  "Content-Type": "application/json",
-  Origin: "https://bandcamp.com",
-  Referer: "https://bandcamp.com/discover",
-};
 
 export const getApiBody = (
   slice: "new" | "hot" = "new",
@@ -77,8 +70,7 @@ export function transformAlbumData(item: BandcampAlbumItem): Album {
   };
 }
 
-// Request timeout configuration (10 seconds)
-const REQUEST_TIMEOUT_MS = 10000;
+// Sanitize tag parameter
 
 async function fetchFromBandcamp(
   cursor: string,
@@ -110,7 +102,7 @@ async function fetchFromBandcamp(
     return data;
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("Request timed out after 10 seconds");
+      throw new Error(`Request timed out after ${REQUEST_TIMEOUT_MS / 1000} seconds`);
     }
     throw error;
   } finally {
