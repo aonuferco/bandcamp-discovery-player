@@ -77,10 +77,10 @@ export interface AppController {
 // URL Utilities
 // ============================================================================
 
-const isValidMode = (mode: string | null | undefined): mode is DiscoveryMode => 
+export const isValidMode = (mode: string | null | undefined): mode is DiscoveryMode => 
   mode === "new" || mode === "hot";
 
-const parseUrlParams = (): { genre: Genre | ""; mode: DiscoveryMode } => {
+export const parseUrlParams = (): { genre: Genre | ""; mode: DiscoveryMode } => {
   const params = new URLSearchParams(window.location.search);
   const genreParam = params.get("genre") || "";
   const modeParam = params.get("mode") || "new";
@@ -680,13 +680,17 @@ declare global {
   }
 }
 
-window.appState = null;
-window.appController = null;
+if (typeof window !== 'undefined') {
+  (window as any).appState = null;
+  (window as any).appController = null;
+}
 
-document.addEventListener("DOMContentLoaded", () => {
-  const controller = createAppController();
-  window.appController = controller;
-  window.appState = controller.state;
-  controller.setupEventListeners();
-  controller.init();
-});
+if (typeof document !== 'undefined') {
+  document.addEventListener("DOMContentLoaded", () => {
+    const controller = createAppController();
+    window.appController = controller;
+    window.appState = controller.state;
+    controller.setupEventListeners();
+    controller.init();
+  });
+}
