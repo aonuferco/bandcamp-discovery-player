@@ -158,11 +158,23 @@ const createUIManager = (): UIManager => {
     tempImg.src = album.img;
 
     if (elements.title) {
-      elements.title.textContent = album.title;
-      elements.title.title = album.title;
+      elements.title.innerHTML = `<span class="truncate-text">${album.title}</span>`;
+      const span = elements.title.querySelector('.truncate-text') as HTMLElement;
+      if (span && span.scrollWidth > span.clientWidth) {
+        elements.title.setAttribute('data-tooltip', album.title);
+      } else {
+        elements.title.removeAttribute('data-tooltip');
+      }
     }
     if (elements.artist) {
-      elements.artist.textContent = `by ${album.artist}`;
+      const artistText = `by ${album.artist}`;
+      elements.artist.innerHTML = `<span class="truncate-text">${artistText}</span>`;
+      const span = elements.artist.querySelector('.truncate-text') as HTMLElement;
+      if (span && span.scrollWidth > span.clientWidth) {
+        elements.artist.setAttribute('data-tooltip', album.artist);
+      } else {
+        elements.artist.removeAttribute('data-tooltip');
+      }
     }
 
     updateTrackInfo(album);
@@ -177,44 +189,36 @@ const createUIManager = (): UIManager => {
 
     if (!album.featured_track) {
       elements.trackInfo.innerHTML = "";
-      elements.trackInfo.className = "track-info";
+      elements.trackInfo.removeAttribute('data-tooltip');
       return;
     }
 
     const trackText = album.featured_track.title;
-    const fullText = `<strong>Featured Track:</strong> ${trackText}`;
-
-    // Check if text needs marquee
-    const tempElement = document.createElement("div");
-    tempElement.style.cssText =
-      "position: absolute; visibility: hidden; white-space: nowrap; font-size: 0.9rem; font-weight: 500;";
-    tempElement.innerHTML = fullText;
-    document.body.appendChild(tempElement);
-
-    const textWidth = tempElement.offsetWidth;
-    document.body.removeChild(tempElement);
-
-    if (textWidth > 280) {
-      elements.trackInfo.className = "track-info marquee";
-      elements.trackInfo.innerHTML = `
-        <div class="static-label">Featured Track:</div>
-        <div class="marquee-container">
-          <div class="marquee-content" data-text="${trackText}">
-            ${trackText}
-          </div>
-        </div>
-      `;
+    elements.trackInfo.innerHTML = `<span class="truncate-text"><strong>Featured Track:</strong> ${trackText}</span>`;
+    
+    const span = elements.trackInfo.querySelector('.truncate-text') as HTMLElement;
+    if (span && span.scrollWidth > span.clientWidth) {
+      elements.trackInfo.setAttribute('data-tooltip', trackText);
     } else {
-      elements.trackInfo.className = "track-info";
-      elements.trackInfo.innerHTML = fullText;
+      elements.trackInfo.removeAttribute('data-tooltip');
     }
   };
 
   const updateLabelInfo = (album: Album) => {
     if (!elements.labelInfo) return;
-    elements.labelInfo.innerHTML = album.band_name 
-      ? `<strong>Label:</strong> ${album.band_name}` 
-      : "";
+    if (!album.band_name) {
+      elements.labelInfo.innerHTML = "";
+      elements.labelInfo.removeAttribute('data-tooltip');
+      return;
+    }
+    
+    elements.labelInfo.innerHTML = `<span class="truncate-text"><strong>Label:</strong> ${album.band_name}</span>`;
+    const span = elements.labelInfo.querySelector('.truncate-text') as HTMLElement;
+    if (span && span.scrollWidth > span.clientWidth) {
+      elements.labelInfo.setAttribute('data-tooltip', album.band_name);
+    } else {
+      elements.labelInfo.removeAttribute('data-tooltip');
+    }
   };
 
   const updateTrackCount = (album: Album) => {
