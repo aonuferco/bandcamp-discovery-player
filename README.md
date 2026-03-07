@@ -44,19 +44,32 @@ Bandcamp's discovery page is great for finding new music, but their featured tra
 bandcamp-discovery-player/
 ├── api/
 │   └── index.ts                # Vercel serverless entry point
-├── src/
-│   ├── server/
-│   │   ├── app.ts              # Main Express app configuration
-│   │   ├── index.ts            # Server entry point
-│   │   ├── types.ts            # Shared TypeScript types
-│   │   ├── routes/
-│   │   │   └── albums.ts       # Album API routes
-│   │   └── middleware/
-│   │       └── static.ts       # Static file serving middleware
 ├── public/                     # Frontend static assets
+│   ├── index.html              # Main HTML entry point
+│   ├── css/                    # Stylesheets
+│   └── js/                     # Frontend TypeScript modules
+│       ├── app.ts              # Main frontend controller
+│       ├── api.ts              # API client
+│       ├── state.ts            # Application state management
+│       ├── genres.ts           # Genre data and validation
+│       └── ui/                 # UI components and builders
+├── src/                        # Backend and shared code
+│   ├── server/                 # Express server
+│   │   ├── app.ts              # Express app configuration
+│   │   ├── index.ts            # Server entry point
+│   │   ├── config.ts           # Server configuration/constants
+│   │   ├── routes/             # API route handlers
+│   │   └── middleware/         # Custom middleware
+│   └── shared/                 # Shared TypeScript types
+├── tests/                      # Test suites
+│   ├── unit/                   # Vitest unit tests
+│   └── e2e/                    # Playwright end-to-end tests
 ├── dist/                       # Compiled production code (gitignored)
-├── package.json
+├── vite.config.ts              # Vite configuration
+├── vitest.config.ts            # Vitest configuration
+├── playwright.config.ts        # Playwright configuration
 ├── tsconfig.json               # TypeScript configuration
+├── eslint.config.js            # ESLint configuration
 └── README.md
 ```
 
@@ -85,7 +98,7 @@ bandcamp-discovery-player/
    npm run build
    ```
 
-4. Start the development server:
+4. Start the development server (Concurrent Mode):
    ```bash
    npm run dev
    ```
@@ -94,15 +107,22 @@ bandcamp-discovery-player/
 
 ### Available Scripts
 
-- `npm run build`: Compile TypeScript to JavaScript in the `dist/` directory
-- `npm start`: Start the production server using the compiled code
-- `npm run dev`: Start the development server with `tsx` for real-time updates
-- `npm run lint`: Run ESLint with TypeScript support
+- `npm run dev`: Start both backend and frontend development servers concurrently
+- `npm run build`: Compile TypeScript and build the frontend bundle
+- `npm start`: Start the production server using compiled code
+- `npm run test:unit`: Run Vitest unit tests
+- `npm run test:e2e`: Run Playwright end-to-end tests
+- `npm run test:coverage`: Run unit tests with coverage reporting
+- `npm run lint`: Run ESLint checks
 - `npm run format`: Format code with Prettier
 
 ## API Endpoints
 
-- `GET /api/albums?page=1`: Fetch albums with pagination
+- `GET /api/albums`: Fetch albums from Bandcamp
+  - **Query Params**:
+    - `page` (number): Pagination page (default: 1)
+    - `slice` ("new" | "hot"): Filter by new or hot releases (default: "new")
+    - `tag` (string): Genre tag to filter by (default: "breakcore")
 - `GET /health`: Health check endpoint
 
 ## Performance Optimizations
