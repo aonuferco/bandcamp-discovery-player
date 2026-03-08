@@ -130,7 +130,7 @@ export const GENRES = {
   ],
 } as const;
 
-export const ALL_GENRES = Object.values(GENRES).flat().sort();
+export const ALL_GENRES = [...new Set(Object.values(GENRES).flat())].sort();
 
 export type Genre = typeof ALL_GENRES[number];
 
