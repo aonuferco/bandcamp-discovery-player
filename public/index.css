@@ -270,6 +270,13 @@ body {
   height: 100%;
   object-fit: cover;
   filter: contrast(1.1) saturate(1.2);
+  transition: opacity 0.2s ease-in-out;
+}
+
+.cover-container.loading #cover,
+#cover[src=""],
+#cover:not([src]) {
+  opacity: 0;
 }
 
 .loading-spinner, .error-overlay {
@@ -283,23 +290,37 @@ body {
 }
 
 .loading-spinner {
-  display: none;
-}
-.cover-container.loading .loading-spinner {
   display: flex;
 }
-
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 5px solid #000;
-  border-top-color: var(--accent-neon-pink);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+.loading-spinner.hidden {
+  display: none !important;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.ascii-loader {
+  font-family: var(--font-mono);
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #000;
+  letter-spacing: 2px;
+  background: var(--accent-neon-yellow);
+  padding: 5px 15px;
+  border: var(--rough-border);
+  box-shadow: 4px 4px 0 var(--accent-neon-pink);
+  transform: rotate(-2deg);
+}
+
+.ascii-loader::before {
+  content: "▓▒░▒▓";
+  animation: glitch-tape 0.4s infinite steps(1);
+}
+
+@keyframes glitch-tape {
+  0% { content: "▓▒░▒▓"; transform: translateX(0); }
+  20% { content: "▒░▒▓▒"; transform: translateX(2px); }
+  40% { content: "░▒▓▒░"; transform: translateX(-2px); }
+  60% { content: "▒▓▒░▒"; transform: translateX(3px); }
+  80% { content: "▓▒░▒▓"; transform: translateX(-1px); }
+  100% { content: "▒░▒▓▒"; transform: translateX(0); }
 }
 
 .error-overlay {
