@@ -32,6 +32,7 @@ export interface UIElements {
   genreSearch: HTMLInputElement | null;
   genreDropdown: HTMLElement | null;
   loadingSpinner: HTMLElement | null;
+  coverContainer: HTMLElement | null;
   errorOverlay: HTMLElement | null;
   retryBtn: HTMLButtonElement | null;
 }
@@ -128,6 +129,7 @@ const createUIManager = (): UIManager => {
     genreSearch: document.getElementById("genre-search") as HTMLInputElement | null,
     genreDropdown: document.getElementById("genre-dropdown"),
     loadingSpinner: document.getElementById("loading-spinner"),
+    coverContainer: document.querySelector(".cover-container"),
     errorOverlay: document.getElementById("error-overlay"),
     retryBtn: document.getElementById("retry-btn") as HTMLButtonElement | null,
   };
@@ -144,16 +146,28 @@ const createUIManager = (): UIManager => {
 
   // Main UI update methods
   const showAlbum = (album: Album | undefined) => {
-    if (!album) return;
+    if (!album) {
+      if (elements.loadingSpinner) elements.loadingSpinner.classList.add("hidden");
+      if (elements.coverContainer) {
+        elements.coverContainer.classList.remove("loading");
+      }
+      return;
+    }
 
     if (elements.loadingSpinner) {
       elements.loadingSpinner.classList.remove("hidden");
+    }
+    if (elements.coverContainer) {
+      elements.coverContainer.classList.add("loading");
     }
 
     const tempImg = new Image();
     tempImg.onload = () => {
       if (elements.cover) elements.cover.src = tempImg.src;
       if (elements.loadingSpinner) elements.loadingSpinner.classList.add("hidden");
+      if (elements.coverContainer) {
+        elements.coverContainer.classList.remove("loading");
+      }
     };
     tempImg.src = album.img;
 
@@ -327,6 +341,12 @@ const createAppController = (): AppController => {
   const fetchAlbums = async (page = 1) => {
     state.setIsFetching(true);
     ui.hideError();
+    if (ui.elements.loadingSpinner) {
+      ui.elements.loadingSpinner.classList.remove("hidden");
+    }
+    if (ui.elements.coverContainer) {
+      ui.elements.coverContainer.classList.add("loading");
+    }
 
     try {
       const data = await service.fetchAlbums(

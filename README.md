@@ -2,7 +2,7 @@
 
 A modern web application for discovering and streaming music from Bandcamp with enhanced listening controls and quick navigation. Built for music enthusiasts who want to efficiently explore new artists and tracks.
 
-![Bandcamp Discovery Player Main](main-image.png)
+![Bandcamp Discovery Player Main](main.png)
 
 ## What This App Does
 
