@@ -1,7 +1,7 @@
 {
   "name": "bandcamp-discovery-player",
-  "version": "0.0.3",
-  "description": "A simple webapp to scrape and display the latest Breakcore albums from Bandcamp Discover.",
+  "version": "1.0.1",
+  "description": "A simple webapp to scrape and display the latest albums from Bandcamp Discover.",
   "main": "dist/src/server/index.js",
   "scripts": {
     "build": "tsc && vite build",

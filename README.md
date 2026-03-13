@@ -13,7 +13,7 @@ This app addresses the limitations of Bandcamp's native discovery page by provid
 - **Rapid Navigation**: Keyboard shortcuts for fast browsing between artists
 - **Easy Link Sharing**: One-click copying of album links when you find something you like
 - **Streamlined Workflow**: Skip tracks you don't like and move to the next artist instantly
-- **Dual Mode Discovery**: Switch between "New Releases" and "Hot" (best selling) breakcore albums
+- **Dual Mode Discovery**: Switch between "New Releases" and "Hot" (best selling) albums
 
 ## Why This Exists
 
@@ -122,7 +122,7 @@ bandcamp-discovery-player/
   - **Query Params**:
     - `page` (number): Pagination page (default: 1)
     - `slice` ("new" | "hot"): Filter by new or hot releases (default: "new")
-    - `tag` (string): Genre tag to filter by (default: "breakcore")
+    - `tag` (string): Genre tag to filter
 - `GET /health`: Health check endpoint
 
 ## Performance Optimizations
