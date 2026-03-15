@@ -104,6 +104,19 @@ const updateUrl = (genre: string, mode: DiscoveryMode): void => {
   window.history.replaceState(null, "", newUrl);
 };
 
+export const applyGenreTheme = (genre: string, mode: DiscoveryMode): void => {
+  const classes = Array.from(document.body.classList);
+  classes.forEach(c => {
+    if (c.startsWith("genre-theme-")) {
+      document.body.classList.remove(c);
+    }
+  });
+
+  if (!genre) {
+    document.body.classList.add(`genre-theme-${mode}`);
+  }
+};
+
 // ============================================================================
 // UI Manager Shell
 // ============================================================================
@@ -404,6 +417,7 @@ const createAppController = (): AppController => {
     state.setCurrentMode(mode);
     state.resetState();
     updateUrl(state.getCurrentTag(), mode);
+    applyGenreTheme(state.getCurrentTag(), mode);
 
     // Update button states and aria-pressed
     const isNew = mode === "new";
@@ -431,6 +445,7 @@ const createAppController = (): AppController => {
     state.setCurrentTag(genre);
     state.resetState();
     updateUrl(genre, state.getCurrentMode());
+    applyGenreTheme(genre, state.getCurrentMode());
     ui.updateSearchInput(genre);
     ui.toggleDropdown(false);
 
@@ -669,6 +684,8 @@ const createAppController = (): AppController => {
       state.setCurrentTag(genre);
       ui.updateSearchInput(genre);
     }
+
+    applyGenreTheme(genre, state.getCurrentMode());
 
     await fetchAlbums(state.getCurrentPage());
     showCurrentAlbum();
