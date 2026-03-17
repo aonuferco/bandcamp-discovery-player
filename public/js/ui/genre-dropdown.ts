@@ -10,6 +10,9 @@ export interface GenreDropdownManager {
   renderGenreDropdown(filter?: string): boolean;
   toggleDropdown(show: boolean): void;
   updateSearchInput(tag: string): void;
+  navigate(direction: 'up' | 'down'): void;
+  getHighlightedGenre(): string | null;
+  resetHighlight(): void;
 }
 
 /**
@@ -23,6 +26,23 @@ export const createGenreDropdownManager = (
   getCurrentTag: () => string
 ): GenreDropdownManager => {
   const { genreSearch, genreDropdown } = elements;
+  let highlightedIndex = -1;
+
+  const getItems = (): HTMLElement[] => {
+    if (!genreDropdown) return [];
+    return Array.from(genreDropdown.querySelectorAll(".genre-item:not(.no-results)")) as HTMLElement[];
+  };
+
+  const applyHighlight = (items: HTMLElement[]) => {
+    items.forEach((item, index) => {
+      if (index === highlightedIndex) {
+        item.classList.add("highlighted");
+        item.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      } else {
+        item.classList.remove("highlighted");
+      }
+    });
+  };
 
   /**
    * Render the genre dropdown with optional filtering
@@ -90,7 +110,48 @@ export const createGenreDropdownManager = (
       hasResults = true;
     }
 
+    highlightedIndex = -1;
     return hasResults;
+  };
+
+  /**
+   * Reset the highlighted index
+   */
+  const resetHighlight = () => {
+    highlightedIndex = -1;
+    const items = getItems();
+    items.forEach(item => item.classList.remove("highlighted"));
+  };
+
+  /**
+   * Navigate through the dropdown items
+   * @param direction
+   */
+  const navigate = (direction: 'up' | 'down') => {
+    const items = getItems();
+    if (items.length === 0) return;
+
+    if (direction === 'down') {
+      highlightedIndex++;
+      if (highlightedIndex >= items.length) highlightedIndex = 0;
+    } else {
+      highlightedIndex--;
+      if (highlightedIndex < 0) highlightedIndex = items.length - 1;
+    }
+
+    applyHighlight(items);
+  };
+
+  /**
+   * Get the genre string of the currently highlighted item
+   * @returns genre or null
+   */
+  const getHighlightedGenre = (): string | null => {
+    const items = getItems();
+    if (highlightedIndex >= 0 && highlightedIndex < items.length) {
+      return (items[highlightedIndex] as HTMLElement).dataset['genre'] || null;
+    }
+    return null;
   };
 
   /**
@@ -123,5 +184,8 @@ export const createGenreDropdownManager = (
     renderGenreDropdown,
     toggleDropdown,
     updateSearchInput,
+    navigate,
+    getHighlightedGenre,
+    resetHighlight,
   };
 };

@@ -1,4 +1,4 @@
-import { ALL_GENRES, type Genre, isValidGenre } from './genres';
+import { ALL_GENRES, type Genre, getGenreFamily, isValidGenre } from './genres';
 import { createAppState, type AppState } from './state';
 import { createAlbumService, type AlbumService } from './api';
 import { createModalManager } from './ui/modal';
@@ -54,6 +54,8 @@ export interface UIManager {
   renderGenreDropdown(filter?: string): boolean;
   toggleDropdown(show: boolean): void;
   updateSearchInput(tag: string): void;
+  navigateDropdown(direction: 'up' | 'down'): void;
+  getHighlightedGenre(): string | null;
 }
 
 export interface AppController {
@@ -326,6 +328,8 @@ const createUIManager = (): UIManager => {
     renderGenreDropdown: genreDropdownManager.renderGenreDropdown,
     toggleDropdown: genreDropdownManager.toggleDropdown,
     updateSearchInput: genreDropdownManager.updateSearchInput,
+    navigateDropdown: genreDropdownManager.navigate,
+    getHighlightedGenre: genreDropdownManager.getHighlightedGenre,
   };
 };
 
@@ -624,6 +628,21 @@ const createAppController = (): AppController => {
           ui.toggleDropdown(false);
           searchInput.value = state.getCurrentTag();
           searchInput.blur();
+        } else if (e.key === "ArrowDown") {
+          e.preventDefault();
+          ui.navigateDropdown('down');
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault();
+          ui.navigateDropdown('up');
+        } else if (e.key === "Enter") {
+          e.preventDefault();
+          const highlightedGenre = ui.getHighlightedGenre();
+          if (highlightedGenre) {
+            selectGenre(highlightedGenre);
+          } else if (searchInput.value) {
+            // If nothing is highlighted but there's a value, try to select that value
+            selectGenre(searchInput.value);
+          }
         }
       });
 

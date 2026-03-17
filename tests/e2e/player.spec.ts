@@ -26,6 +26,24 @@ test.describe('Bandcamp Discovery Player', () => {
     await expect(page.locator('.genre-item').first()).toContainText('breakcore');
   });
 
+  test('genre dropdown keyboard navigation', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#genre-search').focus();
+    await page.locator('#genre-search').fill('rock');
+    
+    // Press ArrowDown to select first item
+    await page.keyboard.press('ArrowDown');
+    await expect(page.locator('.genre-item.highlighted')).toBeVisible();
+    const highlightedText = await page.locator('.genre-item.highlighted').textContent();
+    
+    // Press Enter to select
+    await page.keyboard.press('Enter');
+    
+    // Should update URL and input
+    await expect(page).toHaveURL(new RegExp(`genre=${highlightedText}`));
+    await expect(page.locator('#genre-search')).toHaveValue(highlightedText!);
+  });
+
   test('mode toggle updates URL', async ({ page }) => {
     await page.goto('/');
     await page.locator('#hot-btn').click();
