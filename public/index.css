@@ -28,9 +28,10 @@ body {
   font-family: var(--font-mono);
   background-color: var(--bg-color);
   color: var(--text-primary);
-  /* Halftone/texture effect using radial gradient */
-  background-image: radial-gradient(#ccc 1px, transparent 1px);
-  background-size: 10px 10px;
+  /* Default halftone — overridden per-theme via --genre-bg / --genre-bg-size */
+  --genre-bg: radial-gradient(#ccc 1px, transparent 1px);
+  background-image: var(--genre-bg);
+  background-size: var(--genre-bg-size, 10px 10px);
   height: 100vh;
   margin: 0;
   display: flex;
@@ -550,8 +551,16 @@ kbd {
   transform: rotate(-1deg);
 }
 
-/* Genre Themes */
-/* body.genre-theme-hot {
+
+/* ============================================================================
+   Genre Themes
+   Each rule overrides --genre-bg and --genre-bg-size on the body element.
+   The body reads background-image: var(--genre-bg) so the override takes effect.
+   ============================================================================ */
+
+/* Default: no genre selected — mode-level themes */
+
+body.genre-theme-hot {
   --genre-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50' viewBox='0 0 50 50'%3E%3Cpolygon points='25,5 30,20 45,25 30,30 25,45 20,30 5,25 20,20' fill='none' stroke='%23ff007f' stroke-width='2'/%3E%3Ccircle cx='25' cy='25' r='3' fill='%23eaff00'/%3E%3C/svg%3E");
   --genre-bg-size: 50px 50px;
 }
@@ -559,10 +568,10 @@ kbd {
 body.genre-theme-new {
   --genre-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cpath d='M10 10 L20 20 M20 10 L10 20' stroke='%2300ffff' stroke-width='2'/%3E%3Cpath d='M40 40 L50 50 M50 40 L40 50' stroke='%23ff007f' stroke-width='2'/%3E%3Ccircle cx='40' cy='15' r='3' fill='%23eaff00'/%3E%3Ccircle cx='15' cy='45' r='2' fill='%23111'/%3E%3C/svg%3E");
   --genre-bg-size: 60px 60px;
-} */
+}
 
-/* Genre Themes — Electronic */
-/* 
+/* Electronic family — genre-theme-electronic-{mode} */
+
 body.genre-theme-electronic-hot {
   --genre-bg:
     linear-gradient(rgba(255,0,127,0.35) 1px, transparent 1px),
@@ -585,4 +594,5 @@ body.genre-theme-electronic-new {
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60'%3E%3Cpath d='M0 30 C15 10 25 10 30 30 C35 50 45 50 60 30 C75 10 85 10 90 30 C95 50 105 50 120 30' fill='none' stroke='%2300ffff' stroke-width='1.2' stroke-opacity='0.6'/%3E%3C/svg%3E"),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='40'%3E%3Cpath d='M0 20 C10 5 15 5 20 20 C25 35 30 35 40 20 C50 5 55 5 60 20 C65 35 70 35 80 20' fill='none' stroke='%23ff007f' stroke-width='0.8' stroke-opacity='0.35'/%3E%3C/svg%3E");
   --genre-bg-size: 100% 100%, 120px 60px, 80px 40px;
-} */
+}
+

@@ -134,6 +134,22 @@ export const ALL_GENRES = [...new Set(Object.values(GENRES).flat())].sort();
 
 export type Genre = typeof ALL_GENRES[number];
 
+// Priority-ordered lookup for theming. ELECTRONIC is first so the slug
+// "electronic" (which also appears under AMBIENT) resolves to the right family.
+const THEME_FAMILY_PRIORITY: Array<keyof typeof GENRES> = [
+  'ELECTRONIC', 'METAL', 'PUNK', 'JAZZ', 'FOLK', 'POP',
+  'ROCK', 'ALTERNATIVE', 'EXPERIMENTAL', 'AMBIENT', 'HIP-HOP',
+];
+
+export function getGenreFamily(genre: string): string | undefined {
+  for (const family of THEME_FAMILY_PRIORITY) {
+    if ((GENRES[family] as readonly string[]).includes(genre)) {
+      return family.toLowerCase();
+    }
+  }
+  return undefined;
+}
+
 export function isValidGenre(genre: string | null | undefined): genre is Genre {
   return genre !== null && genre !== undefined && ALL_GENRES.includes(genre as Genre);
 }
