@@ -107,6 +107,28 @@ const updateUrl = (genre: string, mode: DiscoveryMode): void => {
 };
 
 // ============================================================================
+// Genre Theming
+// ============================================================================
+
+export const applyGenreTheme = (genre: string, mode: DiscoveryMode): void => {
+  // Remove any existing genre theme classes
+  Array.from(document.body.classList)
+    .filter(c => c.startsWith('genre-theme-'))
+    .forEach(c => document.body.classList.remove(c));
+
+  if (!genre) {
+    // No genre selected — apply the mode-level theme (hot / new)
+    document.body.classList.add(`genre-theme-${mode}`);
+  } else {
+    // Genre selected — apply the family+mode theme (e.g. genre-theme-electronic-hot)
+    const family = getGenreFamily(genre);
+    if (family) {
+      document.body.classList.add(`genre-theme-${family}-${mode}`);
+    }
+  }
+};
+
+// ============================================================================
 // UI Manager Shell
 // ============================================================================
 
@@ -408,6 +430,7 @@ const createAppController = (): AppController => {
     state.setCurrentMode(mode);
     state.resetState();
     updateUrl(state.getCurrentTag(), mode);
+    applyGenreTheme(state.getCurrentTag(), mode);
 
     // Update button states and aria-pressed
     const isNew = mode === "new";
@@ -435,6 +458,7 @@ const createAppController = (): AppController => {
     state.setCurrentTag(genre);
     state.resetState();
     updateUrl(genre, state.getCurrentMode());
+    applyGenreTheme(genre, state.getCurrentMode());
     ui.updateSearchInput(genre);
     ui.toggleDropdown(false);
 
@@ -688,6 +712,8 @@ const createAppController = (): AppController => {
       state.setCurrentTag(genre);
       ui.updateSearchInput(genre);
     }
+
+    applyGenreTheme(genre, state.getCurrentMode());
 
     await fetchAlbums(state.getCurrentPage());
     showCurrentAlbum();
