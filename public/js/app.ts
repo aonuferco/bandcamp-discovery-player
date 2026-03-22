@@ -661,7 +661,8 @@ const createAppController = (): AppController => {
         } else if (e.key === "Enter") {
           e.preventDefault();
           const highlightedGenre = ui.getHighlightedGenre();
-          if (highlightedGenre) {
+          if (highlightedGenre !== null) {
+            // highlightedGenre may be "" for "All Genres" — that's valid
             selectGenre(highlightedGenre);
           } else if (searchInput.value) {
             // If nothing is highlighted but there's a value, try to select that value
@@ -686,7 +687,7 @@ const createAppController = (): AppController => {
       // Genre selection
       dropdown.addEventListener("click", (e) => {
         const item = (e.target as HTMLElement).closest(".genre-item") as HTMLElement;
-        if (item && item.dataset['genre']) {
+        if (item && item.dataset['genre'] !== undefined) {
           selectGenre(item.dataset['genre']);
         }
       });
