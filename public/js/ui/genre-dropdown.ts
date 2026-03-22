@@ -73,6 +73,19 @@ export const createGenreDropdownManager = (
       return div;
     };
 
+    /**
+     * Always prepend the "All Genres" sentinel item at the top.
+     * data-genre is intentionally "" so selectGenre("") resets back to All Genres.
+     */
+    const allItem = document.createElement("div");
+    allItem.className = "genre-item genre-item-all";
+    if (getCurrentTag() === "") {
+      allItem.classList.add("selected");
+    }
+    allItem.textContent = "✦ All Genres";
+    allItem.dataset['genre'] = "";
+    genreDropdown.appendChild(allItem);
+
     // If filtering, show flat list
     if (filter) {
       const matches = ALL_GENRES.filter((g) =>
@@ -132,11 +145,9 @@ export const createGenreDropdownManager = (
     if (items.length === 0) return;
 
     if (direction === 'down') {
-      highlightedIndex++;
-      if (highlightedIndex >= items.length) highlightedIndex = 0;
+      highlightedIndex = Math.min(highlightedIndex + 1, items.length - 1);
     } else {
-      highlightedIndex--;
-      if (highlightedIndex < 0) highlightedIndex = items.length - 1;
+      highlightedIndex = Math.max(highlightedIndex - 1, 0);
     }
 
     applyHighlight(items);
@@ -149,7 +160,9 @@ export const createGenreDropdownManager = (
   const getHighlightedGenre = (): string | null => {
     const items = getItems();
     if (highlightedIndex >= 0 && highlightedIndex < items.length) {
-      return (items[highlightedIndex] as HTMLElement).dataset['genre'] || null;
+      const genre = (items[highlightedIndex] as HTMLElement).dataset['genre'];
+      // genre may be "" for the All Genres item — return it as-is (not null)
+      return genre !== undefined ? genre : null;
     }
     return null;
   };

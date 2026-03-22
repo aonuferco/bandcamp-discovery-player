@@ -172,6 +172,30 @@ body {
   color: var(--accent-neon-yellow);
 }
 
+/* Pinned "All Genres" reset entry at top of dropdown */
+.genre-item-all {
+  font-family: var(--font-title);
+  font-size: 1rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: var(--accent-neon-yellow);
+  border-bottom: 3px solid #000 !important;
+  margin-bottom: 4px;
+}
+
+.genre-item-all:hover,
+.genre-item-all.highlighted {
+  background: #000 !important;
+  color: var(--accent-neon-yellow) !important;
+  transform: translateX(5px);
+}
+
+.genre-item-all.selected {
+  background: #000 !important;
+  color: var(--accent-neon-yellow) !important;
+}
+
+
 .help-button {
   font-family: var(--font-title);
   font-size: 1.5rem;
