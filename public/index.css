@@ -594,6 +594,33 @@ body.genre-theme-new {
   --genre-bg-size: 60px 60px;
 }
 
+/* Alternative family — genre-theme-alternative-{mode} */
+
+body.genre-theme-alternative-hot {
+  /* Jagged sawtooth / screaming distortion lines — maroon + bruise-purple on raw paper */
+  --genre-bg:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='60'%3E%3Cpath d='M0 50 L10 10 L20 50 L30 10 L40 50 L50 10 L60 50 L70 10 L80 50 L90 10 L100 50 L110 10 L120 50 L130 10 L140 50' fill='none' stroke='%23800020' stroke-width='2.5' stroke-opacity='0.55'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cline x1='0' y1='0' x2='90' y2='90' stroke='%234a1560' stroke-width='1' stroke-opacity='0.2'/%3E%3Cline x1='90' y1='0' x2='0' y2='90' stroke='%234a1560' stroke-width='1' stroke-opacity='0.2'/%3E%3Ccircle cx='45' cy='45' r='4' fill='none' stroke='%23800020' stroke-width='1.5' stroke-opacity='0.35'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(
+      135deg,
+      transparent, transparent 8px,
+      rgba(74, 21, 96, 0.06) 8px, rgba(74, 21, 96, 0.06) 9px
+    );
+  --genre-bg-size: 140px 60px, 90px 90px, 100% 100%;
+}
+
+body.genre-theme-alternative-new {
+  /* Shoegaze reverb haze — dense stipple / grain noise, muted slate + fog-purple */
+  --genre-bg:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Ccircle cx='12' cy='18' r='1' fill='%23555577' fill-opacity='0.45'/%3E%3Ccircle cx='37' cy='5'  r='1.2' fill='%23444' fill-opacity='0.3'/%3E%3Ccircle cx='60' cy='30' r='0.9' fill='%23666688' fill-opacity='0.5'/%3E%3Ccircle cx='82' cy='12' r='1.1' fill='%23555577' fill-opacity='0.4'/%3E%3Ccircle cx='95' cy='55' r='1'   fill='%23444' fill-opacity='0.35'/%3E%3Ccircle cx='5'  cy='70' r='1.3' fill='%23666688' fill-opacity='0.5'/%3E%3Ccircle cx='25' cy='85' r='0.8' fill='%23555577' fill-opacity='0.3'/%3E%3Ccircle cx='50' cy='65' r='1'   fill='%23444' fill-opacity='0.4'/%3E%3Ccircle cx='70' cy='80' r='1.2' fill='%23666688' fill-opacity='0.45'/%3E%3Ccircle cx='88' cy='90' r='0.9' fill='%23555577' fill-opacity='0.35'/%3E%3Cpath d='M0 50 Q25 45 50 50 Q75 55 100 50' fill='none' stroke='%234a1560' stroke-width='0.7' stroke-opacity='0.18'/%3E%3Cpath d='M0 80 Q25 75 50 80 Q75 85 100 80' fill='none' stroke='%234a1560' stroke-width='0.7' stroke-opacity='0.15'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(
+      0deg,
+      transparent, transparent 18px,
+      rgba(85, 85, 119, 0.05) 18px, rgba(85, 85, 119, 0.05) 19px
+    );
+  --genre-bg-size: 100px 100px, 100% 100%;
+}
+
 /* Electronic family — genre-theme-electronic-{mode} */
 
 body.genre-theme-electronic-hot {
