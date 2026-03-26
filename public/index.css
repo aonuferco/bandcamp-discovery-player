@@ -647,3 +647,32 @@ body.genre-theme-electronic-new {
   --genre-bg-size: 100% 100%, 120px 60px, 80px 40px;
 }
 
+/* Ambient family — genre-theme-ambient-{mode} */
+
+body.genre-theme-ambient-hot {
+  /* Dark-ambient / drone: slow sonar rings pulsing from deep indigo into crimson, layered on raw paper */
+  --genre-bg:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Ccircle cx='80' cy='80' r='70' fill='none' stroke='%231a0a2e' stroke-width='1.2' stroke-opacity='0.28'/%3E%3Ccircle cx='80' cy='80' r='50' fill='none' stroke='%23600030' stroke-width='1' stroke-opacity='0.22'/%3E%3Ccircle cx='80' cy='80' r='30' fill='none' stroke='%231a0a2e' stroke-width='0.8' stroke-opacity='0.2'/%3E%3Ccircle cx='80' cy='80' r='12' fill='none' stroke='%23600030' stroke-width='0.6' stroke-opacity='0.18'/%3E%3Ccircle cx='80' cy='80' r='3' fill='%23600030' fill-opacity='0.2'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Ccircle cx='40' cy='40' r='35' fill='none' stroke='%231a0a2e' stroke-width='0.6' stroke-opacity='0.12'/%3E%3Ccircle cx='40' cy='40' r='20' fill='none' stroke='%23600030' stroke-width='0.5' stroke-opacity='0.1'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(
+      0deg,
+      transparent, transparent 19px,
+      rgba(26, 10, 46, 0.04) 19px, rgba(26, 10, 46, 0.04) 20px
+    );
+  --genre-bg-size: 160px 160px, 80px 80px, 100% 100%;
+}
+
+body.genre-theme-ambient-new {
+  /* Chill-out / field-recordings: slow sine-wave ribbons in pale teal + sage, drifting stipple mist */
+  --genre-bg:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='80'%3E%3Cpath d='M0 40 C25 20 50 20 50 40 C50 60 75 60 100 40 C125 20 150 20 150 40 C150 60 175 60 200 40' fill='none' stroke='%230d7a6e' stroke-width='1' stroke-opacity='0.22'/%3E%3Cpath d='M0 55 C25 38 50 38 50 55 C50 72 75 72 100 55 C125 38 150 38 150 55 C150 72 175 72 200 55' fill='none' stroke='%234a7c59' stroke-width='0.7' stroke-opacity='0.15'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='80'%3E%3Cpath d='M0 30 C25 12 50 12 50 30 C50 48 75 48 100 30 C125 12 150 12 150 30 C150 48 175 48 200 30' fill='none' stroke='%230d7a6e' stroke-width='0.6' stroke-opacity='0.12'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Ccircle cx='18'  cy='22'  r='0.9' fill='%230d7a6e' fill-opacity='0.25'/%3E%3Ccircle cx='55'  cy='8'   r='1.1' fill='%234a7c59' fill-opacity='0.2'/%3E%3Ccircle cx='90'  cy='35'  r='0.7' fill='%230d7a6e' fill-opacity='0.22'/%3E%3Ccircle cx='108' cy='10'  r='1'   fill='%234a7c59' fill-opacity='0.18'/%3E%3Ccircle cx='5'   cy='65'  r='1.2' fill='%230d7a6e' fill-opacity='0.2'/%3E%3Ccircle cx='35'  cy='80'  r='0.8' fill='%234a7c59' fill-opacity='0.18'/%3E%3Ccircle cx='72'  cy='95'  r='1'   fill='%230d7a6e' fill-opacity='0.22'/%3E%3Ccircle cx='100' cy='75'  r='0.9' fill='%234a7c59' fill-opacity='0.2'/%3E%3Ccircle cx='115' cy='100' r='1.1' fill='%230d7a6e' fill-opacity='0.18'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(
+      90deg,
+      transparent, transparent 39px,
+      rgba(13, 122, 110, 0.035) 39px, rgba(13, 122, 110, 0.035) 40px
+    );
+  --genre-bg-size: 200px 80px, 200px 80px, 120px 120px, 100% 100%;
+}
+
