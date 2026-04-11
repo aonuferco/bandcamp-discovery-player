@@ -925,3 +925,39 @@ body.genre-theme-punk-new {
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='80'%3E%3Cpath d='M10 80 L10 55 Q10 40 20 38 L25 37' fill='none' stroke='%236ab000' stroke-width='1.8' stroke-opacity='0.35' stroke-linecap='round'/%3E%3Cpath d='M60 80 L60 62 Q60 50 68 48' fill='none' stroke='%23111' stroke-width='1.4' stroke-opacity='0.25' stroke-linecap='round'/%3E%3Cpath d='M110 80 L110 58 Q110 44 120 42 L130 41' fill='none' stroke='%236ab000' stroke-width='1.2' stroke-opacity='0.28' stroke-linecap='round'/%3E%3C/svg%3E");
   --genre-bg-size: 100px 100px, 80px 60px, 140px 80px;
 }
+
+/* Rock family — genre-theme-rock-{mode} */
+
+body.genre-theme-rock-hot {
+  /* Vinyl lathe grooves: concentric arc rings on a 200px tile radiating
+     from dead-centre like a pressed record, alternating black and deep
+     vinyl-red (#7a0010) as grooves tighten toward the label area,
+     crossed by a single tonearm-needle scratch — a heavy diagonal line
+     with a faint red ghost offset — cutting clean across the rings.
+     Analogue, physical, nothing digital. */
+  --genre-bg:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Ccircle cx='100' cy='100' r='92' fill='none' stroke='%23111' stroke-width='0.9' stroke-opacity='0.22'/%3E%3Ccircle cx='100' cy='100' r='80' fill='none' stroke='%23111' stroke-width='0.7' stroke-opacity='0.19'/%3E%3Ccircle cx='100' cy='100' r='68' fill='none' stroke='%23111' stroke-width='0.7' stroke-opacity='0.17'/%3E%3Ccircle cx='100' cy='100' r='56' fill='none' stroke='%23111' stroke-width='0.6' stroke-opacity='0.16'/%3E%3Ccircle cx='100' cy='100' r='44' fill='none' stroke='%237a0010' stroke-width='0.6' stroke-opacity='0.2'/%3E%3Ccircle cx='100' cy='100' r='32' fill='none' stroke='%237a0010' stroke-width='0.5' stroke-opacity='0.18'/%3E%3Ccircle cx='100' cy='100' r='20' fill='none' stroke='%23111' stroke-width='0.5' stroke-opacity='0.15'/%3E%3Ccircle cx='100' cy='100' r='6' fill='%23111' fill-opacity='0.18'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cline x1='155' y1='0' x2='60' y2='200' stroke='%23111' stroke-width='1.8' stroke-opacity='0.38'/%3E%3Cline x1='157' y1='0' x2='62' y2='200' stroke='%23111' stroke-width='0.5' stroke-opacity='0.1'/%3E%3Cline x1='153' y1='0' x2='58' y2='200' stroke='%237a0010' stroke-width='0.6' stroke-opacity='0.15'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(0deg,
+      transparent, transparent 11px,
+      rgba(17, 17, 17, 0.03) 11px, rgba(17, 17, 17, 0.03) 12px);
+  --genre-bg-size: 200px 200px, 200px 200px, 100% 100%;
+}
+
+body.genre-theme-rock-new {
+  /* Amp cabinet speaker cloth: honeycomb weave of small outline circles
+     in a staggered two-row offset grid at 22×19px — the exact geometry
+     of woven speaker grille fabric — in black and speaker-cone copper
+     (#b06820). Inner dot centres simulate the warp thread crossing points.
+     Warm, tactile, analogue craft. Nothing waved, slashed, or gridded. */
+  --genre-bg:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='19'%3E%3Ccircle cx='5' cy='5' r='3.2' fill='none' stroke='%23111' stroke-width='0.8' stroke-opacity='0.22'/%3E%3Ccircle cx='16' cy='5' r='3.2' fill='none' stroke='%23111' stroke-width='0.8' stroke-opacity='0.22'/%3E%3Ccircle cx='10.5' cy='14' r='3.2' fill='none' stroke='%23b06820' stroke-width='0.8' stroke-opacity='0.26'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='19'%3E%3Ccircle cx='5' cy='5' r='1.1' fill='%23111' fill-opacity='0.14'/%3E%3Ccircle cx='16' cy='5' r='1.1' fill='%23111' fill-opacity='0.14'/%3E%3Ccircle cx='10.5' cy='14' r='1.1' fill='%23b06820' fill-opacity='0.16'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(90deg,
+      transparent, transparent 21px,
+      rgba(176, 104, 32, 0.03) 21px, rgba(176, 104, 32, 0.03) 22px),
+    repeating-linear-gradient(0deg,
+      transparent, transparent 18px,
+      rgba(17, 17, 17, 0.03) 18px, rgba(17, 17, 17, 0.03) 19px);
+  --genre-bg-size: 22px 19px, 22px 19px, 100% 100%, 100% 100%;
+}
