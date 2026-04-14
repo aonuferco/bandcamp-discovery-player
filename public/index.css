@@ -971,3 +971,13 @@ body.genre-theme-rock-new {
       rgba(17, 17, 17, 0.03) 18px, rgba(17, 17, 17, 0.03) 19px);
   --genre-bg-size: 22px 19px, 22px 19px, 100% 100%, 100% 100%;
 }
+
+/* Mobile Fixes */
+@media (max-width: 600px) {
+  [data-tooltip]:hover::after {
+    left: 50%;
+    top: calc(100% + 8px);
+    transform: translateX(-50%) rotate(1deg);
+    max-width: 90vw;
+  }
+}
