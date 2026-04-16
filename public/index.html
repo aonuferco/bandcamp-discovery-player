@@ -79,6 +79,11 @@
     <!-- Toast notification container -->
     <div id="toast-container"></div>
 
+    <!-- Copy Link FAB (mobile only) -->
+    <button id="copy-link-fab" class="copy-link-fab" aria-label="Copy album link" title="Copy album link">
+      ✂️
+    </button>
+
     <!-- Help modal -->
     <div id="help-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-hidden="true">
       <div class="modal-content">
@@ -87,6 +92,24 @@
           <button id="close-modal" class="close-btn" aria-label="Close dialog">&times;</button>
         </div>
         <div class="modal-body">
+          <!-- Mobile swipe panel — shown only on touch/narrow screens -->
+          <div class="mobile-swipe-panel" aria-label="Mobile navigation gestures">
+            <h3 class="mobile-swipe-title">✂ Touch Navigation</h3>
+            <div class="shortcut-item">
+              <kbd class="swipe-kbd">← swipe</kbd>
+              <span>Next album</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd class="swipe-kbd">swipe →</kbd>
+              <span>Previous album</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd class="swipe-kbd">✂ FAB</kbd>
+              <span>Copy album link</span>
+            </div>
+            <hr class="mobile-divider" />
+          </div>
+
           <div class="shortcut-item">
             <kbd>Q</kbd>
             <span>Navigate to previous track</span>

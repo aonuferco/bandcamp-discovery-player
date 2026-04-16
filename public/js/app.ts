@@ -35,6 +35,7 @@ export interface UIElements {
   coverContainer: HTMLElement | null;
   errorOverlay: HTMLElement | null;
   retryBtn: HTMLButtonElement | null;
+  copyLinkFab: HTMLButtonElement | null;
 }
 
 export interface UIManager {
@@ -156,6 +157,7 @@ const createUIManager = (): UIManager => {
     coverContainer: document.querySelector(".cover-container"),
     errorOverlay: document.getElementById("error-overlay"),
     retryBtn: document.getElementById("retry-btn") as HTMLButtonElement | null,
+    copyLinkFab: document.getElementById("copy-link-fab") as HTMLButtonElement | null,
   };
 
   // Helper logic: Volume management
@@ -611,6 +613,43 @@ const createAppController = (): AppController => {
     ui.elements.helpBtn?.addEventListener("click", () => ui.openModal());
     ui.elements.closeModal?.addEventListener("click", () => ui.closeModal());
     ui.elements.retryBtn?.addEventListener("click", () => retryFetch());
+
+    // Copy-link FAB (mobile)
+    ui.elements.copyLinkFab?.addEventListener("click", () => copyAlbumLink());
+
+    // Touch swipe on #album for mobile navigation
+    const albumEl = document.getElementById("album");
+    if (albumEl) {
+      let touchStartX = 0;
+      let touchStartY = 0;
+      const SWIPE_THRESHOLD = 50;  // minimum horizontal px to count as a swipe
+      const AXIS_LOCK = 30;        // max vertical drift before we ignore the gesture
+
+      albumEl.addEventListener("touchstart", (e: TouchEvent) => {
+        const t = e.touches[0];
+        if (!t) return;
+        touchStartX = t.clientX;
+        touchStartY = t.clientY;
+      }, { passive: true });
+
+      albumEl.addEventListener("touchend", (e: TouchEvent) => {
+        const t = e.changedTouches[0];
+        if (!t) return;
+        const dx = t.clientX - touchStartX;
+        const dy = t.clientY - touchStartY;
+
+        // Ignore if the gesture was more vertical than horizontal
+        if (Math.abs(dy) > AXIS_LOCK) return;
+
+        if (dx < -SWIPE_THRESHOLD) {
+          // Swipe left → next album
+          nextAlbum();
+        } else if (dx > SWIPE_THRESHOLD) {
+          // Swipe right → previous album
+          prevAlbum();
+        }
+      }, { passive: true });
+    }
 
     // Mode button events
     ui.elements.newReleasesBtn?.addEventListener("click", () => switchMode("new"));

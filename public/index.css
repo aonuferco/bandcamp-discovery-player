@@ -627,13 +627,131 @@ kbd {
   transform: rotate(-1deg);
 }
 
-/* Mobile Fixes */
+/* ============================================================================
+   Copy-Link FAB — floating action button (scissors/tape zine style)
+   Hidden on desktop (> 600px), shown only on narrow/touch viewports.
+   ============================================================================ */
+
+.copy-link-fab {
+  display: none; /* hidden by default (desktop) */
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  z-index: 1500;
+  width: 56px;
+  height: 56px;
+  font-size: 1.6rem;
+  line-height: 1;
+  background: #000;
+  color: #fff;
+  border: 3px solid var(--accent-neon-yellow);
+  border-radius: 50%;
+  box-shadow: 4px 4px 0 var(--accent-neon-pink), 0 0 0 2px #000;
+  cursor: pointer;
+  transform: rotate(-8deg);
+  transition: transform 0.15s, box-shadow 0.15s;
+  /* Tape strip pseudo-element */
+}
+
+.copy-link-fab:hover,
+.copy-link-fab:focus-visible {
+  transform: rotate(0deg) scale(1.12);
+  box-shadow: 6px 6px 0 var(--accent-cyan), 0 0 0 2px #000;
+  outline: none;
+}
+
+.copy-link-fab:active {
+  transform: rotate(5deg) scale(0.95);
+  box-shadow: 2px 2px 0 var(--accent-neon-pink);
+}
+
+/* Tape strip across FAB top */
+.copy-link-fab::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-4deg);
+  width: 44px;
+  height: 14px;
+  background: var(--tape-color);
+  border: 1px solid #ccc;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+/* ============================================================================
+   Mobile swipe panel inside help modal
+   Hidden on desktop, shown on narrow / touch viewports.
+   ============================================================================ */
+
+.mobile-swipe-panel {
+  display: none;
+}
+
+.mobile-swipe-title {
+  font-family: var(--font-title);
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+  background: var(--accent-cyan);
+  color: #000;
+  padding: 3px 8px;
+  display: inline-block;
+  transform: rotate(-1deg);
+  border: 2px solid #000;
+  box-shadow: 2px 2px 0 #000;
+}
+
+.swipe-kbd {
+  background: #000;
+  color: var(--accent-cyan);
+  font-family: var(--font-mono);
+  font-weight: bold;
+  padding: 5px 10px;
+  border: 2px solid var(--accent-cyan);
+  box-shadow: 2px 2px 0 var(--accent-neon-pink);
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+.mobile-divider {
+  border: none;
+  border-top: 3px dashed #000;
+  margin: 14px 0 16px;
+}
+
+/* ============================================================================
+   Mobile Fixes — ≤ 600 px
+   ============================================================================ */
+
 @media (max-width: 600px) {
+  /* Tooltip repositioning */
   [data-tooltip]:hover::after {
     left: 50%;
     top: calc(100% + 8px);
     transform: translateX(-50%) rotate(1deg);
     max-width: 90vw;
+  }
+
+  /* Hide desktop ◀ ▶ nav buttons */
+  .nav-btn {
+    display: none !important;
+  }
+
+  /* Show Copy-Link FAB */
+  .copy-link-fab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Show mobile swipe panel in help modal */
+  .mobile-swipe-panel {
+    display: block;
+    margin-bottom: 4px;
   }
 }
 
