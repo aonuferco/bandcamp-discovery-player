@@ -753,6 +753,15 @@ kbd {
     display: block;
     margin-bottom: 4px;
   }
+
+  /* #album fills the freed horizontal space now that nav buttons are hidden */
+  #album {
+    max-width: 100%;
+    width: calc(100% - 16px);
+    /* GPU-composited layer keeps swipe translateX() silky smooth */
+    will-change: transform;
+    touch-action: pan-y; /* allow vertical scroll; horizontal handled by JS */
+  }
 }
 
 

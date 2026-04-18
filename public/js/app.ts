@@ -617,41 +617,132 @@ const createAppController = (): AppController => {
     // Copy-link FAB (mobile)
     ui.elements.copyLinkFab?.addEventListener("click", () => copyAlbumLink());
 
-    // Touch swipe on #album for mobile navigation
+  // ---- setupTouchNavigation: kinetic swipe on #album (mobile) ----
+  const setupTouchNavigation = () => {
     const albumEl = document.getElementById("album");
-    if (albumEl) {
-      let touchStartX = 0;
-      let touchStartY = 0;
-      const SWIPE_THRESHOLD = 50;  // minimum horizontal px to count as a swipe
-      const AXIS_LOCK = 30;        // max vertical drift before we ignore the gesture
+    if (!albumEl) return;
 
-      albumEl.addEventListener("touchstart", (e: TouchEvent) => {
+    const SWIPE_THRESHOLD = 50; // min horizontal px to count as a swipe
+    const AXIS_LOCK = 30;       // max vertical drift before we ignore the gesture
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let currentDx = 0;
+    let isDragging = false;
+
+    /** Apply a live translateX while preserving the card's decorative rotation */
+    const setDragTranslate = (dx: number) => {
+      // The card has a base transform: rotate(-1.5deg). We layer translateX on top.
+      albumEl.style.transition = "none";
+      albumEl.style.transform = `rotate(-1.5deg) translateX(${dx}px)`;
+    };
+
+    /** Snap the card back to its resting position with a spring-like transition */
+    const resetTransform = () => {
+      albumEl.style.transition = "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+      albumEl.style.transform = "";
+      // Clean up inline styles once the transition ends so CSS class rules win
+      albumEl.addEventListener(
+        "transitionend",
+        () => {
+          albumEl.style.transition = "";
+          albumEl.style.transform = "";
+        },
+        { once: true }
+      );
+    };
+
+    albumEl.addEventListener(
+      "touchstart",
+      (e: TouchEvent) => {
         const t = e.touches[0];
         if (!t) return;
         touchStartX = t.clientX;
         touchStartY = t.clientY;
-      }, { passive: true });
+        currentDx = 0;
+        isDragging = true;
+        // Remove any leftover transition so the card tracks the finger instantly
+        albumEl.style.transition = "none";
+      },
+      { passive: true }
+    );
 
-      albumEl.addEventListener("touchend", (e: TouchEvent) => {
-        const t = e.changedTouches[0];
+    albumEl.addEventListener(
+      "touchmove",
+      (e: TouchEvent) => {
+        if (!isDragging) return;
+        const t = e.touches[0];
         if (!t) return;
+
         const dx = t.clientX - touchStartX;
         const dy = t.clientY - touchStartY;
 
-        // Ignore if the gesture was more vertical than horizontal
-        if (Math.abs(dy) > AXIS_LOCK) return;
-
-        if (dx < -SWIPE_THRESHOLD) {
-          // Swipe left → next album
-          nextAlbum();
-        } else if (dx > SWIPE_THRESHOLD) {
-          // Swipe right → previous album
-          prevAlbum();
+        // If the gesture is primarily vertical, bail out and don't interfere
+        if (Math.abs(dy) > AXIS_LOCK && Math.abs(dx) < SWIPE_THRESHOLD) {
+          isDragging = false;
+          resetTransform();
+          return;
         }
-      }, { passive: true });
-    }
 
-    // Mode button events
+        currentDx = dx;
+        setDragTranslate(dx);
+      },
+      { passive: true }
+    );
+
+    albumEl.addEventListener(
+      "touchend",
+      (_e: TouchEvent) => {
+        if (!isDragging) return;
+        isDragging = false;
+
+        if (currentDx < -SWIPE_THRESHOLD) {
+          // Swipe left → next album: fly out to the left, then update
+          albumEl.style.transition = "transform 0.2s ease-in";
+          albumEl.style.transform = `rotate(-1.5deg) translateX(-110vw)`;
+          albumEl.addEventListener(
+            "transitionend",
+            () => {
+              albumEl.style.transition = "";
+              albumEl.style.transform = "";
+              nextAlbum();
+            },
+            { once: true }
+          );
+        } else if (currentDx > SWIPE_THRESHOLD) {
+          // Swipe right → prev album: fly out to the right, then update
+          albumEl.style.transition = "transform 0.2s ease-in";
+          albumEl.style.transform = `rotate(-1.5deg) translateX(110vw)`;
+          albumEl.addEventListener(
+            "transitionend",
+            () => {
+              albumEl.style.transition = "";
+              albumEl.style.transform = "";
+              prevAlbum();
+            },
+            { once: true }
+          );
+        } else {
+          // Not enough delta — spring back
+          resetTransform();
+        }
+      },
+      { passive: true }
+    );
+
+    albumEl.addEventListener(
+      "touchcancel",
+      () => {
+        isDragging = false;
+        resetTransform();
+      },
+      { passive: true }
+    );
+  };
+
+    // Touch navigation (mobile swipe with kinetic feel)
+    setupTouchNavigation();
+
     ui.elements.newReleasesBtn?.addEventListener("click", () => switchMode("new"));
     ui.elements.hotBtn?.addEventListener("click", () => switchMode("hot"));
 
