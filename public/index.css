@@ -724,6 +724,75 @@ kbd {
 }
 
 /* ============================================================================
+   Swipe Animation — exit / enter keyframes for #album card transitions
+   Applied via JS class toggling; defined globally so keyframes compile once.
+   ============================================================================ */
+
+@keyframes swipe-out-left {
+  from {
+    transform: rotate(-1.5deg) translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: rotate(-1.5deg) translateX(-110vw);
+    opacity: 0;
+  }
+}
+
+@keyframes swipe-out-right {
+  from {
+    transform: rotate(-1.5deg) translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: rotate(-1.5deg) translateX(110vw);
+    opacity: 0;
+  }
+}
+
+@keyframes swipe-in-left {
+  from {
+    transform: rotate(-1.5deg) translateX(110vw);
+    opacity: 0;
+  }
+  to {
+    transform: rotate(-1.5deg) translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes swipe-in-right {
+  from {
+    transform: rotate(-1.5deg) translateX(-110vw);
+    opacity: 0;
+  }
+  to {
+    transform: rotate(-1.5deg) translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Exit classes — card flies out before album data updates */
+#album.swipe-exit-left {
+  animation: swipe-out-left 0.2s ease-in forwards;
+  pointer-events: none;
+}
+
+#album.swipe-exit-right {
+  animation: swipe-out-right 0.2s ease-in forwards;
+  pointer-events: none;
+}
+
+/* Enter classes — new album content slides in from the opposite side */
+#album.swipe-enter-left {
+  animation: swipe-in-left 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+#album.swipe-enter-right {
+  animation: swipe-in-right 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* ============================================================================
    Mobile Fixes — ≤ 600 px
    ============================================================================ */
 

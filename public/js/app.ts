@@ -637,8 +637,17 @@ const createAppController = (): AppController => {
       albumEl.style.transform = `rotate(-1.5deg) translateX(${dx}px)`;
     };
 
+    /** Strip all swipe animation classes (safety helper) */
+    const clearSwipeClasses = () => {
+      albumEl.classList.remove(
+        "swipe-exit-left", "swipe-exit-right",
+        "swipe-enter-left", "swipe-enter-right"
+      );
+    };
+
     /** Snap the card back to its resting position with a spring-like transition */
     const resetTransform = () => {
+      clearSwipeClasses();
       albumEl.style.transition = "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
       albumEl.style.transform = "";
       // Clean up inline styles once the transition ends so CSS class rules win
@@ -697,31 +706,51 @@ const createAppController = (): AppController => {
         isDragging = false;
 
         if (currentDx < -SWIPE_THRESHOLD) {
-          // Swipe left → next album: fly out to the left, then update
-          albumEl.style.transition = "transform 0.2s ease-in";
-          albumEl.style.transform = `rotate(-1.5deg) translateX(-110vw)`;
+          // Swipe left → next album
+          // 1. Clear any inline drag styles, then trigger CSS exit animation
+          albumEl.style.transition = "";
+          albumEl.style.transform = "";
+          albumEl.classList.add("swipe-exit-left");
+
           albumEl.addEventListener(
-            "transitionend",
+            "animationend",
             () => {
-              albumEl.style.transition = "";
-              albumEl.style.transform = "";
+              // 2. Remove exit class, update album data
+              albumEl.classList.remove("swipe-exit-left");
               nextAlbum();
+              // 3. Slide the new content in from the right
+              albumEl.classList.add("swipe-enter-right");
+              albumEl.addEventListener(
+                "animationend",
+                () => albumEl.classList.remove("swipe-enter-right"),
+                { once: true }
+              );
             },
             { once: true }
           );
+
         } else if (currentDx > SWIPE_THRESHOLD) {
-          // Swipe right → prev album: fly out to the right, then update
-          albumEl.style.transition = "transform 0.2s ease-in";
-          albumEl.style.transform = `rotate(-1.5deg) translateX(110vw)`;
+          // Swipe right → prev album
+          albumEl.style.transition = "";
+          albumEl.style.transform = "";
+          albumEl.classList.add("swipe-exit-right");
+
           albumEl.addEventListener(
-            "transitionend",
+            "animationend",
             () => {
-              albumEl.style.transition = "";
-              albumEl.style.transform = "";
+              albumEl.classList.remove("swipe-exit-right");
               prevAlbum();
+              // New content enters from the left
+              albumEl.classList.add("swipe-enter-left");
+              albumEl.addEventListener(
+                "animationend",
+                () => albumEl.classList.remove("swipe-enter-left"),
+                { once: true }
+              );
             },
             { once: true }
           );
+
         } else {
           // Not enough delta — spring back
           resetTransform();
