@@ -628,57 +628,93 @@ kbd {
 }
 
 /* ============================================================================
-   Copy-Link FAB — floating action button (scissors/tape zine style)
-   Hidden on desktop (> 600px), shown only on narrow/touch viewports.
+   Copy-Link FAB — floating action button, zine black square style.
+   Hidden by default (desktop); only shown inside the ≤ 600px media query.
    ============================================================================ */
 
-.copy-link-fab {
-  display: none; /* hidden by default (desktop) */
+@keyframes fab-wiggle {
+  0%   { transform: rotate(-8deg) scale(1); }
+  25%  { transform: rotate(12deg) scale(1.08); }
+  50%  { transform: rotate(-6deg) scale(1.05); }
+  75%  { transform: rotate(8deg)  scale(1.1); }
+  100% { transform: rotate(0deg)  scale(1.08); }
+}
+
+@keyframes fab-pop {
+  0%   { transform: rotate(0deg)  scale(1.08); }
+  40%  { transform: rotate(-10deg) scale(0.9); }
+  100% { transform: rotate(-8deg) scale(1); }
+}
+
+.copy-fab {
+  /* Hidden on desktop — shown via media query below */
+  display: none;
+
+  /* Layout */
   position: fixed;
   bottom: 24px;
-  right: 20px;
+  right: 24px;
   z-index: 1500;
   width: 56px;
   height: 56px;
-  font-size: 1.6rem;
-  line-height: 1;
+  align-items: center;
+  justify-content: center;
+
+  /* Zine black square aesthetic */
   background: #000;
   color: #fff;
-  border: 3px solid var(--accent-neon-yellow);
-  border-radius: 50%;
-  box-shadow: 4px 4px 0 var(--accent-neon-pink), 0 0 0 2px #000;
+  border: 3px solid #000;
+  border-radius: 0;           /* square, not circle */
+  box-shadow: 5px 5px 0 var(--accent-neon-pink);
   cursor: pointer;
   transform: rotate(-8deg);
-  transition: transform 0.15s, box-shadow 0.15s;
-  /* Tape strip pseudo-element */
+  transition: box-shadow 0.12s;
 }
 
-.copy-link-fab:hover,
-.copy-link-fab:focus-visible {
-  transform: rotate(0deg) scale(1.12);
-  box-shadow: 6px 6px 0 var(--accent-cyan), 0 0 0 2px #000;
+/* Tape strip across top — zine collage feel */
+.copy-fab::before {
+  content: "";
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-3deg);
+  width: 48px;
+  height: 14px;
+  background: var(--tape-color);
+  border: 1px solid #bbb;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+}
+
+/* Neon-yellow corner stamp */
+.copy-fab::after {
+  content: "W";
+  font-family: var(--font-title);
+  font-size: 0.55rem;
+  letter-spacing: 0.5px;
+  position: absolute;
+  bottom: 3px;
+  right: 4px;
+  color: var(--accent-neon-yellow);
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.copy-fab:hover,
+.copy-fab:focus-visible {
+  animation: fab-wiggle 0.35s ease-out forwards;
+  box-shadow: 6px 6px 0 var(--accent-cyan);
   outline: none;
 }
 
-.copy-link-fab:active {
-  transform: rotate(5deg) scale(0.95);
+.copy-fab:active {
+  animation: fab-pop 0.2s ease-out forwards;
   box-shadow: 2px 2px 0 var(--accent-neon-pink);
 }
 
-/* Tape strip across FAB top */
-.copy-link-fab::before {
-  content: "";
-  position: absolute;
-  top: -10px;
-  left: 50%;
-  transform: translateX(-50%) rotate(-4deg);
-  width: 44px;
-  height: 14px;
-  background: var(--tape-color);
-  border: 1px solid #ccc;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
-  border-radius: 2px;
-  pointer-events: none;
+.copy-fab svg {
+  display: block;
+  flex-shrink: 0;
 }
 
 /* ============================================================================
@@ -810,11 +846,9 @@ kbd {
     display: none !important;
   }
 
-  /* Show Copy-Link FAB */
-  .copy-link-fab {
+  /* Show Copy-Link FAB on mobile */
+  .copy-fab {
     display: flex;
-    align-items: center;
-    justify-content: center;
   }
 
   /* Show mobile swipe panel in help modal */
