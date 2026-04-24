@@ -84,6 +84,13 @@ export interface AppController {
 export const isValidMode = (mode: string | null | undefined): mode is DiscoveryMode => 
   mode === "new" || mode === "hot";
 
+/**
+ * Returns true when the primary input is a coarse pointer (touch screen).
+ * Used to strip keyboard-hint text from toasts on mobile.
+ */
+export const isTouchDevice = (): boolean =>
+  window.matchMedia("(pointer: coarse)").matches;
+
 export const parseUrlParams = (): { genre: Genre | ""; mode: DiscoveryMode } => {
   const params = new URLSearchParams(window.location.search);
   const genreParam = params.get("genre") || "";
@@ -445,9 +452,12 @@ const createAppController = (): AppController => {
       ui.elements.hotBtn.setAttribute("aria-pressed", (!isNew).toString());
     }
 
-    // Show loading state
+    // Show loading state — suppress keyboard hints on touch devices
     const modeText = mode === "new" ? "new releases" : "hot releases";
-    ui.showToast(`Switching to ${modeText}...`, "success");
+    const modeToast = isTouchDevice()
+      ? `Switching to ${modeText}…`
+      : `Switching to ${modeText}...`;
+    ui.showToast(modeToast, "success");
 
     // Fetch new data
     await fetchAlbums(1);
@@ -465,7 +475,10 @@ const createAppController = (): AppController => {
     ui.toggleDropdown(false);
 
     const genreText = genre || "all genres";
-    ui.showToast(`Loading ${genreText}...`, "success");
+    const genreToast = isTouchDevice()
+      ? `Loading ${genreText}…`
+      : `Loading ${genreText}...`;
+    ui.showToast(genreToast, "success");
 
     await fetchAlbums(1);
     showCurrentAlbum();

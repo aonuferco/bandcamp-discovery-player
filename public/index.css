@@ -718,14 +718,23 @@ kbd {
 }
 
 /* ============================================================================
-   Mobile swipe panel inside help modal
-   Hidden on desktop, shown on narrow / touch viewports.
+   Help modal — responsive shortcut panels
+   .desktop-shortcuts : keyboard shortcuts, shown on ≥ 601px
+   .mobile-shortcuts  : touch gestures, shown on ≤ 600px
    ============================================================================ */
 
-.mobile-swipe-panel {
-  display: none;
-}
+/* Modal title: show only the relevant span per viewport */
+.modal-title-mobile { display: none; }
+.modal-title-desktop { display: inline; }
 
+/* Desktop panel visible by default; mobile panel hidden */
+.desktop-shortcuts { display: block; }
+.mobile-shortcuts  { display: none; }
+
+/* Stale class — kept so old references silently no-op */
+.mobile-swipe-panel { display: none; }
+
+/* Shared sub-title chip used inside mobile shortcuts */
 .mobile-swipe-title {
   font-family: var(--font-title);
   font-size: 1.1rem;
@@ -751,6 +760,9 @@ kbd {
   box-shadow: 2px 2px 0 var(--accent-neon-pink);
   border-radius: 2px;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .mobile-divider {
@@ -851,11 +863,11 @@ kbd {
     display: flex;
   }
 
-  /* Show mobile swipe panel in help modal */
-  .mobile-swipe-panel {
-    display: block;
-    margin-bottom: 4px;
-  }
+  /* Modal: swap panels and title */
+  .desktop-shortcuts   { display: none; }
+  .mobile-shortcuts    { display: block; }
+  .modal-title-desktop { display: none; }
+  .modal-title-mobile  { display: inline; }
 
   /* #album fills the freed horizontal space now that nav buttons are hidden */
   #album {
