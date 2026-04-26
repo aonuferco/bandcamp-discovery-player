@@ -35,6 +35,7 @@ export interface UIElements {
   coverContainer: HTMLElement | null;
   errorOverlay: HTMLElement | null;
   retryBtn: HTMLButtonElement | null;
+  copyLinkFab: HTMLButtonElement | null;
 }
 
 export interface UIManager {
@@ -82,6 +83,13 @@ export interface AppController {
 
 export const isValidMode = (mode: string | null | undefined): mode is DiscoveryMode => 
   mode === "new" || mode === "hot";
+
+/**
+ * Returns true when the primary input is a coarse pointer (touch screen).
+ * Used to strip keyboard-hint text from toasts on mobile.
+ */
+export const isTouchDevice = (): boolean =>
+  window.matchMedia("(pointer: coarse)").matches;
 
 export const parseUrlParams = (): { genre: Genre | ""; mode: DiscoveryMode } => {
   const params = new URLSearchParams(window.location.search);
@@ -156,6 +164,7 @@ const createUIManager = (): UIManager => {
     coverContainer: document.querySelector(".cover-container"),
     errorOverlay: document.getElementById("error-overlay"),
     retryBtn: document.getElementById("retry-btn") as HTMLButtonElement | null,
+    copyLinkFab: document.getElementById("copy-link-fab") as HTMLButtonElement | null,
   };
 
   // Helper logic: Volume management
@@ -443,9 +452,12 @@ const createAppController = (): AppController => {
       ui.elements.hotBtn.setAttribute("aria-pressed", (!isNew).toString());
     }
 
-    // Show loading state
+    // Show loading state — suppress keyboard hints on touch devices
     const modeText = mode === "new" ? "new releases" : "hot releases";
-    ui.showToast(`Switching to ${modeText}...`, "success");
+    const modeToast = isTouchDevice()
+      ? `Switching to ${modeText}…`
+      : `Switching to ${modeText}...`;
+    ui.showToast(modeToast, "success");
 
     // Fetch new data
     await fetchAlbums(1);
@@ -463,7 +475,10 @@ const createAppController = (): AppController => {
     ui.toggleDropdown(false);
 
     const genreText = genre || "all genres";
-    ui.showToast(`Loading ${genreText}...`, "success");
+    const genreToast = isTouchDevice()
+      ? `Loading ${genreText}…`
+      : `Loading ${genreText}...`;
+    ui.showToast(genreToast, "success");
 
     await fetchAlbums(1);
     showCurrentAlbum();
@@ -612,7 +627,164 @@ const createAppController = (): AppController => {
     ui.elements.closeModal?.addEventListener("click", () => ui.closeModal());
     ui.elements.retryBtn?.addEventListener("click", () => retryFetch());
 
-    // Mode button events
+    // Copy-link FAB (mobile)
+    ui.elements.copyLinkFab?.addEventListener("click", () => copyAlbumLink());
+
+  // ---- setupTouchNavigation: kinetic swipe on #album (mobile) ----
+  const setupTouchNavigation = () => {
+    const albumEl = document.getElementById("album");
+    if (!albumEl) return;
+
+    const SWIPE_THRESHOLD = 50; // min horizontal px to count as a swipe
+    const AXIS_LOCK = 30;       // max vertical drift before we ignore the gesture
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let currentDx = 0;
+    let isDragging = false;
+
+    /** Apply a live translateX while preserving the card's decorative rotation */
+    const setDragTranslate = (dx: number) => {
+      // The card has a base transform: rotate(-1.5deg). We layer translateX on top.
+      albumEl.style.transition = "none";
+      albumEl.style.transform = `rotate(-1.5deg) translateX(${dx}px)`;
+    };
+
+    /** Strip all swipe animation classes (safety helper) */
+    const clearSwipeClasses = () => {
+      albumEl.classList.remove(
+        "swipe-exit-left", "swipe-exit-right",
+        "swipe-enter-left", "swipe-enter-right"
+      );
+    };
+
+    /** Snap the card back to its resting position with a spring-like transition */
+    const resetTransform = () => {
+      clearSwipeClasses();
+      albumEl.style.transition = "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+      albumEl.style.transform = "";
+      // Clean up inline styles once the transition ends so CSS class rules win
+      albumEl.addEventListener(
+        "transitionend",
+        () => {
+          albumEl.style.transition = "";
+          albumEl.style.transform = "";
+        },
+        { once: true }
+      );
+    };
+
+    albumEl.addEventListener(
+      "touchstart",
+      (e: TouchEvent) => {
+        const t = e.touches[0];
+        if (!t) return;
+        touchStartX = t.clientX;
+        touchStartY = t.clientY;
+        currentDx = 0;
+        isDragging = true;
+        // Remove any leftover transition so the card tracks the finger instantly
+        albumEl.style.transition = "none";
+      },
+      { passive: true }
+    );
+
+    albumEl.addEventListener(
+      "touchmove",
+      (e: TouchEvent) => {
+        if (!isDragging) return;
+        const t = e.touches[0];
+        if (!t) return;
+
+        const dx = t.clientX - touchStartX;
+        const dy = t.clientY - touchStartY;
+
+        // If the gesture is primarily vertical, bail out and don't interfere
+        if (Math.abs(dy) > AXIS_LOCK && Math.abs(dx) < SWIPE_THRESHOLD) {
+          isDragging = false;
+          resetTransform();
+          return;
+        }
+
+        currentDx = dx;
+        setDragTranslate(dx);
+      },
+      { passive: true }
+    );
+
+    albumEl.addEventListener(
+      "touchend",
+      (_e: TouchEvent) => {
+        if (!isDragging) return;
+        isDragging = false;
+
+        if (currentDx < -SWIPE_THRESHOLD) {
+          // Swipe left → next album
+          // 1. Clear any inline drag styles, then trigger CSS exit animation
+          albumEl.style.transition = "";
+          albumEl.style.transform = "";
+          albumEl.classList.add("swipe-exit-left");
+
+          albumEl.addEventListener(
+            "animationend",
+            () => {
+              // 2. Remove exit class, update album data
+              albumEl.classList.remove("swipe-exit-left");
+              nextAlbum();
+              // 3. Slide the new content in from the right
+              albumEl.classList.add("swipe-enter-right");
+              albumEl.addEventListener(
+                "animationend",
+                () => albumEl.classList.remove("swipe-enter-right"),
+                { once: true }
+              );
+            },
+            { once: true }
+          );
+
+        } else if (currentDx > SWIPE_THRESHOLD) {
+          // Swipe right → prev album
+          albumEl.style.transition = "";
+          albumEl.style.transform = "";
+          albumEl.classList.add("swipe-exit-right");
+
+          albumEl.addEventListener(
+            "animationend",
+            () => {
+              albumEl.classList.remove("swipe-exit-right");
+              prevAlbum();
+              // New content enters from the left
+              albumEl.classList.add("swipe-enter-left");
+              albumEl.addEventListener(
+                "animationend",
+                () => albumEl.classList.remove("swipe-enter-left"),
+                { once: true }
+              );
+            },
+            { once: true }
+          );
+
+        } else {
+          // Not enough delta — spring back
+          resetTransform();
+        }
+      },
+      { passive: true }
+    );
+
+    albumEl.addEventListener(
+      "touchcancel",
+      () => {
+        isDragging = false;
+        resetTransform();
+      },
+      { passive: true }
+    );
+  };
+
+    // Touch navigation (mobile swipe with kinetic feel)
+    setupTouchNavigation();
+
     ui.elements.newReleasesBtn?.addEventListener("click", () => switchMode("new"));
     ui.elements.hotBtn?.addEventListener("click", () => switchMode("hot"));
 

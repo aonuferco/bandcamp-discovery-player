@@ -627,13 +627,255 @@ kbd {
   transform: rotate(-1deg);
 }
 
-/* Mobile Fixes */
+/* ============================================================================
+   Copy-Link FAB — floating action button, zine black square style.
+   Hidden by default (desktop); only shown inside the ≤ 600px media query.
+   ============================================================================ */
+
+@keyframes fab-wiggle {
+  0%   { transform: rotate(-8deg) scale(1); }
+  25%  { transform: rotate(12deg) scale(1.08); }
+  50%  { transform: rotate(-6deg) scale(1.05); }
+  75%  { transform: rotate(8deg)  scale(1.1); }
+  100% { transform: rotate(0deg)  scale(1.08); }
+}
+
+@keyframes fab-pop {
+  0%   { transform: rotate(0deg)  scale(1.08); }
+  40%  { transform: rotate(-10deg) scale(0.9); }
+  100% { transform: rotate(-8deg) scale(1); }
+}
+
+.copy-fab {
+  /* Hidden on desktop — shown via media query below */
+  display: none;
+
+  /* Layout */
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1500;
+  width: 56px;
+  height: 56px;
+  align-items: center;
+  justify-content: center;
+
+  /* Zine black square aesthetic */
+  background: #000;
+  color: #fff;
+  border: 3px solid #000;
+  border-radius: 0;           /* square, not circle */
+  box-shadow: 5px 5px 0 var(--accent-neon-pink);
+  cursor: pointer;
+  transform: rotate(-8deg);
+  transition: box-shadow 0.12s;
+}
+
+/* Tape strip across top — zine collage feel */
+.copy-fab::before {
+  content: "";
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-3deg);
+  width: 48px;
+  height: 14px;
+  background: var(--tape-color);
+  border: 1px solid #bbb;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+}
+
+/* Neon-yellow corner stamp */
+.copy-fab::after {
+  content: "W";
+  font-family: var(--font-title);
+  font-size: 0.55rem;
+  letter-spacing: 0.5px;
+  position: absolute;
+  bottom: 3px;
+  right: 4px;
+  color: var(--accent-neon-yellow);
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.copy-fab:hover,
+.copy-fab:focus-visible {
+  animation: fab-wiggle 0.35s ease-out forwards;
+  box-shadow: 6px 6px 0 var(--accent-cyan);
+  outline: none;
+}
+
+.copy-fab:active {
+  animation: fab-pop 0.2s ease-out forwards;
+  box-shadow: 2px 2px 0 var(--accent-neon-pink);
+}
+
+.copy-fab svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* ============================================================================
+   Help modal — responsive shortcut panels
+   .desktop-shortcuts : keyboard shortcuts, shown on ≥ 601px
+   .mobile-shortcuts  : touch gestures, shown on ≤ 600px
+   ============================================================================ */
+
+/* Modal title: show only the relevant span per viewport */
+.modal-title-mobile { display: none; }
+.modal-title-desktop { display: inline; }
+
+/* Desktop panel visible by default; mobile panel hidden */
+.desktop-shortcuts { display: block; }
+.mobile-shortcuts  { display: none; }
+
+/* Stale class — kept so old references silently no-op */
+.mobile-swipe-panel { display: none; }
+
+/* Shared sub-title chip used inside mobile shortcuts */
+.mobile-swipe-title {
+  font-family: var(--font-title);
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+  background: var(--accent-cyan);
+  color: #000;
+  padding: 3px 8px;
+  display: inline-block;
+  transform: rotate(-1deg);
+  border: 2px solid #000;
+  box-shadow: 2px 2px 0 #000;
+}
+
+.swipe-kbd {
+  background: #000;
+  color: var(--accent-cyan);
+  font-family: var(--font-mono);
+  font-weight: bold;
+  padding: 5px 10px;
+  border: 2px solid var(--accent-cyan);
+  box-shadow: 2px 2px 0 var(--accent-neon-pink);
+  border-radius: 2px;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.mobile-divider {
+  border: none;
+  border-top: 3px dashed #000;
+  margin: 14px 0 16px;
+}
+
+/* ============================================================================
+   Swipe Animation — exit / enter keyframes for #album card transitions
+   Applied via JS class toggling; defined globally so keyframes compile once.
+   ============================================================================ */
+
+@keyframes swipe-out-left {
+  from {
+    transform: rotate(-1.5deg) translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: rotate(-1.5deg) translateX(-110vw);
+    opacity: 0;
+  }
+}
+
+@keyframes swipe-out-right {
+  from {
+    transform: rotate(-1.5deg) translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: rotate(-1.5deg) translateX(110vw);
+    opacity: 0;
+  }
+}
+
+@keyframes swipe-in-left {
+  from {
+    transform: rotate(-1.5deg) translateX(110vw);
+    opacity: 0;
+  }
+  to {
+    transform: rotate(-1.5deg) translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes swipe-in-right {
+  from {
+    transform: rotate(-1.5deg) translateX(-110vw);
+    opacity: 0;
+  }
+  to {
+    transform: rotate(-1.5deg) translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Exit classes — card flies out before album data updates */
+#album.swipe-exit-left {
+  animation: swipe-out-left 0.2s ease-in forwards;
+  pointer-events: none;
+}
+
+#album.swipe-exit-right {
+  animation: swipe-out-right 0.2s ease-in forwards;
+  pointer-events: none;
+}
+
+/* Enter classes — new album content slides in from the opposite side */
+#album.swipe-enter-left {
+  animation: swipe-in-left 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+#album.swipe-enter-right {
+  animation: swipe-in-right 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* ============================================================================
+   Mobile Fixes — ≤ 600 px
+   ============================================================================ */
+
 @media (max-width: 600px) {
+  /* Tooltip repositioning */
   [data-tooltip]:hover::after {
     left: 50%;
     top: calc(100% + 8px);
     transform: translateX(-50%) rotate(1deg);
     max-width: 90vw;
+  }
+
+  /* Hide desktop ◀ ▶ nav buttons */
+  .nav-btn {
+    display: none !important;
+  }
+
+  /* Show Copy-Link FAB on mobile */
+  .copy-fab {
+    display: flex;
+  }
+
+  /* Modal: swap panels and title */
+  .desktop-shortcuts   { display: none; }
+  .mobile-shortcuts    { display: block; }
+  .modal-title-desktop { display: none; }
+  .modal-title-mobile  { display: inline; }
+
+  /* #album fills the freed horizontal space now that nav buttons are hidden */
+  #album {
+    max-width: 100%;
+    width: calc(100% - 16px);
+    /* GPU-composited layer keeps swipe translateX() silky smooth */
+    will-change: transform;
+    touch-action: pan-y; /* allow vertical scroll; horizontal handled by JS */
   }
 }
 

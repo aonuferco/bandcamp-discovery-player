@@ -79,54 +79,102 @@
     <!-- Toast notification container -->
     <div id="toast-container"></div>
 
+    <button id="copy-link-fab" class="copy-fab" aria-label="Copy album link" title="Copy album link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <!-- Scissors blades -->
+        <circle cx="6"  cy="6"  r="3"/>
+        <circle cx="6"  cy="18" r="3"/>
+        <line   x1="20" y1="4"  x2="8.12" y2="15.88"/>
+        <line   x1="14.47" y1="14.48" x2="20" y2="20"/>
+        <line   x1="8.12" y1="8.12"   x2="12" y2="12"/>
+      </svg>
+    </button>
+
     <!-- Help modal -->
     <div id="help-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-hidden="true">
       <div class="modal-content">
         <div class="modal-header">
-          <h2 id="modal-title">Keyboard Shortcuts</h2>
+          <!-- Title text swaps via CSS content on mobile -->
+          <h2 id="modal-title" class="modal-title">
+            <span class="modal-title-desktop">Keyboard Shortcuts</span>
+            <span class="modal-title-mobile">Touch Controls</span>
+          </h2>
           <button id="close-modal" class="close-btn" aria-label="Close dialog">&times;</button>
         </div>
         <div class="modal-body">
-          <div class="shortcut-item">
-            <kbd>Q</kbd>
-            <span>Navigate to previous track</span>
+
+          <!-- ── MOBILE PANEL — shown only on ≤ 600px ── -->
+          <div class="mobile-shortcuts" aria-label="Mobile touch gestures">
+            <div class="shortcut-item">
+              <kbd class="swipe-kbd">← swipe</kbd>
+              <span>Next release</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd class="swipe-kbd">swipe →</kbd>
+              <span>Previous release</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd class="swipe-kbd">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:middle">
+                  <circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/>
+                  <line x1="20" y1="4" x2="8.12" y2="15.88"/>
+                  <line x1="14.47" y1="14.48" x2="20" y2="20"/>
+                  <line x1="8.12" y1="8.12" x2="12" y2="12"/>
+                </svg>
+                button
+              </kbd>
+              <span>Copy album link</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd class="swipe-kbd">?</kbd>
+              <span>This help screen</span>
+            </div>
           </div>
-          <div class="shortcut-item">
-            <kbd>E</kbd>
-            <span>Navigate to next track</span>
+
+          <!-- ── DESKTOP PANEL — shown only on ≥ 601px ── -->
+          <div class="desktop-shortcuts" aria-label="Keyboard shortcuts">
+            <div class="shortcut-item">
+              <kbd>Q</kbd>
+              <span>Previous album</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>E</kbd>
+              <span>Next album</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>W</kbd>
+              <span>Copy album link to clipboard</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>S</kbd>
+              <span>Open album page in new tab</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>Space</kbd>
+              <span>Play / pause</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>←</kbd>
+              <span>Seek backward 10 s</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>→</kbd>
+              <span>Seek forward 10 s</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>↑</kbd>
+              <span>Volume up</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>↓</kbd>
+              <span>Volume down</span>
+            </div>
+            <div class="shortcut-item">
+              <kbd>/</kbd>
+              <span>Focus genre search</span>
+            </div>
           </div>
-          <div class="shortcut-item">
-            <kbd>W</kbd>
-            <span>Copy album link to clipboard</span>
-          </div>
-          <div class="shortcut-item">
-            <kbd>S</kbd>
-            <span>Open album page in new tab</span>
-          </div>
-          <div class="shortcut-item">
-            <kbd>Space</kbd>
-            <span>Play/pause current track</span>
-          </div>
-          <div class="shortcut-item">
-            <kbd>←</kbd>
-            <span>Seek backward 10 seconds</span>
-          </div>
-          <div class="shortcut-item">
-            <kbd>→</kbd>
-            <span>Seek forward 10 seconds</span>
-          </div>
-          <div class="shortcut-item">
-            <kbd>↑</kbd>
-            <span>Increase volume</span>
-          </div>
-          <div class="shortcut-item">
-            <kbd>↓</kbd>
-            <span>Decrease volume</span>
-          </div>
-          <div class="shortcut-item">
-            <kbd>/</kbd>
-            <span>Focus genre search</span>
-          </div>
+
         </div>
       </div>
     </div>
