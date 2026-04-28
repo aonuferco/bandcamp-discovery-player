@@ -132,6 +132,7 @@ export function createAppState(): AppState {
       albums = [];
       currentIndex = 0;
       currentPage = 1;
+      isFetching = false;
       seenLinks = new Set();
       lastError = null;
     },
