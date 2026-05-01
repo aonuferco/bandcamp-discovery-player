@@ -559,6 +559,7 @@ const createAppController = (): AppController => {
   const seekAudio = (seconds: number) => {
     const audio = document.querySelector("audio");
     if (audio) {
+      if (!isFinite(audio.duration)) return;
       const newTime = audio.currentTime + seconds;
       audio.currentTime = Math.max(0, Math.min(newTime, audio.duration));
     }
