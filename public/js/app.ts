@@ -290,22 +290,41 @@ const createUIManager = (): UIManager => {
     }
   };
 
+  // Persistent audio element — created once, reused across album changes.
+  // We keep it here in closure scope so the volumechange listener is registered
+  // exactly once, preventing the leak that occurred when innerHTML rebuilt the
+  // node on every album navigation.
+  let audioEl: HTMLAudioElement | null = null;
+
   const updateAudioPlayer = (album: Album) => {
     if (!elements.player) return;
-    elements.player.innerHTML = `
-      <audio controls autoplay style="width: 100%; height: 40px;">
-        <source src="${album.stream_url}" type="audio/mp3" />
-        Your browser does not support the audio element.
-      </audio>
-    `;
 
-    const audio = elements.player.querySelector("audio");
-    if (audio) {
-      audio.volume = getSavedVolume();
-      audio.addEventListener("volumechange", () => {
-        saveVolume(audio.volume);
+    if (!audioEl) {
+      // First call: build the element, wire up the single persistent listener,
+      // and inject it into the DOM.
+      audioEl = document.createElement("audio");
+      audioEl.controls = true;
+      audioEl.autoplay = true;
+      audioEl.style.width = "100%";
+      audioEl.style.height = "40px";
+
+      const source = document.createElement("source");
+      source.type = "audio/mp3";
+      audioEl.appendChild(source);
+
+      audioEl.volume = getSavedVolume();
+      audioEl.addEventListener("volumechange", () => {
+        saveVolume(audioEl!.volume);
       });
+
+      elements.player.innerHTML = "";
+      elements.player.appendChild(audioEl);
     }
+
+    // Subsequent calls: just swap the src and reload — no new element, no new listener.
+    const source = audioEl.querySelector("source")!;
+    source.src = album.stream_url ?? "";
+    audioEl.load();
   };
 
   const preloadNextImages = (count = 3) => {
