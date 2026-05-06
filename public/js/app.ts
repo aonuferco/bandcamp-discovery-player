@@ -140,7 +140,7 @@ export const applyGenreTheme = (genre: string, mode: DiscoveryMode): void => {
 // UI Manager Shell
 // ============================================================================
 
-const createUIManager = (): UIManager => {
+const createUIManager = (state: AppState): UIManager => {
   const elements: UIElements = {
     cover: document.getElementById("cover") as HTMLImageElement | null,
     title: document.getElementById("title"),
@@ -328,9 +328,6 @@ const createUIManager = (): UIManager => {
   };
 
   const preloadNextImages = (count = 3) => {
-    const state = (window as any).appState;
-    if (!state) return;
-
     for (let i = 1; i <= count; i++) {
       const albums = state.getAlbums();
       const nextItem = albums[state.getCurrentIndex() + i];
@@ -390,7 +387,7 @@ const createUIManager = (): UIManager => {
 const createAppController = (): AppController => {
   const state = createAppState();
   const service = createAlbumService();
-  const ui = createUIManager();
+  const ui = createUIManager(state);
 
   const fetchAlbums = async (page = 1) => {
     state.setIsFetching(true);
