@@ -760,9 +760,17 @@ const createAppController = (): AppController => {
   const handleKeydown = (e: KeyboardEvent) => {
     const target = e.target as HTMLElement;
     const tag = target.tagName.toLowerCase();
-    if (tag === "input" || tag === "textarea") return;
+    // Allow Escape to fall through even when an input/textarea is focused so
+    // it can always close the modal and dropdown at the document level.
+    // The search input's own keydown listener handles its Escape cleanup
+    // (blur + restore value) independently.
+    if ((tag === "input" || tag === "textarea") && e.key !== "Escape") return;
 
     switch (e.key.toLowerCase()) {
+      case "escape":
+        ui.closeModal();
+        ui.toggleDropdown(false);
+        break;
       case "e":
         nextAlbum();
         break;
@@ -830,12 +838,6 @@ const createAppController = (): AppController => {
 
     // Keyboard events
     document.addEventListener("keydown", handleKeydown);
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        ui.closeModal();
-        ui.toggleDropdown(false);
-      }
-    });
 
     // Search dropdown events
     const searchInput = ui.elements.genreSearch;
