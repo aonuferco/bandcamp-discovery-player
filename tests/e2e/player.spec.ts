@@ -19,11 +19,32 @@ test.describe('Bandcamp Discovery Player', () => {
     expect(secondTitle).not.toBe(firstTitle);
   });
 
+  test('genre URL param round-trip', async ({ page }) => {
+    await page.goto('/?genre=electronic&mode=hot');
+    await expect(page.locator('#title')).not.toBeEmpty();
+
+    // Assert the hot button has aria-pressed="true"
+    const hotBtn = page.locator('#hot-btn');
+    await expect(hotBtn).toHaveAttribute('aria-pressed', 'true');
+
+    // Assert the genre search input value is "electronic"
+    const genreSearch = page.locator('#genre-search');
+    await expect(genreSearch).toHaveValue('electronic');
+
+    // Press E and assert the album title changes
+    const firstTitle = await page.locator('#title').textContent();
+    await page.keyboard.press('e');
+    await page.waitForTimeout(1000);
+    
+    const secondTitle = await page.locator('#title').textContent();
+    expect(secondTitle).not.toBe(firstTitle);
+  });
+
   test('genre search filters dropdown', async ({ page }) => {
     await page.goto('/');
     await page.locator('#genre-search').click();
     await page.locator('#genre-search').fill('break');
-    await expect(page.locator('.genre-item').first()).toContainText('breakcore');
+    await expect(page.locator('.genre-item:not(.genre-item-all)').first()).toContainText('breakcore');
   });
 
   test('genre dropdown keyboard navigation', async ({ page }) => {
@@ -31,7 +52,8 @@ test.describe('Bandcamp Discovery Player', () => {
     await page.locator('#genre-search').focus();
     await page.locator('#genre-search').fill('rock');
     
-    // Press ArrowDown to select first item
+    // Press ArrowDown twice to select the first matched actual genre (skipping All Genres)
+    await page.keyboard.press('ArrowDown');
     await page.keyboard.press('ArrowDown');
     await expect(page.locator('.genre-item.highlighted')).toBeVisible();
     const highlightedText = await page.locator('.genre-item.highlighted').textContent();
