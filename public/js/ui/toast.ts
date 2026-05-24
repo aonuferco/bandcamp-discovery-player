@@ -30,11 +30,16 @@ export const createToastManager = (elements: ToastElements): ToastManager => {
 
     const toast = document.createElement("div");
     toast.className = `toast toast-${type}`;
-    toast.innerHTML = `
-      <div class="toast-content">
-        <span class="toast-message">${message}</span>
-      </div>
-    `;
+
+    const toastContent = document.createElement("div");
+    toastContent.className = "toast-content";
+
+    const toastMessage = document.createElement("span");
+    toastMessage.className = "toast-message";
+    toastMessage.textContent = message;
+
+    toastContent.appendChild(toastMessage);
+    toast.appendChild(toastContent);
 
     toastContainer.appendChild(toast);
 
