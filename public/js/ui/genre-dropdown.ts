@@ -10,7 +10,7 @@ export interface GenreDropdownManager {
   renderGenreDropdown(filter?: string): boolean;
   toggleDropdown(show: boolean): void;
   updateSearchInput(tag: string): void;
-  navigate(direction: 'up' | 'down'): void;
+  navigate(direction: "up" | "down"): void;
   getHighlightedGenre(): string | null;
   resetHighlight(): void;
 }
@@ -23,14 +23,16 @@ export interface GenreDropdownManager {
  */
 export const createGenreDropdownManager = (
   elements: GenreDropdownElements,
-  getCurrentTag: () => string
+  getCurrentTag: () => string,
 ): GenreDropdownManager => {
   const { genreSearch, genreDropdown } = elements;
   let highlightedIndex = -1;
 
   const getItems = (): HTMLElement[] => {
     if (!genreDropdown) return [];
-    return Array.from(genreDropdown.querySelectorAll(".genre-item:not(.no-results)")) as HTMLElement[];
+    return Array.from(
+      genreDropdown.querySelectorAll(".genre-item:not(.no-results)"),
+    ) as HTMLElement[];
   };
 
   const applyHighlight = (items: HTMLElement[]) => {
@@ -51,7 +53,7 @@ export const createGenreDropdownManager = (
    */
   const renderGenreDropdown = (filter: string = ""): boolean => {
     if (!genreDropdown) return false;
-    
+
     genreDropdown.innerHTML = "";
 
     const filterLower = filter.toLowerCase();
@@ -69,7 +71,7 @@ export const createGenreDropdownManager = (
         div.classList.add("selected");
       }
       div.textContent = genre;
-      div.dataset['genre'] = genre;
+      div.dataset["genre"] = genre;
       return div;
     };
 
@@ -83,13 +85,13 @@ export const createGenreDropdownManager = (
       allItem.classList.add("selected");
     }
     allItem.textContent = "✦ All Genres";
-    allItem.dataset['genre'] = "";
+    allItem.dataset["genre"] = "";
     genreDropdown.appendChild(allItem);
 
     // If filtering, show flat list
     if (filter) {
       const matches = ALL_GENRES.filter((g) =>
-        g.toLowerCase().includes(filterLower)
+        g.toLowerCase().includes(filterLower),
       );
 
       if (matches.length > 0) {
@@ -133,20 +135,26 @@ export const createGenreDropdownManager = (
   const resetHighlight = () => {
     highlightedIndex = -1;
     const items = getItems();
-    items.forEach(item => item.classList.remove("highlighted"));
+    items.forEach((item) => item.classList.remove("highlighted"));
   };
 
   /**
    * Navigate through the dropdown items
    * @param direction
    */
-  const navigate = (direction: 'up' | 'down') => {
+  const navigate = (direction: "up" | "down") => {
     const items = getItems();
     if (items.length === 0) return;
 
-    if (direction === 'down') {
+    if (direction === "down") {
       highlightedIndex = Math.min(highlightedIndex + 1, items.length - 1);
     } else {
+      if (highlightedIndex === 0) {
+        // Already at top — escape back to the input
+        resetHighlight();
+        genreSearch?.focus();
+        return;
+      }
       highlightedIndex = Math.max(highlightedIndex - 1, 0);
     }
 
@@ -160,7 +168,7 @@ export const createGenreDropdownManager = (
   const getHighlightedGenre = (): string | null => {
     const items = getItems();
     if (highlightedIndex >= 0 && highlightedIndex < items.length) {
-      const genre = (items[highlightedIndex] as HTMLElement).dataset['genre'];
+      const genre = (items[highlightedIndex] as HTMLElement).dataset["genre"];
       // genre may be "" for the All Genres item — return it as-is (not null)
       return genre !== undefined ? genre : null;
     }
