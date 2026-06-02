@@ -130,15 +130,26 @@ export const GENRES = {
   ],
 } as const;
 
+// Flattened and deduplicated across all families. Cross-family duplicates are
+// intentional — see THEME_FAMILY_PRIORITY in getGenreFamily() for theming resolution.
 export const ALL_GENRES = [...new Set(Object.values(GENRES).flat())].sort();
 
-export type Genre = typeof ALL_GENRES[number];
+export type Genre = (typeof ALL_GENRES)[number];
 
 // Priority-ordered lookup for theming. ELECTRONIC is first so the slug
 // "electronic" (which also appears under AMBIENT) resolves to the right family.
 const THEME_FAMILY_PRIORITY: Array<keyof typeof GENRES> = [
-  'ELECTRONIC', 'METAL', 'PUNK', 'JAZZ', 'FOLK', 'POP',
-  'ROCK', 'ALTERNATIVE', 'EXPERIMENTAL', 'AMBIENT', 'HIP-HOP',
+  "ELECTRONIC",
+  "METAL",
+  "PUNK",
+  "JAZZ",
+  "FOLK",
+  "POP",
+  "ROCK",
+  "ALTERNATIVE",
+  "EXPERIMENTAL",
+  "AMBIENT",
+  "HIP-HOP",
 ];
 
 export function getGenreFamily(genre: string): string | undefined {
@@ -150,6 +161,18 @@ export function getGenreFamily(genre: string): string | undefined {
   return undefined;
 }
 
+/**
+ * Returns true if `genre` is a known genre slug.
+ *
+ * Note: some slugs appear in multiple families (e.g. "hardcore" in METAL,
+ * PUNK, and HIP-HOP; "noise" in AMBIENT and EXPERIMENTAL; "drone" in AMBIENT
+ * and EXPERIMENTAL; "dream-pop" in ALTERNATIVE and POP). ALL_GENRES deduplicates
+ * them via Set, so each slug is valid regardless of which family it came from.
+ * For theming, the winning family is determined by THEME_FAMILY_PRIORITY order
+ * in getGenreFamily() — e.g. "hardcore" themes as METAL, not PUNK or HIP-HOP.
+ */
 export function isValidGenre(genre: string | null | undefined): genre is Genre {
-  return genre !== null && genre !== undefined && ALL_GENRES.includes(genre as Genre);
+  return (
+    genre !== null && genre !== undefined && ALL_GENRES.includes(genre as Genre)
+  );
 }
