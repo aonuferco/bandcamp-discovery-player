@@ -125,6 +125,17 @@ export const createGenreDropdownManager = (
       hasResults = true;
     }
 
+    const selectedItem = genreDropdown.querySelector(".selected") as HTMLElement | null;
+    if (selectedItem) {
+      if (typeof requestAnimationFrame !== "undefined") {
+        requestAnimationFrame(() => {
+          selectedItem.scrollIntoView({ block: "nearest" });
+        });
+      } else {
+        selectedItem.scrollIntoView({ block: "nearest" });
+      }
+    }
+
     highlightedIndex = -1;
     return hasResults;
   };
