@@ -91,10 +91,14 @@ export const createModalManager = (elements: ModalElements): ModalManager => {
     helpModal.removeEventListener("keydown", trapFocus as EventListener);
 
     // Restore focus to the previously focused element
-    if (previouslyFocusedElement && (previouslyFocusedElement as HTMLElement).focus) {
+    if (
+      previouslyFocusedElement &&
+      document.contains(previouslyFocusedElement) &&
+      (previouslyFocusedElement as HTMLElement).focus
+    ) {
       (previouslyFocusedElement as HTMLElement).focus();
-      previouslyFocusedElement = null;
     }
+    previouslyFocusedElement = null;
   };
 
   return {
