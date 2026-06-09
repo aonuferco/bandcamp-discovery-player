@@ -41,6 +41,13 @@ export const createToastManager = (elements: ToastElements): ToastManager => {
     toastContent.appendChild(toastMessage);
     toast.appendChild(toastContent);
 
+    if (toastContainer.children.length >= 3) {
+      const oldest = toastContainer.firstElementChild;
+      if (oldest) {
+        toastContainer.removeChild(oldest);
+      }
+    }
+
     toastContainer.appendChild(toast);
 
     setTimeout(() => toast.classList.add("show"), 10);
