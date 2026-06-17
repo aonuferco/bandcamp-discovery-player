@@ -31,17 +31,17 @@ export function isBandcampAlbumItem(item: unknown): item is BandcampAlbumItem {
     return false;
   }
   
-  if (o['album_artist'] !== undefined && typeof o['album_artist'] !== "string") return false;
-  if (o['label_name'] !== undefined && typeof o['label_name'] !== "string") return false;
-  if (o['track_count'] !== undefined && typeof o['track_count'] !== "number") return false;
-  if (o['release_date'] !== undefined && typeof o['release_date'] !== "string") return false;
+  if (o['album_artist'] !== undefined && o['album_artist'] !== null && typeof o['album_artist'] !== "string") return false;
+  if (o['label_name'] !== undefined && o['label_name'] !== null && typeof o['label_name'] !== "string") return false;
+  if (o['track_count'] !== undefined && o['track_count'] !== null && typeof o['track_count'] !== "number") return false;
+  if (o['release_date'] !== undefined && o['release_date'] !== null && typeof o['release_date'] !== "string") return false;
   
   if (o['featured_track'] !== undefined && o['featured_track'] !== null) {
     const ft = o['featured_track'] as Record<string, unknown>;
     if (typeof ft !== "object") return false;
     if (typeof ft['title'] !== "string") return false;
     if (typeof ft['duration'] !== "number") return false;
-    if (ft['stream_url'] !== undefined && typeof ft['stream_url'] !== "string") return false;
+    if (ft['stream_url'] !== undefined && ft['stream_url'] !== null && typeof ft['stream_url'] !== "string") return false;
   }
   
   return true;
@@ -59,7 +59,15 @@ export function isBandcampApiResponse(data: unknown): data is BandcampApiRespons
     return false;
   }
   
-  return (data as { results: unknown[] }).results.every(isBandcampAlbumItem);
+  const results = (data as { results: unknown[] }).results;
+  return results.every((item) => {
+    if (typeof item !== "object" || item === null) return false;
+    const o = item as Record<string, unknown>;
+    if (o['result_type'] === "a") {
+      return isBandcampAlbumItem(item);
+    }
+    return typeof o['result_type'] === "string";
+  });
 }
 
 // In-memory cache (in production, consider Redis or similar)

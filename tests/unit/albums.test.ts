@@ -41,6 +41,44 @@ describe('isBandcampApiResponse', () => {
   it('rejects non-array results', () => {
     expect(isBandcampApiResponse({ results: "string", cursor: "x" })).toBe(false);
   });
+
+  it('accepts responses with mixed result_type (albums and songs)', () => {
+    const response = {
+      results: [
+        {
+          id: 123,
+          title: 'Album 1',
+          band_name: 'Band 1',
+          primary_image: { image_id: 456 },
+          item_url: 'https://example.com/album',
+          result_type: 'a'
+        },
+        {
+          id: 789,
+          result_type: 's'
+        }
+      ],
+      cursor: "abc"
+    };
+    expect(isBandcampApiResponse(response)).toBe(true);
+  });
+
+  it('rejects response if album item fails validation', () => {
+    const response = {
+      results: [
+        {
+          id: 123,
+          title: 'Album 1',
+          band_name: 'Band 1',
+          primary_image: {},
+          item_url: 'https://example.com/album',
+          result_type: 'a'
+        }
+      ],
+      cursor: "abc"
+    };
+    expect(isBandcampApiResponse(response)).toBe(false);
+  });
 });
 
 describe('transformAlbumData', () => {
@@ -124,6 +162,23 @@ describe('isBandcampAlbumItem', () => {
       primary_image: { image_id: 456 },
       item_url: 'https://example.com',
       result_type: 'a'
+    };
+    expect(isBandcampAlbumItem(item)).toBe(true);
+  });
+
+  it('accepts album item with null fields', () => {
+    const item = {
+      id: 123,
+      title: 'Valid Title',
+      band_name: 'Valid Band',
+      primary_image: { image_id: 456 },
+      item_url: 'https://example.com',
+      result_type: 'a',
+      album_artist: null,
+      label_name: null,
+      track_count: null,
+      release_date: null,
+      featured_track: null
     };
     expect(isBandcampAlbumItem(item)).toBe(true);
   });
