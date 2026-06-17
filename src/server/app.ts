@@ -4,16 +4,22 @@ import express, {
   NextFunction,
   ErrorRequestHandler,
 } from "express";
-import cors from "cors";
 import albumsRouter from "./routes/albums.js";
 import { staticMiddleware } from "./middleware/static.js";
 import type { HealthCheckResponse, ApiErrorResponse } from "./types.js";
 import { PORT } from "./config.js";
+import {
+  corsMiddleware,
+  securityHeadersMiddleware,
+  rateLimitMiddleware,
+} from "./middleware/security.js";
 
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(corsMiddleware);
+app.use(securityHeadersMiddleware);
+app.use("/api", rateLimitMiddleware);
 app.use(staticMiddleware(express));
 
 // Debugging/Logging middleware
@@ -38,6 +44,7 @@ const errorHandler: ErrorRequestHandler = (
   err: Error,
   _req: Request,
   res: Response<ApiErrorResponse>,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _next: NextFunction
 ): void => {
   console.error("Unhandled error:", err);

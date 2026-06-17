@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { isBandcampApiResponse, transformAlbumData, getApiBody } from '../../src/server/routes/albums.js';
+import {
+  isBandcampApiResponse,
+  transformAlbumData,
+  getApiBody,
+  isBandcampAlbumItem,
+} from '../../src/server/routes/albums.js';
+import { validateQuery, albumsQuerySchema } from '../../src/server/middleware/validate.js';
 
 describe('getApiBody', () => {
   it('returns correct body for "new" slice', () => {
@@ -106,5 +112,148 @@ describe('transformAlbumData', () => {
     const result = transformAlbumData(input);
     expect(result.stream_url).toBe('');
     expect(result.featured_track).toBe(null);
+  });
+});
+
+describe('isBandcampAlbumItem', () => {
+  it('accepts correct album item', () => {
+    const item = {
+      id: 123,
+      title: 'Valid Title',
+      band_name: 'Valid Band',
+      primary_image: { image_id: 456 },
+      item_url: 'https://example.com',
+      result_type: 'a'
+    };
+    expect(isBandcampAlbumItem(item)).toBe(true);
+  });
+
+  it('rejects item with missing primary_image image_id', () => {
+    const item = {
+      id: 123,
+      title: 'Valid Title',
+      band_name: 'Valid Band',
+      primary_image: {},
+      item_url: 'https://example.com',
+      result_type: 'a'
+    };
+    expect(isBandcampAlbumItem(item)).toBe(false);
+  });
+
+  it('rejects item with non-number id', () => {
+    const item = {
+      id: '123',
+      title: 'Valid Title',
+      band_name: 'Valid Band',
+      primary_image: { image_id: 456 },
+      item_url: 'https://example.com',
+      result_type: 'a'
+    };
+    expect(isBandcampAlbumItem(item)).toBe(false);
+  });
+});
+
+describe('validateQuery', () => {
+  it('allows valid parameters', () => {
+    const middleware = validateQuery(albumsQuerySchema);
+    const req = {
+      query: {
+        page: '2',
+        slice: 'hot',
+        tag: 'synthwave'
+      }
+    } as any;
+    
+    let nextCalled = false;
+    const next = () => { nextCalled = true; };
+    const res = {
+      status: () => res,
+      json: () => res
+    } as any;
+
+    middleware(req, res, next);
+    expect(nextCalled).toBe(true);
+    expect(req.query.page).toBe('2');
+    expect(req.query.tag).toBe('synthwave');
+  });
+
+  it('rejects invalid page', () => {
+    const middleware = validateQuery(albumsQuerySchema);
+    const req = {
+      query: {
+        page: '-1'
+      }
+    } as any;
+    
+    let nextCalled = false;
+    const next = () => { nextCalled = true; };
+    
+    let statusValue = 0;
+    let jsonValue: any = null;
+    const res = {
+      status: (code: number) => {
+        statusValue = code;
+        return res;
+      },
+      json: (data: any) => {
+        jsonValue = data;
+        return res;
+      }
+    } as any;
+
+    middleware(req, res, next);
+    expect(nextCalled).toBe(false);
+    expect(statusValue).toBe(400);
+    expect(jsonValue.error).toContain('Invalid page');
+  });
+
+  it('rejects invalid slice', () => {
+    const middleware = validateQuery(albumsQuerySchema);
+    const req = {
+      query: {
+        slice: 'invalid'
+      }
+    } as any;
+    
+    let nextCalled = false;
+    const next = () => { nextCalled = true; };
+    
+    let statusValue = 0;
+    const res = {
+      status: (code: number) => {
+        statusValue = code;
+        return res;
+      },
+      json: () => res
+    } as any;
+
+    middleware(req, res, next);
+    expect(nextCalled).toBe(false);
+    expect(statusValue).toBe(400);
+  });
+
+  it('rejects invalid tag containing special characters', () => {
+    const middleware = validateQuery(albumsQuerySchema);
+    const req = {
+      query: {
+        tag: 'synth_wave!'
+      }
+    } as any;
+    
+    let nextCalled = false;
+    const next = () => { nextCalled = true; };
+    
+    let statusValue = 0;
+    const res = {
+      status: (code: number) => {
+        statusValue = code;
+        return res;
+      },
+      json: () => res
+    } as any;
+
+    middleware(req, res, next);
+    expect(nextCalled).toBe(false);
+    expect(statusValue).toBe(400);
   });
 });
