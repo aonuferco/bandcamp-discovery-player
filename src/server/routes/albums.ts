@@ -17,7 +17,7 @@ export function isBandcampAlbumItem(item: unknown): item is BandcampAlbumItem {
   
   const o = item as Record<string, unknown>;
   
-  if (typeof o['id'] !== "number") return false;
+  if (typeof o['id'] !== "number" && typeof o['item_id'] !== "number") return false;
   if (typeof o['title'] !== "string") return false;
   if (typeof o['band_name'] !== "string") return false;
   if (typeof o['item_url'] !== "string") return false;
@@ -99,7 +99,7 @@ export const getApiBody = (
 
 export function transformAlbumData(item: BandcampAlbumItem): Album {
   return {
-    id: item.id,
+    id: item.id || item.item_id || 0,
     title: item.title,
     artist: item.album_artist || item.band_name,
     img: `https://f4.bcbits.com/img/a${item.primary_image.image_id}_10.jpg`,

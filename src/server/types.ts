@@ -6,7 +6,8 @@
  * Represents a single album/item in Bandcamp's API response.
  */
 export interface BandcampAlbumItem {
-  id: number;
+  id?: number;
+  item_id?: number;
   title: string;
   album_artist?: string;
   band_name: string;
