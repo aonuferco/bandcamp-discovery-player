@@ -8,18 +8,66 @@ import {
   BandcampApiResponse,
 } from "../types.js";
 import { BANDCAMP_API_URL, API_HEADERS, REQUEST_TIMEOUT_MS } from "../config.js";
+import { validateQuery, albumsQuerySchema } from "../middleware/validate.js";
 
 const router = express.Router();
 
+export function isBandcampAlbumItem(item: unknown): item is BandcampAlbumItem {
+  if (typeof item !== "object" || item === null) return false;
+  
+  const o = item as Record<string, unknown>;
+  
+  if (typeof o['id'] !== "number" && typeof o['item_id'] !== "number") return false;
+  if (typeof o['title'] !== "string") return false;
+  if (typeof o['band_name'] !== "string") return false;
+  if (typeof o['item_url'] !== "string") return false;
+  if (typeof o['result_type'] !== "string") return false;
+  
+  if (
+    typeof o['primary_image'] !== "object" ||
+    o['primary_image'] === null ||
+    typeof (o['primary_image'] as Record<string, unknown>)['image_id'] !== "number"
+  ) {
+    return false;
+  }
+  
+  if (o['album_artist'] !== undefined && o['album_artist'] !== null && typeof o['album_artist'] !== "string") return false;
+  if (o['label_name'] !== undefined && o['label_name'] !== null && typeof o['label_name'] !== "string") return false;
+  if (o['track_count'] !== undefined && o['track_count'] !== null && typeof o['track_count'] !== "number") return false;
+  if (o['release_date'] !== undefined && o['release_date'] !== null && typeof o['release_date'] !== "string") return false;
+  
+  if (o['featured_track'] !== undefined && o['featured_track'] !== null) {
+    const ft = o['featured_track'] as Record<string, unknown>;
+    if (typeof ft !== "object") return false;
+    if (typeof ft['title'] !== "string") return false;
+    if (typeof ft['duration'] !== "number") return false;
+    if (ft['stream_url'] !== undefined && ft['stream_url'] !== null && typeof ft['stream_url'] !== "string") return false;
+  }
+  
+  return true;
+}
+
 export function isBandcampApiResponse(data: unknown): data is BandcampApiResponse {
-  return (
-    typeof data === "object" &&
-    data !== null &&
-    "results" in data &&
-    Array.isArray((data as { results: unknown }).results) &&
-    "cursor" in data &&
-    typeof (data as { cursor: unknown }).cursor === "string"
-  );
+  if (
+    typeof data !== "object" ||
+    data === null ||
+    !("results" in data) ||
+    !Array.isArray((data as { results: unknown }).results) ||
+    !("cursor" in data) ||
+    typeof (data as { cursor: unknown }).cursor !== "string"
+  ) {
+    return false;
+  }
+  
+  const results = (data as { results: unknown[] }).results;
+  return results.every((item) => {
+    if (typeof item !== "object" || item === null) return false;
+    const o = item as Record<string, unknown>;
+    if (o['result_type'] === "a") {
+      return isBandcampAlbumItem(item);
+    }
+    return typeof o['result_type'] === "string";
+  });
 }
 
 // In-memory cache (in production, consider Redis or similar)
@@ -51,7 +99,7 @@ export const getApiBody = (
 
 export function transformAlbumData(item: BandcampAlbumItem): Album {
   return {
-    id: item.id,
+    id: item.id || item.item_id || 0,
     title: item.title,
     artist: item.album_artist || item.band_name,
     img: `https://f4.bcbits.com/img/a${item.primary_image.image_id}_10.jpg`,
@@ -112,44 +160,8 @@ async function fetchFromBandcamp(
 
 router.get(
   "/albums",
+  validateQuery(albumsQuerySchema),
   async (req: Request<object, object, object, AlbumsQueryParams>, res: Response) => {
-    // Validate page parameter
-    const pageParam = req.query.page;
-    if (pageParam !== undefined) {
-      const pageNum = parseInt(pageParam, 10);
-      if (
-        isNaN(pageNum) ||
-        pageNum < 1 ||
-        !Number.isInteger(Number(pageParam))
-      ) {
-        return res
-          .status(400)
-          .json({ error: "Invalid page parameter. Must be a positive integer." });
-      }
-    }
-
-    // Validate slice parameter
-    const sliceParam = req.query.slice;
-    const validSlices: readonly string[] = ["new", "hot"];
-    if (sliceParam !== undefined && !validSlices.includes(sliceParam)) {
-      return res
-        .status(400)
-        .json({ error: "Invalid slice parameter. Must be 'new' or 'hot'." });
-    }
-
-    // Sanitize tag parameter
-    let tagParam = req.query.tag;
-    if (tagParam !== undefined) {
-      tagParam = tagParam.trim().toLowerCase().slice(0, 50);
-      const tagPattern = /^[a-z0-9\-\s]*$/;
-      if (!tagPattern.test(tagParam)) {
-        return res.status(400).json({
-          error:
-            "Invalid tag parameter. Only letters, numbers, hyphens, and spaces allowed.",
-        });
-      }
-    }
-
     if (isFetching) {
       return res.status(429).json({ error: "Already fetching" });
     }
@@ -157,6 +169,10 @@ router.get(
     isFetching = true;
 
     try {
+      const pageParam = req.query.page;
+      const sliceParam = req.query.slice;
+      const tagParam = req.query.tag;
+
       const page = pageParam !== undefined ? parseInt(pageParam, 10) : 1;
       const slice = sliceParam || "new";
       const tag = tagParam || null;
@@ -184,11 +200,7 @@ router.get(
     } catch (error) {
       console.error("Error fetching albums:", error);
       res.status(500).json({
-        error: "Failed to load albums",
-        details:
-          process.env['NODE_ENV'] === "development" && error instanceof Error
-            ? error.message
-            : undefined,
+        error: "Failed to fetch albums",
       });
     } finally {
       isFetching = false;

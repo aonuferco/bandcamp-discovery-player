@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { isBandcampApiResponse, transformAlbumData, getApiBody } from '../../src/server/routes/albums.js';
+import {
+  isBandcampApiResponse,
+  transformAlbumData,
+  getApiBody,
+  isBandcampAlbumItem,
+} from '../../src/server/routes/albums.js';
+import { validateQuery, albumsQuerySchema } from '../../src/server/middleware/validate.js';
 
 describe('getApiBody', () => {
   it('returns correct body for "new" slice', () => {
@@ -34,6 +40,44 @@ describe('isBandcampApiResponse', () => {
 
   it('rejects non-array results', () => {
     expect(isBandcampApiResponse({ results: "string", cursor: "x" })).toBe(false);
+  });
+
+  it('accepts responses with mixed result_type (albums and songs)', () => {
+    const response = {
+      results: [
+        {
+          id: 123,
+          title: 'Album 1',
+          band_name: 'Band 1',
+          primary_image: { image_id: 456 },
+          item_url: 'https://example.com/album',
+          result_type: 'a'
+        },
+        {
+          id: 789,
+          result_type: 's'
+        }
+      ],
+      cursor: "abc"
+    };
+    expect(isBandcampApiResponse(response)).toBe(true);
+  });
+
+  it('rejects response if album item fails validation', () => {
+    const response = {
+      results: [
+        {
+          id: 123,
+          title: 'Album 1',
+          band_name: 'Band 1',
+          primary_image: {},
+          item_url: 'https://example.com/album',
+          result_type: 'a'
+        }
+      ],
+      cursor: "abc"
+    };
+    expect(isBandcampApiResponse(response)).toBe(false);
   });
 });
 
@@ -106,5 +150,165 @@ describe('transformAlbumData', () => {
     const result = transformAlbumData(input);
     expect(result.stream_url).toBe('');
     expect(result.featured_track).toBe(null);
+  });
+});
+
+describe('isBandcampAlbumItem', () => {
+  it('accepts correct album item', () => {
+    const item = {
+      id: 123,
+      title: 'Valid Title',
+      band_name: 'Valid Band',
+      primary_image: { image_id: 456 },
+      item_url: 'https://example.com',
+      result_type: 'a'
+    };
+    expect(isBandcampAlbumItem(item)).toBe(true);
+  });
+
+  it('accepts album item with null fields', () => {
+    const item = {
+      id: 123,
+      title: 'Valid Title',
+      band_name: 'Valid Band',
+      primary_image: { image_id: 456 },
+      item_url: 'https://example.com',
+      result_type: 'a',
+      album_artist: null,
+      label_name: null,
+      track_count: null,
+      release_date: null,
+      featured_track: null
+    };
+    expect(isBandcampAlbumItem(item)).toBe(true);
+  });
+
+  it('rejects item with missing primary_image image_id', () => {
+    const item = {
+      id: 123,
+      title: 'Valid Title',
+      band_name: 'Valid Band',
+      primary_image: {},
+      item_url: 'https://example.com',
+      result_type: 'a'
+    };
+    expect(isBandcampAlbumItem(item)).toBe(false);
+  });
+
+  it('rejects item with non-number id', () => {
+    const item = {
+      id: '123',
+      title: 'Valid Title',
+      band_name: 'Valid Band',
+      primary_image: { image_id: 456 },
+      item_url: 'https://example.com',
+      result_type: 'a'
+    };
+    expect(isBandcampAlbumItem(item)).toBe(false);
+  });
+});
+
+describe('validateQuery', () => {
+  it('allows valid parameters', () => {
+    const middleware = validateQuery(albumsQuerySchema);
+    const req = {
+      query: {
+        page: '2',
+        slice: 'hot',
+        tag: 'synthwave'
+      }
+    } as any;
+    
+    let nextCalled = false;
+    const next = () => { nextCalled = true; };
+    const res = {
+      status: () => res,
+      json: () => res
+    } as any;
+
+    middleware(req, res, next);
+    expect(nextCalled).toBe(true);
+    expect(req.query.page).toBe('2');
+    expect(req.query.tag).toBe('synthwave');
+  });
+
+  it('rejects invalid page', () => {
+    const middleware = validateQuery(albumsQuerySchema);
+    const req = {
+      query: {
+        page: '-1'
+      }
+    } as any;
+    
+    let nextCalled = false;
+    const next = () => { nextCalled = true; };
+    
+    let statusValue = 0;
+    let jsonValue: any = null;
+    const res = {
+      status: (code: number) => {
+        statusValue = code;
+        return res;
+      },
+      json: (data: any) => {
+        jsonValue = data;
+        return res;
+      }
+    } as any;
+
+    middleware(req, res, next);
+    expect(nextCalled).toBe(false);
+    expect(statusValue).toBe(400);
+    expect(jsonValue.error).toContain('Invalid page');
+  });
+
+  it('rejects invalid slice', () => {
+    const middleware = validateQuery(albumsQuerySchema);
+    const req = {
+      query: {
+        slice: 'invalid'
+      }
+    } as any;
+    
+    let nextCalled = false;
+    const next = () => { nextCalled = true; };
+    
+    let statusValue = 0;
+    const res = {
+      status: (code: number) => {
+        statusValue = code;
+        return res;
+      },
+      json: () => res
+    } as any;
+
+    middleware(req, res, next);
+    expect(nextCalled).toBe(false);
+    expect(statusValue).toBe(400);
+  });
+
+  it('rejects invalid tag containing special characters', () => {
+    const middleware = validateQuery(albumsQuerySchema);
+    const req = {
+      query: {
+        tag: 'synth_wave!'
+      }
+    } as any;
+    
+    let nextCalled = false;
+    const next = () => { nextCalled = true; };
+    
+    let statusValue = 0;
+    const res = {
+      status: (code: number) => {
+        statusValue = code;
+        return res;
+      },
+      json: () => res
+    } as any;
+
+    middleware(req, res, next);
+    expect(nextCalled).toBe(false);
+    expect(statusValue).toBe(400);
   });
 });
