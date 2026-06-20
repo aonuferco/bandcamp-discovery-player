@@ -205,9 +205,12 @@ const createUIManager = (state: AppState): UIManager => {
     tempImg.src = album.img;
 
     if (elements.title) {
-      elements.title.innerHTML = `<span class="truncate-text">${album.title}</span>`;
-      const span = elements.title.querySelector('.truncate-text') as HTMLElement;
-      if (span && span.scrollWidth > span.clientWidth) {
+      elements.title.textContent = "";
+      const span = document.createElement("span");
+      span.className = "truncate-text";
+      span.textContent = album.title;
+      elements.title.appendChild(span);
+      if (span.scrollWidth > span.clientWidth) {
         elements.title.setAttribute('data-tooltip', album.title);
       } else {
         elements.title.removeAttribute('data-tooltip');
@@ -215,9 +218,12 @@ const createUIManager = (state: AppState): UIManager => {
     }
     if (elements.artist) {
       const artistText = `by ${album.artist}`;
-      elements.artist.innerHTML = `<span class="truncate-text">${artistText}</span>`;
-      const span = elements.artist.querySelector('.truncate-text') as HTMLElement;
-      if (span && span.scrollWidth > span.clientWidth) {
+      elements.artist.textContent = "";
+      const span = document.createElement("span");
+      span.className = "truncate-text";
+      span.textContent = artistText;
+      elements.artist.appendChild(span);
+      if (span.scrollWidth > span.clientWidth) {
         elements.artist.setAttribute('data-tooltip', album.artist);
       } else {
         elements.artist.removeAttribute('data-tooltip');
@@ -235,16 +241,22 @@ const createUIManager = (state: AppState): UIManager => {
     if (!elements.trackInfo) return;
 
     if (!album.featured_track) {
-      elements.trackInfo.innerHTML = "";
+      elements.trackInfo.textContent = "";
       elements.trackInfo.removeAttribute('data-tooltip');
       return;
     }
 
     const trackText = album.featured_track.title;
-    elements.trackInfo.innerHTML = `<span class="truncate-text"><strong>Featured Track:</strong> ${trackText}</span>`;
+    elements.trackInfo.textContent = "";
+    const span = document.createElement("span");
+    span.className = "truncate-text";
+    const strong = document.createElement("strong");
+    strong.textContent = "Featured Track: ";
+    span.appendChild(strong);
+    span.appendChild(document.createTextNode(trackText));
+    elements.trackInfo.appendChild(span);
     
-    const span = elements.trackInfo.querySelector('.truncate-text') as HTMLElement;
-    if (span && span.scrollWidth > span.clientWidth) {
+    if (span.scrollWidth > span.clientWidth) {
       elements.trackInfo.setAttribute('data-tooltip', trackText);
     } else {
       elements.trackInfo.removeAttribute('data-tooltip');
@@ -254,14 +266,21 @@ const createUIManager = (state: AppState): UIManager => {
   const updateLabelInfo = (album: Album) => {
     if (!elements.labelInfo) return;
     if (!album.band_name) {
-      elements.labelInfo.innerHTML = "";
+      elements.labelInfo.textContent = "";
       elements.labelInfo.removeAttribute('data-tooltip');
       return;
     }
     
-    elements.labelInfo.innerHTML = `<span class="truncate-text"><strong>Label:</strong> ${album.band_name}</span>`;
-    const span = elements.labelInfo.querySelector('.truncate-text') as HTMLElement;
-    if (span && span.scrollWidth > span.clientWidth) {
+    elements.labelInfo.textContent = "";
+    const span = document.createElement("span");
+    span.className = "truncate-text";
+    const strong = document.createElement("strong");
+    strong.textContent = "Label: ";
+    span.appendChild(strong);
+    span.appendChild(document.createTextNode(album.band_name));
+    elements.labelInfo.appendChild(span);
+    
+    if (span.scrollWidth > span.clientWidth) {
       elements.labelInfo.setAttribute('data-tooltip', album.band_name);
     } else {
       elements.labelInfo.removeAttribute('data-tooltip');
@@ -270,9 +289,13 @@ const createUIManager = (state: AppState): UIManager => {
 
   const updateTrackCount = (album: Album) => {
     if (!elements.trackCount) return;
-    elements.trackCount.innerHTML = album.track_count && album.track_count > 0
-      ? `<strong>Track Count:</strong> ${album.track_count}`
-      : "";
+    elements.trackCount.textContent = "";
+    if (album.track_count && album.track_count > 0) {
+      const strong = document.createElement("strong");
+      strong.textContent = "Track Count: ";
+      elements.trackCount.appendChild(strong);
+      elements.trackCount.appendChild(document.createTextNode(album.track_count.toString()));
+    }
   };
 
   const updateReleaseDate = (album: Album) => {
@@ -284,9 +307,13 @@ const createUIManager = (state: AppState): UIManager => {
         month: "short",
         day: "numeric",
       });
-      elements.releaseDate.innerHTML = `<strong>Release Date:</strong> ${formattedDate}`;
+      elements.releaseDate.textContent = "";
+      const strong = document.createElement("strong");
+      strong.textContent = "Release Date: ";
+      elements.releaseDate.appendChild(strong);
+      elements.releaseDate.appendChild(document.createTextNode(formattedDate));
     } else {
-      elements.releaseDate.innerHTML = "";
+      elements.releaseDate.textContent = "";
     }
   };
 
@@ -317,7 +344,7 @@ const createUIManager = (state: AppState): UIManager => {
         saveVolume(audioEl!.volume);
       });
 
-      elements.player.innerHTML = "";
+      elements.player.textContent = "";
       elements.player.appendChild(audioEl);
     }
 
@@ -715,8 +742,9 @@ const createAppController = (): AppController => {
       try {
         const url = new URL(album.link);
         if (
-          url.hostname === "bandcamp.com" ||
-          url.hostname.endsWith(".bandcamp.com")
+          url.protocol === "https:" &&
+          (url.hostname === "bandcamp.com" ||
+          url.hostname.endsWith(".bandcamp.com"))
         ) {
           window.open(album.link, "_blank");
           ui.showToast("Opening album page in new tab", "success");
