@@ -54,7 +54,7 @@ export const createGenreDropdownManager = (
   const renderGenreDropdown = (filter: string = ""): boolean => {
     if (!genreDropdown) return false;
 
-    genreDropdown.innerHTML = "";
+    genreDropdown.textContent = "";
 
     const filterLower = filter.toLowerCase();
     let hasResults = false;
