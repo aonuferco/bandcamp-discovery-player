@@ -129,7 +129,7 @@ async function fetchFromBandcamp(
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-  let response: Response;
+  let response: globalThis.Response;
   try {
     response = await fetch(BANDCAMP_API_URL, {
       method: "POST",
