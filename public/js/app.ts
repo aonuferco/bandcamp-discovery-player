@@ -343,6 +343,13 @@ const createUIManager = (state: AppState): UIManager => {
       audioEl.addEventListener("volumechange", () => {
         saveVolume(audioEl!.volume);
       });
+      audioEl.addEventListener("error", () => {
+        if (elements.trackInfo) {
+          elements.trackInfo.textContent = "Track unavailable";
+          elements.trackInfo.removeAttribute("data-tooltip");
+        }
+        toastManager.showToast("Track unavailable", "error");
+      });
 
       elements.player.textContent = "";
       elements.player.appendChild(audioEl);
@@ -595,14 +602,28 @@ const createAppController = (): AppController => {
     }
 
     try {
-      const data = await service.fetchAlbums(
+      const { data, error } = await service.fetchAlbums(
         page,
         state.getCurrentMode(),
         state.getCurrentTag()
       );
 
+      if (error) {
+        if (error.type === 'network') {
+          throw new Error("Network error. Please check your connection and try again.");
+        } else if (error.type === 'timeout') {
+          throw new Error("Request timed out. The server is taking too long to respond.");
+        } else if (error.type === 'http' && error.status === 400) {
+          throw new Error("Invalid request. Please try a different genre.");
+        } else if (error.type === 'http' && error.status === 502) {
+          throw new Error("Upstream service (Bandcamp) is temporarily unavailable.");
+        } else {
+          throw new Error(`Error loading albums: ${error.message}`);
+        }
+      }
+
       // Filter out albums with missing stream URLs
-      const validAlbums = data.filter((album) => {
+      const validAlbums = (data || []).filter((album) => {
         if (!album.stream_url) {
           console.warn("Skipping album with missing stream URL:", album.title);
           return false;
@@ -615,7 +636,7 @@ const createAppController = (): AppController => {
 
       // If no valid albums after filtering, show error
       if (validAlbums.length === 0 && state.getAlbums().length === 0) {
-        ui.showError("No playable albums found. Try a different genre.");
+        ui.showError(`No results found for "${state.getCurrentTag() || state.getCurrentMode()}". Try a different genre.`);
       }
     } catch (error: any) {
       console.error("Error fetching albums:", error);
@@ -986,6 +1007,18 @@ declare global {
 }
 
 if (typeof window !== 'undefined') {
+  window.addEventListener('error', (event) => {
+    if (window.appController?.ui) {
+      window.appController.ui.showToast(`An error occurred: ${event.message}`, 'error');
+    }
+  });
+
+  window.addEventListener('unhandledrejection', (event) => {
+    if (window.appController?.ui) {
+      window.appController.ui.showToast(`An error occurred: ${event.reason?.message || 'Unknown promise rejection'}`, 'error');
+    }
+  });
+
   (window as any).appState = null;
   (window as any).appController = null;
 }

@@ -1,4 +1,5 @@
 import express, { Request, Response } from "express";
+import crypto from "crypto";
 
 import {
   Album,
@@ -128,8 +129,9 @@ async function fetchFromBandcamp(
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
+  let response: Response;
   try {
-    const response = await fetch(BANDCAMP_API_URL, {
+    response = await fetch(BANDCAMP_API_URL, {
       method: "POST",
       headers: API_HEADERS,
       body: JSON.stringify({
@@ -138,24 +140,30 @@ async function fetchFromBandcamp(
       }),
       signal: controller.signal,
     });
-
-    if (!response.ok) {
-      throw new Error(`Bandcamp API error: ${response.status}`);
-    }
-
-    const data: unknown = await response.json();
-    if (!isBandcampApiResponse(data)) {
-      throw new Error("Invalid response structure from Bandcamp API");
-    }
-    return data;
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
-      throw new Error(`Request timed out after ${REQUEST_TIMEOUT_MS / 1000} seconds`);
+      throw new Error(`[TimeoutError] Request timed out after ${REQUEST_TIMEOUT_MS / 1000} seconds`);
     }
-    throw error;
+    throw new Error(`[NetworkError] Failed to connect to Bandcamp API: ${(error as Error).message}`);
   } finally {
     clearTimeout(timeoutId);
   }
+
+  if (!response.ok) {
+    throw new Error(`[HttpError] Bandcamp API responded with status: ${response.status}`);
+  }
+
+  let data: unknown;
+  try {
+    data = await response.json();
+  } catch (error) {
+    throw new Error(`[ParseError] Failed to parse Bandcamp API response: ${(error as Error).message}`);
+  }
+
+  if (!isBandcampApiResponse(data)) {
+    throw new Error("[ParseError] Invalid response structure from Bandcamp API");
+  }
+  return data;
 }
 
 router.get(
@@ -198,9 +206,36 @@ router.get(
 
       res.json(newAlbums);
     } catch (error) {
-      console.error("Error fetching albums:", error);
-      res.status(500).json({
+      const reqId = crypto.randomUUID();
+      const message = error instanceof Error ? error.message : String(error);
+      let category = "InternalError";
+      let status = 500;
+      
+      if (message.startsWith("[")) {
+        const endIdx = message.indexOf("]");
+        if (endIdx !== -1) {
+          category = message.substring(1, endIdx);
+          if (category === "HttpError") {
+            status = 502; // Upstream failure
+          } else if (category === "ParseError") {
+            status = 502; // Bad gateway / upstream returned garbage
+          } else if (category === "NetworkError" || category === "TimeoutError") {
+            status = 504; // Gateway timeout
+          }
+        }
+      }
+
+      console.error(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        reqId,
+        category,
+        message,
+        stack: error instanceof Error ? error.stack : undefined
+      }));
+
+      res.status(status).json({
         error: "Failed to fetch albums",
+        reqId,
       });
     } finally {
       isFetching = false;
