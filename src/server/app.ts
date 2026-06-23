@@ -39,23 +39,9 @@ app.get("/favicon.ico", (req: Request, res: Response): void => {
   res.status(204).end();
 });
 
+import { errorHandler } from "./middleware/error-handler.js";
+
 // Error handling middleware
-const errorHandler: ErrorRequestHandler = (
-  err: Error,
-  _req: Request,
-  res: Response<ApiErrorResponse>,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _next: NextFunction
-): void => {
-  console.error("Unhandled error:", err);
-  res.status(500).json({
-    error: "Internal server error",
-    details:
-      process.env['NODE_ENV'] === "development"
-        ? err.message
-        : "Something went wrong",
-  });
-};
 app.use(errorHandler);
 
 // 404 handler
