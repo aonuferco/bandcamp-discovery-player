@@ -11,13 +11,14 @@ export interface AlbumService {
   ): Promise<FetchResult>;
 }
 
-export function createAlbumService(): AlbumService {
+export function createAlbumService(baseUrl: string = ""): AlbumService {
   async function fetchAlbums(
     page: number = 1,
     mode: DiscoveryMode = "new",
     tag: string = "",
   ): Promise<FetchResult> {
     const tagParam = tag ? `&tag=${encodeURIComponent(tag)}` : "";
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10_000);
 
@@ -28,7 +29,7 @@ export function createAlbumService(): AlbumService {
     while (retries <= maxRetries) {
       try {
         response = await fetch(
-          `/api/albums?page=${page}&slice=${mode}${tagParam}`,
+          `${baseUrl}/api/albums?page=${page}&slice=${mode}${tagParam}`,
           { signal: controller.signal },
         );
         break;
