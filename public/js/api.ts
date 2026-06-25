@@ -59,7 +59,7 @@ export function createAlbumService(baseUrl: string = ""): AlbumService {
     try {
       const data: Album[] = await response.json();
       return { data, error: null };
-    } catch (err) {
+    } catch {
       return { data: null, error: { type: 'parse', message: "Failed to parse response" } };
     }
   }

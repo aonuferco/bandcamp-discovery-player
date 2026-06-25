@@ -2,7 +2,6 @@ import express, {
   Request,
   Response,
   NextFunction,
-  ErrorRequestHandler,
 } from "express";
 import albumsRouter from "./routes/albums.js";
 import { staticMiddleware } from "./middleware/static.js";
@@ -24,6 +23,7 @@ app.use(staticMiddleware(express));
 
 // Debugging/Logging middleware
 app.use((req: Request, res: Response, next: NextFunction): void => {
+  // eslint-disable-next-line no-console
   console.log(`${req.method} ${req.url}`);
   next();
 });

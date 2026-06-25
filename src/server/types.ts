@@ -64,11 +64,21 @@ export interface Album {
 // ============================================================================
 
 /**
+ * Slice configuration for Bandcamp API queries.
+ * - `"new"` / `"hot"` are the user-facing values accepted by our `/api/albums` endpoint.
+ * - `"top"` is an internal Bandcamp API value that `"hot"` maps to before the upstream request.
+ */
+export type SliceType = "new" | "hot" | "top";
+
+/** User-facing discovery mode values accepted by the `/api/albums` endpoint. */
+export type DiscoverySlice = "new" | "hot";
+
+/**
  * Query parameters accepted by the /api/albums endpoint.
  */
 export interface AlbumsQueryParams {
   page?: string;
-  slice?: "new" | "hot";
+  slice?: DiscoverySlice;
   tag?: string;
 }
 
@@ -79,10 +89,10 @@ export interface BandcampApiBody {
   category_id: number;
   tag_norm_names: string[];
   geoname_id: number;
-  time_facet_id: null;
+  time_facet_id: number | null;
   size: number;
   include_result_types: string[];
-  slice?: "new" | "top";
+  slice?: SliceType;
   cursor?: string;
 }
 

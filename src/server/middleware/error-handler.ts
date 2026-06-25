@@ -8,6 +8,7 @@ export const errorHandler: ErrorRequestHandler = (
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _next: NextFunction
 ): void => {
+  // eslint-disable-next-line no-console
   console.error(JSON.stringify({
     timestamp: new Date().toISOString(),
     category: "UnhandledError",

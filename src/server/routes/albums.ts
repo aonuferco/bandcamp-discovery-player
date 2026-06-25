@@ -76,10 +76,7 @@ let cachedAlbums: Album[] = [];
 let lastCursor = "*";
 let isFetching = false;
 
-export const getApiBody = (
-  slice: "new" | "hot" = "new",
-  tag: string | null = "breakcore"
-): BandcampApiBody => {
+export const getApiBody = (slice: "new" | "hot" = "new", tag: string | null = "breakcore"): BandcampApiBody => {
   const body: BandcampApiBody = {
     category_id: 0,
     tag_norm_names: tag ? [tag] : [],
@@ -225,6 +222,7 @@ router.get(
         }
       }
 
+      // eslint-disable-next-line no-console
       console.error(JSON.stringify({
         timestamp: new Date().toISOString(),
         reqId,

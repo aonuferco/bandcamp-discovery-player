@@ -28,7 +28,7 @@ export const validateQuery = (schema: ValidationSchema) => {
       }
 
       if (field.sanitize) {
-        req.query[key] = field.sanitize(value) as any;
+        req.query[key] = field.sanitize(value) as unknown as string;
       }
     }
     next();
