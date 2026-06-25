@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { createToastManager } from '../../public/js/ui/toast';
-import type { ToastElements } from '../../public/js/ui/toast';
+import { createToastManager, type ToastElements } from '../../public/js/ui/toast';
 
 describe('createToastManager', () => {
   let toastContainer: HTMLElement;

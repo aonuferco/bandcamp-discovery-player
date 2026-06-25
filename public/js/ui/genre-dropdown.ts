@@ -1,5 +1,4 @@
 import { GENRES, ALL_GENRES } from "../genres";
-import type { Genre } from "../genres";
 
 export interface GenreDropdownElements {
   genreSearch: HTMLInputElement | null;

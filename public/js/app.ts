@@ -1,4 +1,4 @@
-import { ALL_GENRES, type Genre, getGenreFamily, isValidGenre } from './genres';
+import { type Genre, getGenreFamily, isValidGenre } from './genres';
 import { createAppState, type AppState } from './state';
 import { createAlbumService, type AlbumService } from './api';
 import { createModalManager } from './ui/modal';
@@ -389,7 +389,7 @@ const createUIManager = (state: AppState): UIManager => {
       genreSearch: elements.genreSearch,
       genreDropdown: elements.genreDropdown,
     },
-    () => (window as any).appState?.getCurrentTag() || ""
+    () => window.appState?.getCurrentTag() || ""
   );
 
   return {
@@ -514,7 +514,7 @@ export const setupTouchNavigation = (
 
   albumEl.addEventListener(
     "touchend",
-    (_e: TouchEvent) => {
+    () => {
       if (!isDragging) return;
       isDragging = false;
 
@@ -625,6 +625,7 @@ const createAppController = (): AppController => {
       // Filter out albums with missing stream URLs
       const validAlbums = (data || []).filter((album) => {
         if (!album.stream_url) {
+          // eslint-disable-next-line no-console
           console.warn("Skipping album with missing stream URL:", album.title);
           return false;
         }
@@ -638,9 +639,11 @@ const createAppController = (): AppController => {
       if (validAlbums.length === 0 && state.getAlbums().length === 0) {
         ui.showError(`No results found for "${state.getCurrentTag() || state.getCurrentMode()}". Try a different genre.`);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      // eslint-disable-next-line no-console
       console.error("Error fetching albums:", error);
-      state.setLastError(error instanceof Error ? error : new Error(error.message || "Failed to load albums"));
+      const errMsg = error instanceof Error ? error.message : (typeof error === 'object' && error !== null && 'message' in error ? String((error as Record<string, unknown>)['message']) : 'Failed to load albums');
+      state.setLastError(error instanceof Error ? error : new Error(errMsg));
 
       // Show error overlay if we have no albums to display
       if (state.getAlbums().length === 0) {
@@ -751,6 +754,7 @@ const createAppController = (): AppController => {
         await navigator.clipboard.writeText(album.link);
         ui.showToast("Album link copied to clipboard!", "success");
       } catch (err) {
+        // eslint-disable-next-line no-console
         console.error("Failed to copy album link", err);
         ui.showToast("Failed to copy album link", "error");
       }
@@ -772,7 +776,7 @@ const createAppController = (): AppController => {
         } else {
           ui.showToast("Invalid album URL", "error");
         }
-      } catch (error) {
+      } catch {
         ui.showToast("Invalid album URL", "error");
       }
     }
@@ -1019,8 +1023,8 @@ if (typeof window !== 'undefined') {
     }
   });
 
-  (window as any).appState = null;
-  (window as any).appController = null;
+  window.appState = null;
+  window.appController = null;
 }
 
 if (typeof document !== 'undefined') {

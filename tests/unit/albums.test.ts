@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import type { Request, Response } from 'express';
 import {
   isBandcampApiResponse,
   transformAlbumData,
@@ -217,14 +218,14 @@ describe('validateQuery', () => {
         slice: 'hot',
         tag: 'synthwave'
       }
-    } as any;
+    } as unknown as Request;
     
     let nextCalled = false;
     const next = () => { nextCalled = true; };
     const res = {
       status: () => res,
       json: () => res
-    } as any;
+    } as unknown as Response;
 
     middleware(req, res, next);
     expect(nextCalled).toBe(true);
@@ -238,23 +239,23 @@ describe('validateQuery', () => {
       query: {
         page: '-1'
       }
-    } as any;
+    } as unknown as Request;
     
     let nextCalled = false;
     const next = () => { nextCalled = true; };
     
     let statusValue = 0;
-    let jsonValue: any = null;
+    let jsonValue: unknown = null;
     const res = {
       status: (code: number) => {
         statusValue = code;
         return res;
       },
-      json: (data: any) => {
+      json: (data: unknown) => {
         jsonValue = data;
         return res;
       }
-    } as any;
+    } as unknown as Response;
 
     middleware(req, res, next);
     expect(nextCalled).toBe(false);
@@ -268,7 +269,7 @@ describe('validateQuery', () => {
       query: {
         slice: 'invalid'
       }
-    } as any;
+    } as unknown as Request;
     
     let nextCalled = false;
     const next = () => { nextCalled = true; };
@@ -280,7 +281,7 @@ describe('validateQuery', () => {
         return res;
       },
       json: () => res
-    } as any;
+    } as unknown as Response;
 
     middleware(req, res, next);
     expect(nextCalled).toBe(false);
@@ -293,7 +294,7 @@ describe('validateQuery', () => {
       query: {
         tag: 'synth_wave!'
       }
-    } as any;
+    } as unknown as Request;
     
     let nextCalled = false;
     const next = () => { nextCalled = true; };
@@ -305,7 +306,7 @@ describe('validateQuery', () => {
         return res;
       },
       json: () => res
-    } as any;
+    } as unknown as Response;
 
     middleware(req, res, next);
     expect(nextCalled).toBe(false);

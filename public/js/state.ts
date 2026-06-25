@@ -1,36 +1,36 @@
 import type { Album, DiscoveryMode } from '../../src/shared/types';
-import type { Genre } from './genres';
+
 
 export interface AppState {
-  addAlbums(newAlbums: Album[]): void;
-  getCurrentAlbum(): Album | undefined;
-  canGoNext(): boolean;
-  canGoPrev(): boolean;
-  needsMoreData(): boolean;
-  getAlbums(): Album[];
-  getCurrentIndex(): number;
-  getCurrentPage(): number;
-  getIsFetching(): boolean;
-  getCurrentMode(): DiscoveryMode;
-  getCurrentTag(): string;
-  getLastError(): Error | null;
-  setCurrentIndex(index: number): void;
-  setCurrentPage(page: number): void;
-  setIsFetching(fetching: boolean): void;
-  setCurrentMode(mode: DiscoveryMode): void;
-  setCurrentTag(tag: string): void;
-  setLastError(error: Error | null): void;
-  incrementCurrentIndex(): void;
-  decrementCurrentIndex(): void;
-  incrementCurrentPage(): void;
-  resetState(): void;
+  readonly addAlbums: (newAlbums: Album[]) => void;
+  readonly getCurrentAlbum: () => Album | undefined;
+  readonly canGoNext: () => boolean;
+  readonly canGoPrev: () => boolean;
+  readonly needsMoreData: () => boolean;
+  readonly getAlbums: () => Album[];
+  readonly getCurrentIndex: () => number;
+  readonly getCurrentPage: () => number;
+  readonly getIsFetching: () => boolean;
+  readonly getCurrentMode: () => DiscoveryMode;
+  readonly getCurrentTag: () => string;
+  readonly getLastError: () => Error | null;
+  readonly setCurrentIndex: (index: number) => void;
+  readonly setCurrentPage: (page: number) => void;
+  readonly setIsFetching: (fetching: boolean) => void;
+  readonly setCurrentMode: (mode: DiscoveryMode) => void;
+  readonly setCurrentTag: (tag: string) => void;
+  readonly setLastError: (error: Error | null) => void;
+  readonly incrementCurrentIndex: () => void;
+  readonly decrementCurrentIndex: () => void;
+  readonly incrementCurrentPage: () => void;
+  readonly resetState: () => void;
 }
 
 export function createAppState(): AppState {
   let albums: Album[] = [];
   let currentIndex: number = 0;
   let currentPage: number = 1;
-  let preloadThreshold: number = 3;
+  const preloadThreshold: number = 3;
   let isFetching: boolean = false;
   let seenLinks: Set<string> = new Set();
   let currentMode: DiscoveryMode = 'new';

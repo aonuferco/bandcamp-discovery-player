@@ -72,7 +72,7 @@ export const createModalManager = (elements: ModalElements): ModalManager => {
     closeModal.focus();
 
     // Add focus trap event listener
-    helpModal.addEventListener("keydown", trapFocus as EventListener);
+    helpModal.addEventListener("keydown", trapFocus as (e: Event) => void);
   };
 
   const closeModalFn = () => {
@@ -88,7 +88,7 @@ export const createModalManager = (elements: ModalElements): ModalManager => {
     if (contentWrapper) contentWrapper.removeAttribute("inert");
 
     // Remove focus trap event listener
-    helpModal.removeEventListener("keydown", trapFocus as EventListener);
+    helpModal.removeEventListener("keydown", trapFocus as (e: Event) => void);
 
     // Restore focus to the previously focused element
     if (

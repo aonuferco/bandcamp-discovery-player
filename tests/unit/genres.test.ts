@@ -51,7 +51,7 @@ describe('isValidMode', () => {
   it('returns false for other strings', () => {
     expect(isValidMode('top')).toBe(false);
     expect(isValidMode('')).toBe(false);
-    expect(isValidMode(null as any)).toBe(false);
+    expect(isValidMode(null as unknown as string)).toBe(false);
   });
 });
 
