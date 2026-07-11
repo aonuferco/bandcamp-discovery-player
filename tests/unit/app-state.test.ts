@@ -51,7 +51,6 @@ describe('AppState', () => {
       // albums.length (3) - currentIndex (0) = 3. <= 3 is true.
       expect(state.needsMoreData()).toBe(true);
     });
-
     it('returns false when remaining albums exceed threshold', () => {
       state.addAlbums([mockAlbum('1'), mockAlbum('2'), mockAlbum('3'), mockAlbum('4')]);
       state.setCurrentIndex(0);
@@ -134,6 +133,24 @@ describe('AppState', () => {
       
       expect(state1.getAlbums()).toHaveLength(1);
       expect(state2.getAlbums()).toHaveLength(0);
+    });
+  });
+
+  describe('getCurrentAlbum (Boundary Conditions)', () => {
+    it('returns undefined when album array is empty', () => {
+      expect(state.getCurrentAlbum()).toBeUndefined();
+    });
+
+    it('returns undefined when index is out of bounds', () => {
+      state.addAlbums([mockAlbum('1')]);
+      state.setCurrentIndex(5);
+      expect(state.getCurrentAlbum()).toBeUndefined();
+    });
+
+    it('returns undefined when index is negative', () => {
+      state.addAlbums([mockAlbum('1')]);
+      state.setCurrentIndex(-1);
+      expect(state.getCurrentAlbum()).toBeUndefined();
     });
   });
 });
