@@ -6,10 +6,12 @@ describe('createAlbumService', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.useRealTimers();
   });
 
   it('handles successful response with correct parameters', async () => {
@@ -38,13 +40,14 @@ describe('createAlbumService', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const service = createAlbumService();
-    const result = await service.fetchAlbums(2, 'hot', 'ambient');
+    const { data, error } = await service.fetchAlbums(2, 'hot', 'ambient');
 
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/albums?page=2&slice=hot&tag=ambient',
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
-    expect(result).toEqual(mockAlbums);
+    expect(data).toEqual(mockAlbums);
+    expect(error).toBeNull();
   });
 
   it('uses default parameters when they are omitted', async () => {
@@ -57,16 +60,17 @@ describe('createAlbumService', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const service = createAlbumService();
-    const result = await service.fetchAlbums();
+    const { data, error } = await service.fetchAlbums();
 
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/albums?page=1&slice=new',
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
-    expect(result).toEqual([]);
+    expect(data).toEqual([]);
+    expect(error).toBeNull();
   });
 
-  it('throws an error for non-OK HTTP status', async () => {
+  it('returns HTTP error for non-OK HTTP status', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: false,
       status: 500,
@@ -76,35 +80,38 @@ describe('createAlbumService', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const service = createAlbumService();
-    await expect(service.fetchAlbums(1, 'new', '')).rejects.toThrow(
-      'HTTP error! status: 500'
-    );
+    const { data, error } = await service.fetchAlbums(1, 'new', '');
+    
+    expect(data).toBeNull();
+    expect(error?.type).toBe('http');
+    expect(error?.status).toBe(500);
   });
 
-  it('throws an error on network failure', async () => {
+  it('returns network error on network failure after retries', async () => {
     const networkError = new TypeError('Failed to fetch');
     const fetchMock = vi.fn().mockRejectedValue(networkError);
 
     vi.stubGlobal('fetch', fetchMock);
 
     const service = createAlbumService();
-    await expect(service.fetchAlbums(1, 'new', '')).rejects.toThrow(
-      'Failed to fetch'
-    );
+    
+    // We need to advance timers because of the exponential backoff in api.ts
+    const promise = service.fetchAlbums(1, 'new', '');
+    
+    await vi.runAllTimersAsync();
+    
+    const { data, error } = await promise;
+
+    expect(data).toBeNull();
+    expect(error?.type).toBe('network');
+    expect(error?.message).toContain('Failed to fetch');
+    expect(fetchMock).toHaveBeenCalledTimes(2); // Initial request + 1 retry
   });
 
-  it('aborts the request and throws timeout error when response is slow', async () => {
-    vi.useFakeTimers();
-
+  it('returns timeout error when response is slow', async () => {
     const fetchMock = vi.fn().mockImplementation((_url, options) => {
       return new Promise((_resolve, reject) => {
         if (options?.signal) {
-          if (options.signal.aborted) {
-            const err = new Error('The operation was aborted.');
-            err.name = 'AbortError';
-            reject(err);
-            return;
-          }
           options.signal.addEventListener('abort', () => {
             const err = new Error('The operation was aborted.');
             err.name = 'AbortError';
@@ -120,10 +127,28 @@ describe('createAlbumService', () => {
     const promise = service.fetchAlbums(1, 'new', '');
 
     // Advance time by 10 seconds to trigger timeout
-    vi.advanceTimersByTime(10000);
+    await vi.advanceTimersByTimeAsync(10000);
 
-    await expect(promise).rejects.toThrow('Request timed out after 10 seconds');
+    const { data, error } = await promise;
+    expect(data).toBeNull();
+    expect(error?.type).toBe('timeout');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
 
-    vi.useRealTimers();
+  it('returns parse error when json parsing fails', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => { throw new Error('Invalid JSON'); },
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const service = createAlbumService();
+    const { data, error } = await service.fetchAlbums(1, 'new', '');
+    
+    expect(data).toBeNull();
+    expect(error?.type).toBe('parse');
+    expect(error?.message).toBe('Failed to parse response');
   });
 });

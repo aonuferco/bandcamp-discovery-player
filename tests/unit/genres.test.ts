@@ -14,6 +14,18 @@ describe('isValidGenre', () => {
     expect(isValidGenre('')).toBe(false);
   });
 
+  it('returns false for invalid characters', () => {
+    expect(isValidGenre('breakcore!@#')).toBe(false);
+    expect(isValidGenre('dark ambient')).toBe(false); // spaces not allowed
+    expect(isValidGenre('indie_rock')).toBe(false); // underscores not allowed
+  });
+
+  it('returns false for XSS payloads', () => {
+    expect(isValidGenre('<script>alert(1)</script>')).toBe(false);
+    expect(isValidGenre('javascript:alert(1)')).toBe(false);
+    expect(isValidGenre('breakcore" onerror="alert(1)')).toBe(false);
+  });
+
   it('returns false for null or undefined', () => {
     expect(isValidGenre(null)).toBe(false);
     expect(isValidGenre(undefined)).toBe(false);

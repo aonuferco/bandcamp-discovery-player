@@ -71,6 +71,7 @@ export interface AppController {
   copyAlbumLink(): Promise<void>;
   openAlbumPage(): void;
   toggleAudio(): void;
+  seekAudio(seconds: number): void;
   switchMode(mode: DiscoveryMode): Promise<void>;
   selectGenre(genre: string): Promise<void>;
   setupEventListeners(): void;
@@ -586,7 +587,7 @@ export const setupTouchNavigation = (
 // App Controller
 // ============================================================================
 
-const createAppController = (): AppController => {
+export const createAppController = (): AppController => {
   const state = createAppState();
   const service = createAlbumService();
   const ui = createUIManager(state);
@@ -992,6 +993,7 @@ const createAppController = (): AppController => {
     copyAlbumLink,
     openAlbumPage,
     toggleAudio,
+    seekAudio,
     switchMode,
     selectGenre,
     setupEventListeners,
