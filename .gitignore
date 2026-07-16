@@ -99,6 +99,9 @@ logs
 dist-frontend/
 .vite/
 
+# Instructions
+.instructions.md
+
 # IDE files
 .vscode/
 .idea/
