@@ -99,7 +99,7 @@ logs
 dist-frontend/
 .vite/
 
-# Copilot instructions (local configuration)
+# Instructions
 .instructions.md
 
 # IDE files
