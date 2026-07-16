@@ -4,6 +4,10 @@ import { createAlbumService, type AlbumService } from './api';
 import { createModalManager } from './ui/modal';
 import { createToastManager } from './ui/toast';
 import { createGenreDropdownManager } from './ui/genre-dropdown';
+import { createAudioController, type AudioController } from './audio-controller';
+import { createKeyboardController, type KeyboardHandler } from './keyboard-controller';
+import { createPaginationController, type PaginationController } from './pagination-controller';
+import { createURLStateManager, type URLStateManager } from './url-state';
 import type { Album, DiscoveryMode } from '../../src/shared/types';
 
 // ============================================================================
@@ -79,45 +83,11 @@ export interface AppController {
 }
 
 // ============================================================================
-// URL Utilities
+// Utility Functions
 // ============================================================================
 
-export const isValidMode = (mode: string | null | undefined): mode is DiscoveryMode => 
-  mode === "new" || mode === "hot";
-
-/**
- * Returns true when the primary input is a coarse pointer (touch screen).
- * Used to strip keyboard-hint text from toasts on mobile.
- */
 export const isTouchDevice = (): boolean =>
   window.matchMedia("(pointer: coarse)").matches;
-
-export const parseUrlParams = (): { genre: Genre | ""; mode: DiscoveryMode } => {
-  const params = new URLSearchParams(window.location.search);
-  const genreParam = params.get("genre") || "";
-  const modeParam = params.get("mode") || "new";
-
-  return {
-    genre: isValidGenre(genreParam) ? genreParam : "",
-    mode: isValidMode(modeParam) ? modeParam : "new",
-  };
-};
-
-const updateUrl = (genre: string, mode: DiscoveryMode): void => {
-  const params = new URLSearchParams();
-  if (genre) params.set("genre", genre);
-  if (mode !== "new") params.set("mode", mode);
-  
-  const queryString = params.toString();
-  const newUrl = queryString
-    ? `${window.location.pathname}?${queryString}`
-    : window.location.pathname;
-  window.history.replaceState(null, "", newUrl);
-};
-
-// ============================================================================
-// Genre Theming
-// ============================================================================
 
 export const applyGenreTheme = (genre: string, mode: DiscoveryMode): void => {
   // Remove any existing genre theme classes
@@ -129,7 +99,7 @@ export const applyGenreTheme = (genre: string, mode: DiscoveryMode): void => {
     // No genre selected — apply the mode-level theme (hot / new)
     document.body.classList.add(`genre-theme-${mode}`);
   } else {
-    // Genre selected — apply the family+mode theme (e.g. genre-theme-electronic-hot)
+    // Genre selected — apply the family+mode theme
     const family = getGenreFamily(genre);
     if (family) {
       document.body.classList.add(`genre-theme-${family}-${mode}`);
@@ -138,7 +108,119 @@ export const applyGenreTheme = (genre: string, mode: DiscoveryMode): void => {
 };
 
 // ============================================================================
-// UI Manager Shell
+// Touch Navigation
+// ============================================================================
+
+export const setupTouchNavigation = (
+  nextAlbum: () => void,
+  prevAlbum: () => void
+): void => {
+  const albumEl = document.getElementById("album");
+  if (!albumEl) return;
+
+  const SWIPE_THRESHOLD = 50;
+  const AXIS_LOCK = 30;
+
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let currentDx = 0;
+  let isDragging = false;
+
+  const setDragTranslate = (dx: number) => {
+    albumEl.style.transition = "none";
+    albumEl.style.transform = `rotate(-1.5deg) translateX(${dx}px)`;
+  };
+
+  const clearSwipeClasses = () => {
+    albumEl.classList.remove(
+      "swipe-exit-left", "swipe-exit-right",
+      "swipe-enter-left", "swipe-enter-right"
+    );
+  };
+
+  const resetTransform = () => {
+    clearSwipeClasses();
+    albumEl.style.transition = "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+    albumEl.style.transform = "";
+    albumEl.addEventListener(
+      "transitionend",
+      () => {
+        albumEl.style.transition = "";
+        albumEl.style.transform = "";
+      },
+      { once: true }
+    );
+  };
+
+  albumEl.addEventListener("touchstart", (e: TouchEvent) => {
+    const t = e.touches[0];
+    if (!t) return;
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+    currentDx = 0;
+    isDragging = true;
+    albumEl.style.transition = "none";
+  }, { passive: true });
+
+  albumEl.addEventListener("touchmove", (e: TouchEvent) => {
+    if (!isDragging) return;
+    const t = e.touches[0];
+    if (!t) return;
+
+    const dx = t.clientX - touchStartX;
+    const dy = t.clientY - touchStartY;
+
+    if (Math.abs(dy) > AXIS_LOCK && Math.abs(dx) < SWIPE_THRESHOLD) {
+      isDragging = false;
+      resetTransform();
+      return;
+    }
+
+    currentDx = dx;
+    setDragTranslate(dx);
+  }, { passive: true });
+
+  albumEl.addEventListener("touchend", () => {
+    if (!isDragging) return;
+    isDragging = false;
+
+    if (currentDx < -SWIPE_THRESHOLD) {
+      albumEl.style.transition = "";
+      albumEl.style.transform = "";
+      albumEl.classList.add("swipe-exit-left");
+
+      albumEl.addEventListener("animationend", () => {
+        albumEl.classList.remove("swipe-exit-left");
+        nextAlbum();
+        albumEl.classList.add("swipe-enter-right");
+        albumEl.addEventListener("animationend", () => albumEl.classList.remove("swipe-enter-right"), { once: true });
+      }, { once: true });
+
+    } else if (currentDx > SWIPE_THRESHOLD) {
+      albumEl.style.transition = "";
+      albumEl.style.transform = "";
+      albumEl.classList.add("swipe-exit-right");
+
+      albumEl.addEventListener("animationend", () => {
+        albumEl.classList.remove("swipe-exit-right");
+        prevAlbum();
+        albumEl.classList.add("swipe-enter-left");
+        albumEl.addEventListener("animationend", () => albumEl.classList.remove("swipe-enter-left"), { once: true });
+      }, { once: true });
+
+    } else {
+      resetTransform();
+    }
+  }, { passive: true });
+
+  albumEl.addEventListener("touchcancel", () => {
+    isDragging = false;
+    resetTransform();
+  }, { passive: true });
+};
+
+// ============================================================================
+// UI Manager
 // ============================================================================
 
 const createUIManager = (state: AppState): UIManager => {
@@ -168,40 +250,40 @@ const createUIManager = (state: AppState): UIManager => {
     copyLinkFab: document.getElementById("copy-link-fab") as HTMLButtonElement | null,
   };
 
-  // Helper logic: Volume management
-  const getSavedVolume = (): number => {
-    const saved = localStorage.getItem("bandcamp-volume");
-    return saved ? parseFloat(saved) : 0.2;
-  };
+  const modalManager = createModalManager({
+    helpModal: elements.helpModal,
+    closeModal: elements.closeModal,
+  });
 
-  const saveVolume = (volume: number): void => {
-    localStorage.setItem("bandcamp-volume", volume.toString());
-  };
+  const toastManager = createToastManager({
+    toastContainer: elements.toastContainer,
+    loadingSpinner: elements.loadingSpinner,
+    errorOverlay: elements.errorOverlay,
+  });
 
-  // Main UI update methods
+  const genreDropdownManager = createGenreDropdownManager(
+    {
+      genreSearch: elements.genreSearch,
+      genreDropdown: elements.genreDropdown,
+    },
+    () => window.appState?.getCurrentTag() || ""
+  );
+
   const showAlbum = (album: Album | undefined) => {
     if (!album) {
       if (elements.loadingSpinner) elements.loadingSpinner.classList.add("hidden");
-      if (elements.coverContainer) {
-        elements.coverContainer.classList.remove("loading");
-      }
+      if (elements.coverContainer) elements.coverContainer.classList.remove("loading");
       return;
     }
 
-    if (elements.loadingSpinner) {
-      elements.loadingSpinner.classList.remove("hidden");
-    }
-    if (elements.coverContainer) {
-      elements.coverContainer.classList.add("loading");
-    }
+    if (elements.loadingSpinner) elements.loadingSpinner.classList.remove("hidden");
+    if (elements.coverContainer) elements.coverContainer.classList.add("loading");
 
     const tempImg = new Image();
     tempImg.onload = () => {
       if (elements.cover) elements.cover.src = tempImg.src;
       if (elements.loadingSpinner) elements.loadingSpinner.classList.add("hidden");
-      if (elements.coverContainer) {
-        elements.coverContainer.classList.remove("loading");
-      }
+      if (elements.coverContainer) elements.coverContainer.classList.remove("loading");
     };
     tempImg.src = album.img;
 
@@ -217,6 +299,7 @@ const createUIManager = (state: AppState): UIManager => {
         elements.title.removeAttribute('data-tooltip');
       }
     }
+
     if (elements.artist) {
       const artistText = `by ${album.artist}`;
       elements.artist.textContent = "";
@@ -240,7 +323,6 @@ const createUIManager = (state: AppState): UIManager => {
 
   const updateTrackInfo = (album: Album) => {
     if (!elements.trackInfo) return;
-
     if (!album.featured_track) {
       elements.trackInfo.textContent = "";
       elements.trackInfo.removeAttribute('data-tooltip');
@@ -318,48 +400,9 @@ const createUIManager = (state: AppState): UIManager => {
     }
   };
 
-  // Persistent audio element — created once, reused across album changes.
-  // We keep it here in closure scope so the volumechange listener is registered
-  // exactly once, preventing the leak that occurred when innerHTML rebuilt the
-  // node on every album navigation.
-  let audioEl: HTMLAudioElement | null = null;
-
   const updateAudioPlayer = (album: Album) => {
     if (!elements.player) return;
-
-    if (!audioEl) {
-      // First call: build the element, wire up the single persistent listener,
-      // and inject it into the DOM.
-      audioEl = document.createElement("audio");
-      audioEl.controls = true;
-      audioEl.autoplay = true;
-      audioEl.style.width = "100%";
-      audioEl.style.height = "40px";
-
-      const source = document.createElement("source");
-      source.type = "audio/mp3";
-      audioEl.appendChild(source);
-
-      audioEl.volume = getSavedVolume();
-      audioEl.addEventListener("volumechange", () => {
-        saveVolume(audioEl!.volume);
-      });
-      audioEl.addEventListener("error", () => {
-        if (elements.trackInfo) {
-          elements.trackInfo.textContent = "Track unavailable";
-          elements.trackInfo.removeAttribute("data-tooltip");
-        }
-        toastManager.showToast("Track unavailable", "error");
-      });
-
-      elements.player.textContent = "";
-      elements.player.appendChild(audioEl);
-    }
-
-    // Subsequent calls: just swap the src and reload — no new element, no new listener.
-    const source = audioEl.querySelector("source")!;
-    source.src = album.stream_url ?? "";
-    audioEl.load();
+    // Audio player is now managed by audio-controller module
   };
 
   const preloadNextImages = (count = 3) => {
@@ -372,26 +415,6 @@ const createUIManager = (state: AppState): UIManager => {
       }
     }
   };
-
-  // Create sub-managers
-  const modalManager = createModalManager({
-    helpModal: elements.helpModal,
-    closeModal: elements.closeModal,
-  });
-
-  const toastManager = createToastManager({
-    toastContainer: elements.toastContainer,
-    loadingSpinner: elements.loadingSpinner,
-    errorOverlay: elements.errorOverlay,
-  });
-
-  const genreDropdownManager = createGenreDropdownManager(
-    {
-      genreSearch: elements.genreSearch,
-      genreDropdown: elements.genreDropdown,
-    },
-    () => window.appState?.getCurrentTag() || ""
-  );
 
   return {
     elements,
@@ -416,181 +439,31 @@ const createUIManager = (state: AppState): UIManager => {
 };
 
 // ============================================================================
-// Touch Navigation
-// ============================================================================
-
-/**
- * Wires kinetic swipe navigation onto the #album card (mobile).
- *
- * Extracted to module scope so it can be unit-tested independently of the
- * full AppController. Pass the same `nextAlbum` / `prevAlbum` callbacks that
- * the controller exposes.
- *
- * @param nextAlbum - Advance to the next album.
- * @param prevAlbum - Go back to the previous album.
- */
-export const setupTouchNavigation = (
-  nextAlbum: () => void,
-  prevAlbum: () => void
-): void => {
-  const albumEl = document.getElementById("album");
-  if (!albumEl) return;
-
-  const SWIPE_THRESHOLD = 50; // min horizontal px to count as a swipe
-  const AXIS_LOCK = 30;       // max vertical drift before we ignore the gesture
-
-  let touchStartX = 0;
-  let touchStartY = 0;
-  let currentDx = 0;
-  let isDragging = false;
-
-  /** Apply a live translateX while preserving the card's decorative rotation */
-  const setDragTranslate = (dx: number) => {
-    // The card has a base transform: rotate(-1.5deg). We layer translateX on top.
-    albumEl.style.transition = "none";
-    albumEl.style.transform = `rotate(-1.5deg) translateX(${dx}px)`;
-  };
-
-  /** Strip all swipe animation classes (safety helper) */
-  const clearSwipeClasses = () => {
-    albumEl.classList.remove(
-      "swipe-exit-left", "swipe-exit-right",
-      "swipe-enter-left", "swipe-enter-right"
-    );
-  };
-
-  /** Snap the card back to its resting position with a spring-like transition */
-  const resetTransform = () => {
-    clearSwipeClasses();
-    albumEl.style.transition = "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
-    albumEl.style.transform = "";
-    // Clean up inline styles once the transition ends so CSS class rules win
-    albumEl.addEventListener(
-      "transitionend",
-      () => {
-        albumEl.style.transition = "";
-        albumEl.style.transform = "";
-      },
-      { once: true }
-    );
-  };
-
-  albumEl.addEventListener(
-    "touchstart",
-    (e: TouchEvent) => {
-      const t = e.touches[0];
-      if (!t) return;
-      touchStartX = t.clientX;
-      touchStartY = t.clientY;
-      currentDx = 0;
-      isDragging = true;
-      // Remove any leftover transition so the card tracks the finger instantly
-      albumEl.style.transition = "none";
-    },
-    { passive: true }
-  );
-
-  albumEl.addEventListener(
-    "touchmove",
-    (e: TouchEvent) => {
-      if (!isDragging) return;
-      const t = e.touches[0];
-      if (!t) return;
-
-      const dx = t.clientX - touchStartX;
-      const dy = t.clientY - touchStartY;
-
-      // If the gesture is primarily vertical, bail out and don't interfere
-      if (Math.abs(dy) > AXIS_LOCK && Math.abs(dx) < SWIPE_THRESHOLD) {
-        isDragging = false;
-        resetTransform();
-        return;
-      }
-
-      currentDx = dx;
-      setDragTranslate(dx);
-    },
-    { passive: true }
-  );
-
-  albumEl.addEventListener(
-    "touchend",
-    () => {
-      if (!isDragging) return;
-      isDragging = false;
-
-      if (currentDx < -SWIPE_THRESHOLD) {
-        // Swipe left → next album
-        // 1. Clear any inline drag styles, then trigger CSS exit animation
-        albumEl.style.transition = "";
-        albumEl.style.transform = "";
-        albumEl.classList.add("swipe-exit-left");
-
-        albumEl.addEventListener(
-          "animationend",
-          () => {
-            // 2. Remove exit class, update album data
-            albumEl.classList.remove("swipe-exit-left");
-            nextAlbum();
-            // 3. Slide the new content in from the right
-            albumEl.classList.add("swipe-enter-right");
-            albumEl.addEventListener(
-              "animationend",
-              () => albumEl.classList.remove("swipe-enter-right"),
-              { once: true }
-            );
-          },
-          { once: true }
-        );
-
-      } else if (currentDx > SWIPE_THRESHOLD) {
-        // Swipe right → prev album
-        albumEl.style.transition = "";
-        albumEl.style.transform = "";
-        albumEl.classList.add("swipe-exit-right");
-
-        albumEl.addEventListener(
-          "animationend",
-          () => {
-            albumEl.classList.remove("swipe-exit-right");
-            prevAlbum();
-            // New content enters from the left
-            albumEl.classList.add("swipe-enter-left");
-            albumEl.addEventListener(
-              "animationend",
-              () => albumEl.classList.remove("swipe-enter-left"),
-              { once: true }
-            );
-          },
-          { once: true }
-        );
-
-      } else {
-        // Not enough delta — spring back
-        resetTransform();
-      }
-    },
-    { passive: true }
-  );
-
-  albumEl.addEventListener(
-    "touchcancel",
-    () => {
-      isDragging = false;
-      resetTransform();
-    },
-    { passive: true }
-  );
-};
-
-// ============================================================================
-// App Controller
+// App Controller (Thin Orchestration Layer)
 // ============================================================================
 
 export const createAppController = (): AppController => {
   const state = createAppState();
   const service = createAlbumService();
   const ui = createUIManager(state);
+
+  // Initialize all module controllers
+  const audioController = createAudioController();
+  const keyboardController = createKeyboardController();
+  const paginationController = createPaginationController(state);
+  const urlStateManager = createURLStateManager();
+
+  // Initialize audio on first use
+  if (ui.elements.player) {
+    audioController.initialize(ui.elements.player);
+    audioController.onError(() => {
+      if (ui.elements.trackInfo) {
+        ui.elements.trackInfo.textContent = "Track unavailable";
+        ui.elements.trackInfo.removeAttribute("data-tooltip");
+      }
+      ui.showToast("Track unavailable", "error");
+    });
+  }
 
   const fetchAlbums = async (page = 1) => {
     state.setIsFetching(true);
@@ -623,7 +496,6 @@ export const createAppController = (): AppController => {
         }
       }
 
-      // Filter out albums with missing stream URLs
       const validAlbums = (data || []).filter((album) => {
         if (!album.stream_url) {
           // eslint-disable-next-line no-console
@@ -636,7 +508,6 @@ export const createAppController = (): AppController => {
       state.addAlbums(validAlbums);
       state.setLastError(null);
 
-      // If no valid albums after filtering, show error
       if (validAlbums.length === 0 && state.getAlbums().length === 0) {
         ui.showError(`No results found for "${state.getCurrentTag() || state.getCurrentMode()}". Try a different genre.`);
       }
@@ -646,11 +517,9 @@ export const createAppController = (): AppController => {
       const errMsg = error instanceof Error ? error.message : (typeof error === 'object' && error !== null && 'message' in error ? String((error as Record<string, unknown>)['message']) : 'Failed to load albums');
       state.setLastError(error instanceof Error ? error : new Error(errMsg));
 
-      // Show error overlay if we have no albums to display
       if (state.getAlbums().length === 0) {
         ui.showError("Failed to load albums. Please try again.");
       } else {
-        // Just show toast if we already have some albums loaded
         ui.showToast("Failed to load more albums", "error");
       }
     } finally {
@@ -658,15 +527,24 @@ export const createAppController = (): AppController => {
     }
   };
 
-  const retryFetch = async () => {
-    if (ui.elements.loadingSpinner) {
-      ui.elements.loadingSpinner.classList.remove("hidden");
+  const showCurrentAlbum = () => {
+    const album = state.getCurrentAlbum();
+    ui.showAlbum(album);
+    
+    if (album?.stream_url) {
+      audioController.loadTrack(album.stream_url);
     }
-    ui.hideError();
-    await fetchAlbums(state.getCurrentPage());
-    if (state.getAlbums().length > 0) {
-      showCurrentAlbum();
-    }
+    paginationController.preloadNextImages();
+  };
+
+  const nextAlbum = async () => {
+    await paginationController.nextAlbum(() => fetchAlbums(state.getCurrentPage()));
+    showCurrentAlbum();
+  };
+
+  const prevAlbum = () => {
+    paginationController.prevAlbum();
+    showCurrentAlbum();
   };
 
   const switchMode = async (mode: DiscoveryMode) => {
@@ -674,10 +552,9 @@ export const createAppController = (): AppController => {
 
     state.setCurrentMode(mode);
     state.resetState();
-    updateUrl(state.getCurrentTag(), mode);
+    urlStateManager.updateUrl(state.getCurrentTag(), mode);
     applyGenreTheme(state.getCurrentTag(), mode);
 
-    // Update button states and aria-pressed
     const isNew = mode === "new";
     if (ui.elements.newReleasesBtn) {
       ui.elements.newReleasesBtn.classList.toggle("active", isNew);
@@ -688,14 +565,12 @@ export const createAppController = (): AppController => {
       ui.elements.hotBtn.setAttribute("aria-pressed", (!isNew).toString());
     }
 
-    // Show loading state — suppress keyboard hints on touch devices
     const modeText = mode === "new" ? "new releases" : "hot releases";
     const modeToast = isTouchDevice()
       ? `Switching to ${modeText}…`
       : `Switching to ${modeText}...`;
     ui.showToast(modeToast, "success");
 
-    // Fetch new data
     await fetchAlbums(1);
     showCurrentAlbum();
   };
@@ -705,7 +580,7 @@ export const createAppController = (): AppController => {
 
     state.setCurrentTag(genre);
     state.resetState();
-    updateUrl(genre, state.getCurrentMode());
+    urlStateManager.updateUrl(genre, state.getCurrentMode());
     applyGenreTheme(genre, state.getCurrentMode());
     ui.updateSearchInput(genre);
     ui.toggleDropdown(false);
@@ -718,34 +593,6 @@ export const createAppController = (): AppController => {
 
     await fetchAlbums(1);
     showCurrentAlbum();
-  };
-
-  const showCurrentAlbum = () => {
-    const album = state.getCurrentAlbum();
-    ui.showAlbum(album);
-    ui.preloadNextImages();
-  };
-
-  const nextAlbum = async () => {
-    state.incrementCurrentIndex();
-
-    if (state.needsMoreData() && !state.getIsFetching()) {
-      state.incrementCurrentPage();
-      await fetchAlbums(state.getCurrentPage());
-    }
-
-    if (state.getCurrentIndex() >= state.getAlbums().length) {
-      state.setCurrentIndex(state.getAlbums().length - 1);
-    }
-
-    showCurrentAlbum();
-  };
-
-  const prevAlbum = () => {
-    if (state.canGoPrev()) {
-      state.decrementCurrentIndex();
-      showCurrentAlbum();
-    }
   };
 
   const copyAlbumLink = async () => {
@@ -784,85 +631,21 @@ export const createAppController = (): AppController => {
   };
 
   const toggleAudio = () => {
-    const audio = document.querySelector("audio");
-    if (audio) {
-      if (audio.paused) {
-        audio.play();
-      } else {
-        audio.pause();
-      }
-    }
+    audioController.togglePlayPause();
   };
 
   const seekAudio = (seconds: number) => {
-    const audio = document.querySelector("audio");
-    if (audio) {
-      if (!isFinite(audio.duration)) return;
-      const newTime = audio.currentTime + seconds;
-      audio.currentTime = Math.max(0, Math.min(newTime, audio.duration));
-    }
+    audioController.seek(seconds);
   };
 
-  const adjustVolume = (change: number) => {
-    const audio = document.querySelector("audio");
-    if (audio) {
-      const newVolume = Math.max(0, Math.min(1, audio.volume + change));
-      audio.volume = newVolume;
+  const retryFetch = async () => {
+    if (ui.elements.loadingSpinner) {
+      ui.elements.loadingSpinner.classList.remove("hidden");
     }
-  };
-
-  const handleKeydown = (e: KeyboardEvent) => {
-    const target = e.target as HTMLElement;
-    const tag = target.tagName.toLowerCase();
-    // Allow Escape to fall through even when an input/textarea is focused so
-    // it can always close the modal and dropdown at the document level.
-    // The search input's own keydown listener handles its Escape cleanup
-    // (blur + restore value) independently.
-    if ((tag === "input" || tag === "textarea") && e.key !== "Escape") return;
-
-    switch (e.key.toLowerCase()) {
-      case "escape":
-        ui.closeModal();
-        ui.toggleDropdown(false);
-        break;
-      case "e":
-        nextAlbum();
-        break;
-      case "q":
-        prevAlbum();
-        break;
-      case "w":
-        copyAlbumLink();
-        break;
-      case "s":
-        openAlbumPage();
-        break;
-      case " ":
-        e.preventDefault();
-        toggleAudio();
-        break;
-      case "arrowleft":
-        e.preventDefault();
-        seekAudio(-10);
-        break;
-      case "arrowright":
-        e.preventDefault();
-        seekAudio(10);
-        break;
-      case "arrowup":
-        e.preventDefault();
-        adjustVolume(0.1);
-        break;
-      case "arrowdown":
-        e.preventDefault();
-        adjustVolume(-0.1);
-        break;
-      case "/":
-        e.preventDefault();
-        if (ui.elements.genreSearch) {
-          ui.elements.genreSearch.focus();
-        }
-        break;
+    ui.hideError();
+    await fetchAlbums(state.getCurrentPage());
+    if (state.getAlbums().length > 0) {
+      showCurrentAlbum();
     }
   };
 
@@ -873,25 +656,42 @@ export const createAppController = (): AppController => {
     ui.elements.helpBtn?.addEventListener("click", () => ui.openModal());
     ui.elements.closeModal?.addEventListener("click", () => ui.closeModal());
     ui.elements.retryBtn?.addEventListener("click", () => retryFetch());
-
-    // Copy-link FAB (mobile)
     ui.elements.copyLinkFab?.addEventListener("click", () => copyAlbumLink());
 
-    // Touch navigation (mobile swipe with kinetic feel)
-    setupTouchNavigation(nextAlbum, prevAlbum);
-
+    // Mode switching
     ui.elements.newReleasesBtn?.addEventListener("click", () => switchMode("new"));
     ui.elements.hotBtn?.addEventListener("click", () => switchMode("hot"));
 
-    // Modal events
+    // Modal backdrop click to close
     ui.elements.helpModal?.addEventListener("click", (e) => {
       if ((e.target as HTMLElement).id === "help-modal") {
         ui.closeModal();
       }
     });
 
-    // Keyboard events
-    document.addEventListener("keydown", handleKeydown);
+    // Touch navigation
+    setupTouchNavigation(nextAlbum, prevAlbum);
+
+    // Setup keyboard shortcuts
+    keyboardController.registerShortcut("e", () => nextAlbum());
+    keyboardController.registerShortcut("q", () => prevAlbum());
+    keyboardController.registerShortcut("w", () => copyAlbumLink());
+    keyboardController.registerShortcut("s", () => openAlbumPage());
+    keyboardController.registerShortcut(" ", () => toggleAudio(), { preventDefault: true });
+    keyboardController.registerShortcut("arrowleft", () => seekAudio(-10), { preventDefault: true });
+    keyboardController.registerShortcut("arrowright", () => seekAudio(10), { preventDefault: true });
+    keyboardController.registerShortcut("arrowup", () => audioController.adjustVolume(0.1), { preventDefault: true });
+    keyboardController.registerShortcut("arrowdown", () => audioController.adjustVolume(-0.1), { preventDefault: true });
+    keyboardController.registerShortcut("escape", () => {
+      ui.closeModal();
+      ui.toggleDropdown(false);
+    });
+    keyboardController.registerShortcut("/", () => {
+      if (ui.elements.genreSearch) {
+        ui.elements.genreSearch.focus();
+      }
+    }, { preventDefault: true });
+    keyboardController.setupListener();
 
     // Search dropdown events
     const searchInput = ui.elements.genreSearch;
@@ -923,16 +723,13 @@ export const createAppController = (): AppController => {
           e.preventDefault();
           const highlightedGenre = ui.getHighlightedGenre();
           if (highlightedGenre !== null) {
-            // highlightedGenre may be "" for "All Genres" — that's valid
             selectGenre(highlightedGenre);
           } else if (searchInput.value) {
-            // If nothing is highlighted but there's a value, try to select that value
             selectGenre(searchInput.value);
           }
         }
       });
 
-      // Click outside to close dropdown
       document.addEventListener("click", (e) => {
         if (
           !searchInput.contains(e.target as Node) &&
@@ -945,7 +742,6 @@ export const createAppController = (): AppController => {
         }
       });
 
-      // Genre selection
       dropdown.addEventListener("click", (e) => {
         const item = (e.target as HTMLElement).closest(".genre-item") as HTMLElement;
         if (item && item.dataset['genre'] !== undefined) {
@@ -956,7 +752,7 @@ export const createAppController = (): AppController => {
   };
 
   const init = async () => {
-    const { genre, mode } = parseUrlParams();
+    const { genre, mode } = urlStateManager.parseUrlParams();
 
     if (mode !== "new") {
       state.setCurrentMode(mode);

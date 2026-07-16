@@ -1,5 +1,17 @@
 import type { Album, DiscoveryMode } from '../../src/shared/types';
 
+// Event types for state changes
+export type StateEventType =
+  | 'albumsAdded'
+  | 'currentIndexChanged'
+  | 'currentPageChanged'
+  | 'isFetchingChanged'
+  | 'currentModeChanged'
+  | 'currentTagChanged'
+  | 'lastErrorChanged'
+  | 'stateReset';
+
+export type StateEventListener<T = any> = (value: T) => void;
 
 export interface AppState {
   readonly addAlbums: (newAlbums: Album[]) => void;
@@ -24,6 +36,10 @@ export interface AppState {
   readonly decrementCurrentIndex: () => void;
   readonly incrementCurrentPage: () => void;
   readonly resetState: () => void;
+  // Event emitter interface
+  readonly on: <T = any>(event: StateEventType, listener: StateEventListener<T>) => void;
+  readonly off: <T = any>(event: StateEventType, listener: StateEventListener<T>) => void;
+  readonly emit: <T = any>(event: StateEventType, value?: T) => void;
 }
 
 export function createAppState(): AppState {
@@ -37,6 +53,30 @@ export function createAppState(): AppState {
   let currentTag: string = '';
   let lastError: Error | null = null;
 
+  // Event emitter storage
+  const listeners = new Map<StateEventType, Set<StateEventListener>>();
+
+  const emit = <T = any>(event: StateEventType, value?: T) => {
+    const eventListeners = listeners.get(event);
+    if (eventListeners) {
+      eventListeners.forEach((listener) => listener(value));
+    }
+  };
+
+  const on = <T = any>(event: StateEventType, listener: StateEventListener<T>) => {
+    if (!listeners.has(event)) {
+      listeners.set(event, new Set());
+    }
+    listeners.get(event)!.add(listener as StateEventListener);
+  };
+
+  const off = <T = any>(event: StateEventType, listener: StateEventListener<T>) => {
+    const eventListeners = listeners.get(event);
+    if (eventListeners) {
+      eventListeners.delete(listener as StateEventListener);
+    }
+  };
+
   return {
     addAlbums(newAlbums: Album[]): void {
       const filteredAlbums = newAlbums.filter((album) => {
@@ -45,6 +85,7 @@ export function createAppState(): AppState {
         return true;
       });
       albums.push(...filteredAlbums);
+      emit('albumsAdded', filteredAlbums);
     },
 
     getCurrentAlbum(): Album | undefined {
@@ -94,26 +135,32 @@ export function createAppState(): AppState {
 
     setCurrentIndex(index: number): void {
       currentIndex = index;
+      emit('currentIndexChanged', index);
     },
 
     setCurrentPage(page: number): void {
       currentPage = page;
+      emit('currentPageChanged', page);
     },
 
     setIsFetching(fetching: boolean): void {
       isFetching = fetching;
+      emit('isFetchingChanged', fetching);
     },
 
     setCurrentMode(mode: DiscoveryMode): void {
       currentMode = mode;
+      emit('currentModeChanged', mode);
     },
 
     setCurrentTag(tag: string): void {
       currentTag = tag;
+      emit('currentTagChanged', tag);
     },
 
     setLastError(error: Error | null): void {
       lastError = error;
+      emit('lastErrorChanged', error);
     },
 
     incrementCurrentIndex(): void {
@@ -135,6 +182,11 @@ export function createAppState(): AppState {
       isFetching = false;
       seenLinks = new Set();
       lastError = null;
+      emit('stateReset');
     },
+
+    on,
+    off,
+    emit,
   };
 }
