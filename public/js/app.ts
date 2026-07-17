@@ -69,9 +69,9 @@ export interface AppController {
   ui: UIManager;
   fetchAlbums(page?: number): Promise<void>;
   retryFetch(): Promise<void>;
-  showCurrentAlbum(): void;
+  showCurrentAlbum(): Promise<void>;
   nextAlbum(): Promise<void>;
-  prevAlbum(): void;
+  prevAlbum(): Promise<void>;
   copyAlbumLink(): Promise<void>;
   openAlbumPage(): void;
   toggleAudio(): void;
@@ -527,24 +527,25 @@ export const createAppController = (): AppController => {
     }
   };
 
-  const showCurrentAlbum = () => {
+  const showCurrentAlbum = async () => {
     const album = state.getCurrentAlbum();
     ui.showAlbum(album);
     
     if (album?.stream_url) {
       audioController.loadTrack(album.stream_url);
+      await audioController.play();
     }
     paginationController.preloadNextImages();
   };
 
   const nextAlbum = async () => {
     await paginationController.nextAlbum(() => fetchAlbums(state.getCurrentPage()));
-    showCurrentAlbum();
+    await showCurrentAlbum();
   };
 
-  const prevAlbum = () => {
+  const prevAlbum = async () => {
     paginationController.prevAlbum();
-    showCurrentAlbum();
+    await showCurrentAlbum();
   };
 
   const switchMode = async (mode: DiscoveryMode) => {
@@ -572,7 +573,7 @@ export const createAppController = (): AppController => {
     ui.showToast(modeToast, "success");
 
     await fetchAlbums(1);
-    showCurrentAlbum();
+    await showCurrentAlbum();
   };
 
   const selectGenre = async (genre: string) => {
@@ -592,7 +593,7 @@ export const createAppController = (): AppController => {
     ui.showToast(genreToast, "success");
 
     await fetchAlbums(1);
-    showCurrentAlbum();
+    await showCurrentAlbum();
   };
 
   const copyAlbumLink = async () => {
@@ -645,7 +646,7 @@ export const createAppController = (): AppController => {
     ui.hideError();
     await fetchAlbums(state.getCurrentPage());
     if (state.getAlbums().length > 0) {
-      showCurrentAlbum();
+      await showCurrentAlbum();
     }
   };
 
@@ -774,7 +775,7 @@ export const createAppController = (): AppController => {
     applyGenreTheme(genre, state.getCurrentMode());
 
     await fetchAlbums(state.getCurrentPage());
-    showCurrentAlbum();
+    await showCurrentAlbum();
   };
 
   return {
