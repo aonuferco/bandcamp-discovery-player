@@ -250,6 +250,9 @@ const createUIManager = (state: AppState): UIManager => {
     copyLinkFab: document.getElementById("copy-link-fab") as HTMLButtonElement | null,
   };
 
+  // Map of preloaded images keyed by album index so we can explicitly dereference them
+  const preloadedImages = new Map<number, HTMLImageElement | null>();
+
   const modalManager = createModalManager({
     helpModal: elements.helpModal,
     closeModal: elements.closeModal,
@@ -405,13 +408,50 @@ const createUIManager = (state: AppState): UIManager => {
     // Audio player is now managed by audio-controller module
   };
 
+  // Deferred genre rendering: use requestIdleCallback when available to avoid jank
+  const renderGenreDropdown = (filter?: string): boolean => {
+    const fn = () => genreDropdownManager.renderGenreDropdown(filter);
+    if ('requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(fn);
+    } else {
+      setTimeout(fn, 50);
+    }
+    // return true to indicate rendering was scheduled
+    return true;
+  };
+
   const preloadNextImages = (count = 3) => {
+    const albums = state.getAlbums();
+    const baseIndex = state.getCurrentIndex();
+    const desired = new Set<number>();
+
     for (let i = 1; i <= count; i++) {
-      const albums = state.getAlbums();
-      const nextItem = albums[state.getCurrentIndex() + i];
-      if (nextItem && nextItem.img) {
+      const idx = baseIndex + i;
+      desired.add(idx);
+      const nextItem = albums[idx];
+      if (nextItem && nextItem.img && !preloadedImages.has(idx)) {
         const img = new Image();
+        img.onload = () => {
+          // no-op; loaded image available via img.src
+        };
         img.src = nextItem.img;
+        preloadedImages.set(idx, img);
+      }
+    }
+
+    // Clean up any preloaded images that are no longer in the desired window
+    for (const [idx, img] of Array.from(preloadedImages.entries())) {
+      if (!desired.has(idx)) {
+        if (img) {
+          try {
+            img.onload = null as unknown as ((this: GlobalEventHandlers, ev: Event) => any) | null;
+            // dereference to help the GC
+            (img as any).src = "";
+          } catch (e) {
+            // ignore
+          }
+        }
+        preloadedImages.delete(idx);
       }
     }
   };
@@ -430,8 +470,8 @@ const createUIManager = (state: AppState): UIManager => {
     hideError: toastManager.hideError,
     openModal: modalManager.openModal,
     closeModal: modalManager.closeModal,
-    renderGenreDropdown: genreDropdownManager.renderGenreDropdown,
-    toggleDropdown: genreDropdownManager.toggleDropdown,
+    renderGenreDropdown,
+    toggleDropdown: genreDropdownManager.toggle,
     updateSearchInput: genreDropdownManager.updateSearchInput,
     navigateDropdown: genreDropdownManager.navigate,
     getHighlightedGenre: genreDropdownManager.getHighlightedGenre,
@@ -464,6 +504,33 @@ export const createAppController = (): AppController => {
       ui.showToast("Track unavailable", "error");
     });
   }
+
+  // Debounce helpers to avoid flooding the audio API for rapid key presses
+  const debounce = <T extends (...args: any[]) => void>(fn: T, wait = 100) => {
+    let timer: number | undefined;
+    return (...args: any[]) => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+      timer = window.setTimeout(() => fn(...args), wait);
+    };
+  };
+
+  const debouncedSeek = debounce((seconds: number) => {
+    try {
+      audioController.seek(seconds);
+    } catch (e) {
+      // swallow
+    }
+  }, 120);
+
+  const debouncedAdjustVolume = debounce((delta: number) => {
+    try {
+      audioController.adjustVolume(delta);
+    } catch (e) {
+      // swallow
+    }
+  }, 150);
 
   const fetchAlbums = async (page = 1) => {
     state.setIsFetching(true);
@@ -530,11 +597,31 @@ export const createAppController = (): AppController => {
   const showCurrentAlbum = () => {
     const album = state.getCurrentAlbum();
     ui.showAlbum(album);
-    
+
+    // Properly unload previous audio element resources before loading a new track
+    try {
+      const audioEl = ui.elements.player as HTMLAudioElement | null;
+      if (audioEl) {
+        audioEl.pause();
+        // clear src and call load to release any internal buffers
+        audioEl.src = "";
+        try {
+          audioEl.load();
+        } catch (e) {
+          // ignore if the underlying controller uses a different element
+        }
+      }
+    } catch (e) {
+      // ignore any unexpected errors while attempting cleanup
+    }
+
     if (album?.stream_url) {
       audioController.loadTrack(album.stream_url);
     }
+
+    // Allow both the pagination controller and the UI manager to schedule preloads
     paginationController.preloadNextImages();
+    ui.preloadNextImages();
   };
 
   const nextAlbum = async () => {
@@ -635,7 +722,13 @@ export const createAppController = (): AppController => {
   };
 
   const seekAudio = (seconds: number) => {
-    audioController.seek(seconds);
+    // Debounced seek to avoid rapid seeks flooding the audio element
+    try {
+      debouncedSeek(seconds);
+    } catch (e) {
+      // fallback to immediate seek
+      try { audioController.seek(seconds); } catch (err) { /* ignore */ }
+    }
   };
 
   const retryFetch = async () => {
@@ -678,10 +771,10 @@ export const createAppController = (): AppController => {
     keyboardController.registerShortcut("w", () => copyAlbumLink());
     keyboardController.registerShortcut("s", () => openAlbumPage());
     keyboardController.registerShortcut(" ", () => toggleAudio(), { preventDefault: true });
-    keyboardController.registerShortcut("arrowleft", () => seekAudio(-10), { preventDefault: true });
-    keyboardController.registerShortcut("arrowright", () => seekAudio(10), { preventDefault: true });
-    keyboardController.registerShortcut("arrowup", () => audioController.adjustVolume(0.1), { preventDefault: true });
-    keyboardController.registerShortcut("arrowdown", () => audioController.adjustVolume(-0.1), { preventDefault: true });
+    keyboardController.registerShortcut("arrowleft", () => debouncedSeek(-10), { preventDefault: true });
+    keyboardController.registerShortcut("arrowright", () => debouncedSeek(10), { preventDefault: true });
+    keyboardController.registerShortcut("arrowup", () => debouncedAdjustVolume(0.1), { preventDefault: true });
+    keyboardController.registerShortcut("arrowdown", () => debouncedAdjustVolume(-0.1), { preventDefault: true });
     keyboardController.registerShortcut("escape", () => {
       ui.closeModal();
       ui.toggleDropdown(false);
