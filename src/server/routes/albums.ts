@@ -72,9 +72,9 @@ export function isBandcampApiResponse(data: unknown): data is BandcampApiRespons
 }
 
 // In-memory cache (in production, consider Redis or similar)
-let cachedAlbums: Album[] = [];
-let lastCursor = "*";
-let isFetching = false;
+const albumsCache = new Map<string, { albums: Album[]; expiresAt: number }>();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const fetchingKeys = new Set<string>();
 
 export const getApiBody = (slice: "new" | "hot" = "new", tag: string | null = "breakcore"): BandcampApiBody => {
   const body: BandcampApiBody = {
@@ -167,47 +167,66 @@ router.get(
   "/albums",
   validateQuery(albumsQuerySchema),
   async (req: Request<object, object, object, AlbumsQueryParams>, res: Response) => {
-    if (isFetching) {
+    const pageParam = req.query.page;
+    const sliceParam = req.query.slice;
+    const tagParam = req.query.tag;
+
+    const page = pageParam !== undefined ? parseInt(pageParam, 10) : 1;
+    const slice = (sliceParam as string) || "new";
+    const tag = (tagParam as string) || null;
+
+    const cacheKey = `${page}:${slice}:${tag || ""}`;
+    const now = Date.now();
+
+    // Serve from cache when available
+    const cached = albumsCache.get(cacheKey);
+    if (cached && cached.expiresAt > now) {
+      res.setHeader("Cache-Control", "public, max-age=300");
+      return res.json(cached.albums);
+    }
+
+    // Prevent parallel fetches for the same key
+    if (fetchingKeys.has(cacheKey)) {
       return res.status(429).json({ error: "Already fetching" });
     }
 
-    isFetching = true;
+    fetchingKeys.add(cacheKey);
 
     try {
-      const pageParam = req.query.page;
-      const sliceParam = req.query.slice;
-      const tagParam = req.query.tag;
+      // Fetch pages sequentially up to the requested page to obtain the correct cursor progression
+      let cursor = "*";
+      let pageAlbums: Album[] = [];
 
-      const page = pageParam !== undefined ? parseInt(pageParam, 10) : 1;
-      const slice = sliceParam || "new";
-      const tag = tagParam || null;
+      for (let p = 1; p <= page; p++) {
+        const data = await fetchFromBandcamp(cursor, slice as "new" | "hot", tag);
 
-      // Reset cursor if it's page 1 (fresh request/page reload)
-      if (page === 1) {
-        lastCursor = "*";
-        cachedAlbums = [];
+        if (!data.results || !Array.isArray(data.results)) {
+          throw new Error("Unexpected response format from Bandcamp API");
+        }
+
+        const newAlbums: Album[] = data.results
+          .filter((item: BandcampAlbumItem) => item.result_type === "a")
+          .map(transformAlbumData);
+
+        if (p === page) {
+          pageAlbums = newAlbums;
+        }
+
+        cursor = data.cursor;
       }
 
-      const data = await fetchFromBandcamp(lastCursor, slice, tag);
+      // Cache the page result
+      albumsCache.set(cacheKey, { albums: pageAlbums, expiresAt: Date.now() + CACHE_TTL_MS });
 
-      if (!data.results || !Array.isArray(data.results)) {
-        throw new Error("Unexpected response format from Bandcamp API");
-      }
-
-      const newAlbums: Album[] = data.results
-        .filter((item: BandcampAlbumItem) => item.result_type === "a")
-        .map(transformAlbumData);
-
-      cachedAlbums.push(...newAlbums);
-      lastCursor = data.cursor;
-
-      res.json(newAlbums);
+      // Set short-lived public cache header for clients
+      res.setHeader("Cache-Control", "public, max-age=300");
+      return res.json(pageAlbums);
     } catch (error) {
       const reqId = crypto.randomUUID();
       const message = error instanceof Error ? error.message : String(error);
       let category = "InternalError";
       let status = 500;
-      
+
       if (message.startsWith("[")) {
         const endIdx = message.indexOf("]");
         if (endIdx !== -1) {
@@ -236,7 +255,7 @@ router.get(
         reqId,
       });
     } finally {
-      isFetching = false;
+      fetchingKeys.delete(cacheKey);
     }
   }
 );
