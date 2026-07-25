@@ -41,6 +41,24 @@ body {
   overflow: hidden;
 }
 
+/* Skip to main content link - hidden by default, visible on focus */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #000;
+  color: #fff;
+  padding: 8px 16px;
+  text-decoration: none;
+  z-index: 10000;
+  font-weight: bold;
+  border: 2px solid var(--accent-cyan);
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
 /* Header - Cut-and-Paste Style */
 .app-header {
   display: flex;
@@ -157,6 +175,9 @@ body {
   font-family: var(--font-mono);
   font-weight: bold;
   transition: all 0.1s;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
 }
 
 .genre-item:hover,
@@ -206,11 +227,16 @@ body {
   color: #fff;
   border: none;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   cursor: pointer;
   box-shadow: -2px 2px 0 var(--accent-neon-pink);
   transform: rotate(10deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Main Content Area */
@@ -606,6 +632,57 @@ audio {
   border: none;
   cursor: pointer;
   color: red;
+}
+
+.close-btn:focus-visible {
+  outline: 3px solid var(--accent-cyan);
+  outline-offset: 2px;
+}
+
+/* Accessibility: Focus-visible styles for all interactive elements */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--accent-cyan);
+  outline-offset: 2px;
+}
+
+.mode-btn:focus-visible {
+  outline: 3px solid var(--accent-cyan);
+  outline-offset: 2px;
+}
+
+.nav-btn:focus-visible {
+  outline: 3px solid var(--accent-cyan);
+  outline-offset: 4px;
+  text-shadow: 4px 4px 0 var(--accent-cyan), 0 0 0 3px var(--accent-cyan);
+}
+
+.help-button:focus-visible {
+  outline: 3px solid var(--accent-cyan);
+  outline-offset: 2px;
+}
+
+.retry-btn:focus-visible {
+  outline: 3px solid #000;
+  outline-offset: 2px;
+}
+
+.genre-item:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: -2px;
+}
+
+#genre-search:focus-visible {
+  outline: 3px solid var(--accent-cyan);
+  outline-offset: 2px;
+}
+
+#genre-search:focus {
+  outline: none;
+  background: var(--accent-cyan);
 }
 
 .shortcut-item {

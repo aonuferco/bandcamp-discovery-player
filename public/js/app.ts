@@ -272,6 +272,23 @@ const createUIManager = (state: AppState): UIManager => {
     () => window.appState?.getCurrentTag() || ""
   );
 
+  /**
+   * Announce album change to screen readers via live region
+   */
+  const announceAlbumChange = (album: Album) => {
+    const announcement = `Now playing: ${album.title} by ${album.artist}${
+      album.featured_track ? `. Featured track: ${album.featured_track.title}` : ""
+    }`;
+    
+    if (elements.toastContainer) {
+      const liveRegion = elements.toastContainer;
+      liveRegion.textContent = announcement;
+      setTimeout(() => {
+        liveRegion.textContent = "";
+      }, 100);
+    }
+  };
+
   const showAlbum = (album: Album | undefined) => {
     if (!album) {
       if (elements.loadingSpinner) elements.loadingSpinner.classList.add("hidden");
@@ -322,6 +339,7 @@ const createUIManager = (state: AppState): UIManager => {
     updateTrackCount(album);
     updateReleaseDate(album);
     updateAudioPlayer(album);
+    announceAlbumChange(album);
   };
 
   const updateTrackInfo = (album: Album) => {
