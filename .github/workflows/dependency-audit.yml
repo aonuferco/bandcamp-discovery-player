@@ -1,0 +1,51 @@
+name: Dependency Audit
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # weekly on Sundays
+  workflow_dispatch: {}
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit and set output
+        id: audit
+        run: |
+          npm audit --json > audit.json || true
+          total=$(node -e "const fs=require('fs');const a=JSON.parse(fs.readFileSync('audit.json'));const meta = a.metadata || {}; const vulnCounts = meta.vulnerabilities ? Object.values(meta.vulnerabilities).reduce((s,n)=>s+n,0) : (meta.totalVulnerabilities || 0); console.log(vulnCounts);" )
+          echo "total=$total" >> $GITHUB_OUTPUT
+
+      - name: Create issue if vulnerabilities found
+        if: steps.audit.outputs.total != '0'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const audit = JSON.parse(fs.readFileSync('audit.json'));
+            const total = (audit.metadata && (audit.metadata.totalVulnerabilities || Object.values(audit.metadata.vulnerabilities || {}).reduce((s,n)=>s+n,0))) || 0;
+            const body = `Weekly dependency audit detected ${total} vulnerabilities.\n\nSee audit.json attached to the workflow run for details or run \`npm audit\` locally.`;
+            const title = `Dependency audit: ${total} vulnerabilities detected`;
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body
+            });
+
+      - name: Upload audit.json as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-json
+          path: audit.json
