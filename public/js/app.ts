@@ -489,7 +489,7 @@ const createUIManager = (state: AppState): UIManager => {
     openModal: modalManager.openModal,
     closeModal: modalManager.closeModal,
     renderGenreDropdown,
-    toggleDropdown: genreDropdownManager.toggle,
+    toggleDropdown: genreDropdownManager.toggleDropdown,
     updateSearchInput: genreDropdownManager.updateSearchInput,
     navigateDropdown: genreDropdownManager.navigate,
     getHighlightedGenre: genreDropdownManager.getHighlightedGenre,
