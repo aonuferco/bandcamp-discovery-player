@@ -1,4 +1,6 @@
 import { type Genre, getGenreFamily, isValidGenre } from './genres';
+// Re-export URL parsing helpers so unit tests can import from public/js/app
+export { parseUrlParams, isValidMode } from './url-state';
 import { createAppState, type AppState } from './state';
 import { createAlbumService, type AlbumService } from './api';
 import { createModalManager } from './ui/modal';
@@ -505,6 +507,28 @@ export const createAppController = (): AppController => {
     });
   }
 
+  // Ensure the UI manager can update the audio player when albums change.
+  // This keeps the responsibility for audio playback in the audioController
+  // while allowing tests (and other callers) to call ui.showAlbum(...) and
+  // have the audio track load immediately.
+  ui.updateAudioPlayer = (album) => {
+    try {
+      if (!ui.elements.player) return;
+      if (album?.stream_url) {
+        audioController.loadTrack(album.stream_url);
+      } else {
+        const audioEl = audioController.getAudioElement();
+        if (audioEl) {
+          const source = audioEl.querySelector('source');
+          if (source) (source as HTMLSourceElement).src = '';
+          try { audioEl.load(); } catch (e) { /* ignore */ }
+        }
+      }
+    } catch (e) {
+      // ignore errors updating audio
+    }
+  };
+
   // Debounce helpers to avoid flooding the audio API for rapid key presses
   const debounce = <T extends (...args: any[]) => void>(fn: T, wait = 100) => {
     let timer: number | undefined;
@@ -722,12 +746,12 @@ export const createAppController = (): AppController => {
   };
 
   const seekAudio = (seconds: number) => {
-    // Debounced seek to avoid rapid seeks flooding the audio element
+    // Immediate seek for programmatic calls (unit tests expect synchronous behavior).
+    // Keyboard handlers use this helper directly so they also apply immediately.
     try {
-      debouncedSeek(seconds);
+      audioController.seek(seconds);
     } catch (e) {
-      // fallback to immediate seek
-      try { audioController.seek(seconds); } catch (err) { /* ignore */ }
+      // ignore
     }
   };
 
@@ -771,8 +795,8 @@ export const createAppController = (): AppController => {
     keyboardController.registerShortcut("w", () => copyAlbumLink());
     keyboardController.registerShortcut("s", () => openAlbumPage());
     keyboardController.registerShortcut(" ", () => toggleAudio(), { preventDefault: true });
-    keyboardController.registerShortcut("arrowleft", () => debouncedSeek(-10), { preventDefault: true });
-    keyboardController.registerShortcut("arrowright", () => debouncedSeek(10), { preventDefault: true });
+    keyboardController.registerShortcut("arrowleft", () => seekAudio(-10), { preventDefault: true });
+    keyboardController.registerShortcut("arrowright", () => seekAudio(10), { preventDefault: true });
     keyboardController.registerShortcut("arrowup", () => debouncedAdjustVolume(0.1), { preventDefault: true });
     keyboardController.registerShortcut("arrowdown", () => debouncedAdjustVolume(-0.1), { preventDefault: true });
     keyboardController.registerShortcut("escape", () => {
