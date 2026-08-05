@@ -94,6 +94,8 @@ export function createAudioController(): AudioController {
 
       audioEl = document.createElement("audio");
       audioEl.controls = true;
+      // allow autoplay by default for the embedded player
+      audioEl.autoplay = true;
       audioEl.style.width = "100%";
       audioEl.style.height = "40px";
 
