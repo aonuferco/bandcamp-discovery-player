@@ -225,7 +225,7 @@ export const setupTouchNavigation = (
 // UI Manager
 // ============================================================================
 
-const createUIManager = (state: AppState): UIManager => {
+const createUIManager = (state: AppState, audioController?: AudioController): UIManager => {
   const elements: UIElements = {
     cover: document.getElementById("cover") as HTMLImageElement | null,
     title: document.getElementById("title"),
@@ -407,7 +407,28 @@ const createUIManager = (state: AppState): UIManager => {
 
   const updateAudioPlayer = (album: Album) => {
     if (!elements.player) return;
-    // Audio player is now managed by audio-controller module
+    // If an audioController was supplied to the UI manager, let it handle
+    // loading/clearing tracks. This keeps audio concerns colocated in the
+    // audio controller while allowing the UI to trigger updates synchronously.
+    try {
+      if (audioController) {
+        if (album?.stream_url) {
+          audioController.loadTrack(album.stream_url);
+        } else {
+          const audioEl = audioController.getAudioElement();
+          if (audioEl) {
+            const source = audioEl.querySelector('source');
+            if (source) {
+              (source as HTMLSourceElement).setAttribute('src', '');
+              (source as HTMLSourceElement).src = '';
+            }
+            try { audioEl.load(); } catch (e) { /* ignore */ }
+          }
+        }
+      }
+    } catch (e) {
+      // ignore errors updating audio
+    }
   };
 
   // Deferred genre rendering: use requestIdleCallback when available to avoid jank
@@ -487,13 +508,17 @@ const createUIManager = (state: AppState): UIManager => {
 export const createAppController = (): AppController => {
   const state = createAppState();
   const service = createAlbumService();
-  const ui = createUIManager(state);
 
   // Initialize all module controllers
   const audioController = createAudioController();
   const keyboardController = createKeyboardController();
   const paginationController = createPaginationController(state);
   const urlStateManager = createURLStateManager();
+
+  // Create UI manager with a reference to the audio controller so its
+  // internal showAlbum/updateAudioPlayer behavior can call into the
+  // audio controller synchronously.
+  const ui = createUIManager(state, audioController);
 
   // Initialize audio on first use
   if (ui.elements.player) {
@@ -506,31 +531,6 @@ export const createAppController = (): AppController => {
       ui.showToast("Track unavailable", "error");
     });
   }
-
-  // Ensure the UI manager can update the audio player when albums change.
-  // This keeps the responsibility for audio playback in the audioController
-  // while allowing tests (and other callers) to call ui.showAlbum(...) and
-  // have the audio track load immediately.
-  ui.updateAudioPlayer = (album) => {
-    try {
-      if (!ui.elements.player) return;
-      if (album?.stream_url) {
-        audioController.loadTrack(album.stream_url);
-      } else {
-        const audioEl = audioController.getAudioElement();
-        if (audioEl) {
-          const source = audioEl.querySelector('source');
-            if (source) {
-              (source as HTMLSourceElement).src = '';
-              (source as HTMLSourceElement).setAttribute('src', '');
-            }
-            try { audioEl.load(); } catch (e) { /* ignore */ }
-          }
-        }
-    } catch (e) {
-        // ignore errors updating audio
-    }
-  };
 
   // Debounce helpers to avoid flooding the audio API for rapid key presses
   const debounce = <T extends (...args: any[]) => void>(fn: T, wait = 100) => {
