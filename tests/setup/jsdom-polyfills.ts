@@ -15,3 +15,17 @@ if (typeof navigator !== 'undefined' && !('clipboard' in navigator)) {
     readText: async () => Promise.resolve(''),
   };
 }
+
+// Ensure HTMLSourceElement.src reflects the attribute value exactly in jsdom
+// so tests that compare .src to a raw URL string behave predictably.
+if (typeof HTMLSourceElement !== 'undefined' && Object.getOwnPropertyDescriptor(HTMLSourceElement.prototype, 'src')?.configurable) {
+  Object.defineProperty(HTMLSourceElement.prototype, 'src', {
+    get(this: any) {
+      return this.getAttribute('src') || '';
+    },
+    set(this: any, value: string) {
+      this.setAttribute('src', value);
+    },
+    configurable: true,
+  });
+}
