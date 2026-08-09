@@ -520,12 +520,15 @@ export const createAppController = (): AppController => {
         const audioEl = audioController.getAudioElement();
         if (audioEl) {
           const source = audioEl.querySelector('source');
-          if (source) (source as HTMLSourceElement).src = '';
-          try { audioEl.load(); } catch (e) { /* ignore */ }
+            if (source) {
+              (source as HTMLSourceElement).src = '';
+              (source as HTMLSourceElement).setAttribute('src', '');
+            }
+            try { audioEl.load(); } catch (e) { /* ignore */ }
+          }
         }
-      }
     } catch (e) {
-      // ignore errors updating audio
+        // ignore errors updating audio
     }
   };
 

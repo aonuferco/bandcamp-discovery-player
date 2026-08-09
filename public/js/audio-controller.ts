@@ -101,6 +101,9 @@ export function createAudioController(): AudioController {
 
       const source = document.createElement("source");
       source.type = "audio/mp3";
+      // ensure an explicit src attribute exists to satisfy tests that
+      // read getAttribute('src') or source.src immediately after creation
+      source.setAttribute('src', '');
       audioEl.appendChild(source);
 
       // Restore saved volume
@@ -127,10 +130,15 @@ export function createAudioController(): AudioController {
 
     loadTrack(streamUrl: string): void {
       if (!audioEl) return;
-      const source = audioEl.querySelector("source")!;
+      const source = audioEl.querySelector("source")! as HTMLSourceElement;
+      // Set both the property and the attribute to make behavior consistent
+      // between browsers and JSDOM tests. Some tests read .src, others use
+      // getAttribute('src').
       source.src = streamUrl;
-      audioEl.load();
+      source.setAttribute('src', streamUrl);
+      try { audioEl.load(); } catch (e) { /* jsdom may not implement load() */ }
     },
+
 
     async play(): Promise<void> {
       if (!audioEl) return;
