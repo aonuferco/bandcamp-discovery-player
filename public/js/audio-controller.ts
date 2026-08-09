@@ -131,13 +131,15 @@ export function createAudioController(): AudioController {
     loadTrack(streamUrl: string): void {
       if (!audioEl) return;
       const source = audioEl.querySelector("source")! as HTMLSourceElement;
-      // Set both the property and the attribute to make behavior consistent
-      // between browsers and JSDOM tests. Some tests read .src, others use
-      // getAttribute('src').
-      source.src = streamUrl;
+      // Set the attribute first, then explicitly assign the property from the
+      // attribute to avoid any environment-specific normalization differences
+      // (jsdom sometimes resolves empty attributes to the document base URL).
       source.setAttribute('src', streamUrl);
+      // assign property from attribute to keep .src and getAttribute('src') in sync
+      source.src = source.getAttribute('src') || '';
       try { audioEl.load(); } catch (e) { /* jsdom may not implement load() */ }
     },
+
 
 
     async play(): Promise<void> {
