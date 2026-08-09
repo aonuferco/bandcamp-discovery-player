@@ -5,6 +5,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['tests/unit/**/*.test.ts'],
+    setupFiles: ['tests/setup/jsdom-polyfills.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
