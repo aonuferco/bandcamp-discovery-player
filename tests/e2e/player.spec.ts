@@ -39,20 +39,47 @@ test.describe('Bandcamp Discovery Player - extended E2E', () => {
     // Prevent real audio playback in test environment but keep audio element behaviour
     await page.addInitScript(() => {
       // Override play/pause to avoid needing real audio playback in CI
+      // and provide a deterministic .paused property for assertions.
       // eslint-disable-next-line no-native-reassign
-      (HTMLMediaElement.prototype as any).play = async function () {
-        try {
-          // emulate successful play
-          (this as any).paused = false;
-          (this as any).currentTime = (this as any).currentTime || 0;
-        } catch (e) {
-          // ignore
-        }
-        return Promise.resolve();
-      };
-      (HTMLMediaElement.prototype as any).pause = function () {
-        try { (this as any).paused = true; } catch (e) {}
-      };
+      if (!(HTMLMediaElement.prototype as any)._hasMockedPlayback) {
+        Object.defineProperty(HTMLMediaElement.prototype, '_mockPaused', {
+          writable: true,
+          configurable: true,
+          value: true,
+        });
+
+        Object.defineProperty(HTMLMediaElement.prototype, 'paused', {
+          get() {
+            // Use per-instance backing field when present
+            return (this as any)._mockPaused === undefined ? true : (this as any)._mockPaused;
+          },
+          configurable: true,
+        });
+
+        // eslint-disable-next-line no-native-reassign
+        (HTMLMediaElement.prototype as any).play = async function () {
+          try {
+            (this as any)._mockPaused = false;
+            (this as any).currentTime = (this as any).currentTime || 0;
+            this.dispatchEvent(new Event('play'));
+          } catch (e) {
+            // ignore
+          }
+          return Promise.resolve();
+        };
+
+        // eslint-disable-next-line no-native-reassign
+        (HTMLMediaElement.prototype as any).pause = function () {
+          try {
+            (this as any)._mockPaused = true;
+            this.dispatchEvent(new Event('pause'));
+          } catch (e) {
+            // ignore
+          }
+        };
+
+        (HTMLMediaElement.prototype as any)._hasMockedPlayback = true;
+      }
     });
   });
 
