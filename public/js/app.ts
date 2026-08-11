@@ -71,9 +71,9 @@ export interface AppController {
   ui: UIManager;
   fetchAlbums(page?: number): Promise<void>;
   retryFetch(): Promise<void>;
-  showCurrentAlbum(): void;
+  showCurrentAlbum(): Promise<void>;
   nextAlbum(): Promise<void>;
-  prevAlbum(): void;
+  prevAlbum(): Promise<void>;
   copyAlbumLink(): Promise<void>;
   openAlbumPage(): void;
   toggleAudio(): void;
@@ -274,6 +274,23 @@ const createUIManager = (state: AppState, audioController?: AudioController): UI
     () => window.appState?.getCurrentTag() || ""
   );
 
+  /**
+   * Announce album change to screen readers via live region
+   */
+  const announceAlbumChange = (album: Album) => {
+    const announcement = `Now playing: ${album.title} by ${album.artist}${
+      album.featured_track ? `. Featured track: ${album.featured_track.title}` : ""
+    }`;
+    
+    if (elements.toastContainer) {
+      const liveRegion = elements.toastContainer;
+      liveRegion.textContent = announcement;
+      setTimeout(() => {
+        liveRegion.textContent = "";
+      }, 100);
+    }
+  };
+
   const showAlbum = (album: Album | undefined) => {
     if (!album) {
       if (elements.loadingSpinner) elements.loadingSpinner.classList.add("hidden");
@@ -324,6 +341,7 @@ const createUIManager = (state: AppState, audioController?: AudioController): UI
     updateTrackCount(album);
     updateReleaseDate(album);
     updateAudioPlayer(album);
+    announceAlbumChange(album);
   };
 
   const updateTrackInfo = (album: Album) => {
@@ -621,7 +639,7 @@ export const createAppController = (): AppController => {
     }
   };
 
-  const showCurrentAlbum = () => {
+  const showCurrentAlbum = async () => {
     const album = state.getCurrentAlbum();
     ui.showAlbum(album);
 
@@ -644,6 +662,7 @@ export const createAppController = (): AppController => {
 
     if (album?.stream_url) {
       audioController.loadTrack(album.stream_url);
+      await audioController.play();
     }
 
     // Allow both the pagination controller and the UI manager to schedule preloads
@@ -653,12 +672,12 @@ export const createAppController = (): AppController => {
 
   const nextAlbum = async () => {
     await paginationController.nextAlbum(() => fetchAlbums(state.getCurrentPage()));
-    showCurrentAlbum();
+    await showCurrentAlbum();
   };
 
-  const prevAlbum = () => {
+  const prevAlbum = async () => {
     paginationController.prevAlbum();
-    showCurrentAlbum();
+    await showCurrentAlbum();
   };
 
   const switchMode = async (mode: DiscoveryMode) => {
@@ -686,7 +705,7 @@ export const createAppController = (): AppController => {
     ui.showToast(modeToast, "success");
 
     await fetchAlbums(1);
-    showCurrentAlbum();
+    await showCurrentAlbum();
   };
 
   const selectGenre = async (genre: string) => {
@@ -706,7 +725,7 @@ export const createAppController = (): AppController => {
     ui.showToast(genreToast, "success");
 
     await fetchAlbums(1);
-    showCurrentAlbum();
+    await showCurrentAlbum();
   };
 
   const copyAlbumLink = async () => {
@@ -765,7 +784,7 @@ export const createAppController = (): AppController => {
     ui.hideError();
     await fetchAlbums(state.getCurrentPage());
     if (state.getAlbums().length > 0) {
-      showCurrentAlbum();
+      await showCurrentAlbum();
     }
   };
 
@@ -894,7 +913,7 @@ export const createAppController = (): AppController => {
     applyGenreTheme(genre, state.getCurrentMode());
 
     await fetchAlbums(state.getCurrentPage());
-    showCurrentAlbum();
+    await showCurrentAlbum();
   };
 
   return {

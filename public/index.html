@@ -13,6 +13,9 @@
     <link rel="stylesheet" href="index.css" />
   </head>
   <body>
+    <!-- Skip to main content link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
     <!-- Sticky Header -->
     <header class="app-header">
       <div class="header-left">
@@ -47,7 +50,7 @@
     </header>
 
     <!-- Main content wrapper with navigation -->
-    <div class="content-wrapper">
+    <main id="main-content" class="content-wrapper">
       <button id="prev-btn" class="nav-btn nav-btn-prev" title="Previous (Q)" aria-label="Go to previous album">◀</button>
       
       <div id="album">
@@ -74,10 +77,10 @@
       </div>
       
       <button id="next-btn" class="nav-btn nav-btn-next" title="Next (E)" aria-label="Go to next album">▶</button>
-    </div>
+    </main>
 
-    <!-- Toast notification container -->
-    <div id="toast-container"></div>
+    <!-- Toast notification container with live region for screen readers -->
+    <div id="toast-container" role="status" aria-live="polite" aria-atomic="true"></div>
 
     <button id="copy-link-fab" class="copy-fab" aria-label="Copy album link" title="Copy album link">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
