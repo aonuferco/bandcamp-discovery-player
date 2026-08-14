@@ -1,21 +1,18 @@
 import { test, expect } from '@playwright/test';
-import { injectAxe, checkA11y } from '@axe-core/playwright';
+import AxeBuilder from '@axe-core/playwright';
 
 test.describe('Accessibility Compliance (WCAG 2.1 AA)', () => {
   test.beforeEach(async ({ page }) => {
-    // Inject axe-core into the page
-    await injectAxe(page);
+    // No explicit injection required; AxeBuilder handles injecting axe-core when
+    // analyze() is called. Keep a simple navigation to ensure page is reachable.
+    await page.goto('/');
   });
 
   test('main page has no accessibility violations', async ({ page }) => {
     await page.goto('/');
     await page.waitForSelector('#title');
-    await checkA11y(page, null, {
-      detailedReport: true,
-      detailedReportOptions: {
-        html: true,
-      },
-    });
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(results.violations.length).toBe(0);
   });
 
   test('skip link is present and accessible', async ({ page }) => {
@@ -264,17 +261,15 @@ test.describe('Accessibility Compliance (WCAG 2.1 AA)', () => {
     await page.goto('/?genre=electronic');
     await page.waitForSelector('#title');
     
-    await checkA11y(page, null, {
-      detailedReport: true,
-    });
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(results.violations.length).toBe(0);
   });
 
   test('no axe violations on hot mode', async ({ page }) => {
     await page.goto('/?mode=hot');
     await page.waitForSelector('#title');
     
-    await checkA11y(page, null, {
-      detailedReport: true,
-    });
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(results.violations.length).toBe(0);
   });
 });
