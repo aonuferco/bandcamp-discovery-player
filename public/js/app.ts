@@ -1,22 +1,31 @@
-import { type Genre, getGenreFamily, isValidGenre } from './genres';
+import { type Genre, getGenreFamily, isValidGenre } from "./genres";
 // Re-export URL parsing helpers so unit tests can import from public/js/app
-export { parseUrlParams, isValidMode } from './url-state';
-import { createAppState, type AppState } from './state';
-import { createAlbumService, type AlbumService } from './api';
-import { createModalManager } from './ui/modal';
-import { createToastManager } from './ui/toast';
-import { createGenreDropdownManager } from './ui/genre-dropdown';
-import { createAudioController, type AudioController } from './audio-controller';
-import { createKeyboardController, type KeyboardHandler } from './keyboard-controller';
-import { createPaginationController, type PaginationController } from './pagination-controller';
-import { createURLStateManager, type URLStateManager } from './url-state';
-import type { Album, DiscoveryMode } from '../../src/shared/types';
+export { parseUrlParams, isValidMode } from "./url-state";
+import { createAppState, type AppState } from "./state";
+import { createAlbumService, type AlbumService } from "./api";
+import { createModalManager } from "./ui/modal";
+import { createToastManager } from "./ui/toast";
+import { createGenreDropdownManager } from "./ui/genre-dropdown";
+import {
+  createAudioController,
+  type AudioController,
+} from "./audio-controller";
+import {
+  createKeyboardController,
+  type KeyboardHandler,
+} from "./keyboard-controller";
+import {
+  createPaginationController,
+  type PaginationController,
+} from "./pagination-controller";
+import { createURLStateManager, type URLStateManager } from "./url-state";
+import type { Album, DiscoveryMode } from "../../src/shared/types";
 
 // ============================================================================
 // Types & Interfaces
 // ============================================================================
 
-export type ToastType = 'success' | 'error';
+export type ToastType = "success" | "error";
 
 export interface UIElements {
   cover: HTMLImageElement | null;
@@ -61,7 +70,7 @@ export interface UIManager {
   renderGenreDropdown(filter?: string): boolean;
   toggleDropdown(show: boolean): void;
   updateSearchInput(tag: string): void;
-  navigateDropdown(direction: 'up' | 'down'): void;
+  navigateDropdown(direction: "up" | "down"): void;
   getHighlightedGenre(): string | null;
 }
 
@@ -94,8 +103,8 @@ export const isTouchDevice = (): boolean =>
 export const applyGenreTheme = (genre: string, mode: DiscoveryMode): void => {
   // Remove any existing genre theme classes
   Array.from(document.body.classList)
-    .filter(c => c.startsWith('genre-theme-'))
-    .forEach(c => document.body.classList.remove(c));
+    .filter((c) => c.startsWith("genre-theme-"))
+    .forEach((c) => document.body.classList.remove(c));
 
   if (!genre) {
     // No genre selected — apply the mode-level theme (hot / new)
@@ -115,7 +124,7 @@ export const applyGenreTheme = (genre: string, mode: DiscoveryMode): void => {
 
 export const setupTouchNavigation = (
   nextAlbum: () => void,
-  prevAlbum: () => void
+  prevAlbum: () => void,
 ): void => {
   const albumEl = document.getElementById("album");
   if (!albumEl) return;
@@ -135,14 +144,17 @@ export const setupTouchNavigation = (
 
   const clearSwipeClasses = () => {
     albumEl.classList.remove(
-      "swipe-exit-left", "swipe-exit-right",
-      "swipe-enter-left", "swipe-enter-right"
+      "swipe-exit-left",
+      "swipe-exit-right",
+      "swipe-enter-left",
+      "swipe-enter-right",
     );
   };
 
   const resetTransform = () => {
     clearSwipeClasses();
-    albumEl.style.transition = "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+    albumEl.style.transition =
+      "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
     albumEl.style.transform = "";
     albumEl.addEventListener(
       "transitionend",
@@ -150,82 +162,115 @@ export const setupTouchNavigation = (
         albumEl.style.transition = "";
         albumEl.style.transform = "";
       },
-      { once: true }
+      { once: true },
     );
   };
 
-  albumEl.addEventListener("touchstart", (e: TouchEvent) => {
-    const t = e.touches[0];
-    if (!t) return;
-    touchStartX = t.clientX;
-    touchStartY = t.clientY;
-    currentDx = 0;
-    isDragging = true;
-    albumEl.style.transition = "none";
-  }, { passive: true });
+  albumEl.addEventListener(
+    "touchstart",
+    (e: TouchEvent) => {
+      const t = e.touches[0];
+      if (!t) return;
+      touchStartX = t.clientX;
+      touchStartY = t.clientY;
+      currentDx = 0;
+      isDragging = true;
+      albumEl.style.transition = "none";
+    },
+    { passive: true },
+  );
 
-  albumEl.addEventListener("touchmove", (e: TouchEvent) => {
-    if (!isDragging) return;
-    const t = e.touches[0];
-    if (!t) return;
+  albumEl.addEventListener(
+    "touchmove",
+    (e: TouchEvent) => {
+      if (!isDragging) return;
+      const t = e.touches[0];
+      if (!t) return;
 
-    const dx = t.clientX - touchStartX;
-    const dy = t.clientY - touchStartY;
+      const dx = t.clientX - touchStartX;
+      const dy = t.clientY - touchStartY;
 
-    if (Math.abs(dy) > AXIS_LOCK && Math.abs(dx) < SWIPE_THRESHOLD) {
+      if (Math.abs(dy) > AXIS_LOCK && Math.abs(dx) < SWIPE_THRESHOLD) {
+        isDragging = false;
+        resetTransform();
+        return;
+      }
+
+      currentDx = dx;
+      setDragTranslate(dx);
+    },
+    { passive: true },
+  );
+
+  albumEl.addEventListener(
+    "touchend",
+    () => {
+      if (!isDragging) return;
+      isDragging = false;
+
+      if (currentDx < -SWIPE_THRESHOLD) {
+        albumEl.style.transition = "";
+        albumEl.style.transform = "";
+        albumEl.classList.add("swipe-exit-left");
+
+        albumEl.addEventListener(
+          "animationend",
+          () => {
+            albumEl.classList.remove("swipe-exit-left");
+            nextAlbum();
+            albumEl.classList.add("swipe-enter-right");
+            albumEl.addEventListener(
+              "animationend",
+              () => albumEl.classList.remove("swipe-enter-right"),
+              { once: true },
+            );
+          },
+          { once: true },
+        );
+      } else if (currentDx > SWIPE_THRESHOLD) {
+        albumEl.style.transition = "";
+        albumEl.style.transform = "";
+        albumEl.classList.add("swipe-exit-right");
+
+        albumEl.addEventListener(
+          "animationend",
+          () => {
+            albumEl.classList.remove("swipe-exit-right");
+            prevAlbum();
+            albumEl.classList.add("swipe-enter-left");
+            albumEl.addEventListener(
+              "animationend",
+              () => albumEl.classList.remove("swipe-enter-left"),
+              { once: true },
+            );
+          },
+          { once: true },
+        );
+      } else {
+        resetTransform();
+      }
+    },
+    { passive: true },
+  );
+
+  albumEl.addEventListener(
+    "touchcancel",
+    () => {
       isDragging = false;
       resetTransform();
-      return;
-    }
-
-    currentDx = dx;
-    setDragTranslate(dx);
-  }, { passive: true });
-
-  albumEl.addEventListener("touchend", () => {
-    if (!isDragging) return;
-    isDragging = false;
-
-    if (currentDx < -SWIPE_THRESHOLD) {
-      albumEl.style.transition = "";
-      albumEl.style.transform = "";
-      albumEl.classList.add("swipe-exit-left");
-
-      albumEl.addEventListener("animationend", () => {
-        albumEl.classList.remove("swipe-exit-left");
-        nextAlbum();
-        albumEl.classList.add("swipe-enter-right");
-        albumEl.addEventListener("animationend", () => albumEl.classList.remove("swipe-enter-right"), { once: true });
-      }, { once: true });
-
-    } else if (currentDx > SWIPE_THRESHOLD) {
-      albumEl.style.transition = "";
-      albumEl.style.transform = "";
-      albumEl.classList.add("swipe-exit-right");
-
-      albumEl.addEventListener("animationend", () => {
-        albumEl.classList.remove("swipe-exit-right");
-        prevAlbum();
-        albumEl.classList.add("swipe-enter-left");
-        albumEl.addEventListener("animationend", () => albumEl.classList.remove("swipe-enter-left"), { once: true });
-      }, { once: true });
-
-    } else {
-      resetTransform();
-    }
-  }, { passive: true });
-
-  albumEl.addEventListener("touchcancel", () => {
-    isDragging = false;
-    resetTransform();
-  }, { passive: true });
+    },
+    { passive: true },
+  );
 };
 
 // ============================================================================
 // UI Manager
 // ============================================================================
 
-const createUIManager = (state: AppState, audioController?: AudioController): UIManager => {
+const createUIManager = (
+  state: AppState,
+  audioController?: AudioController,
+): UIManager => {
   const elements: UIElements = {
     cover: document.getElementById("cover") as HTMLImageElement | null,
     title: document.getElementById("title"),
@@ -239,17 +284,25 @@ const createUIManager = (state: AppState, audioController?: AudioController): UI
     prevBtn: document.getElementById("prev-btn") as HTMLButtonElement | null,
     helpBtn: document.getElementById("help-btn") as HTMLButtonElement | null,
     helpModal: document.getElementById("help-modal"),
-    closeModal: document.getElementById("close-modal") as HTMLButtonElement | null,
+    closeModal: document.getElementById(
+      "close-modal",
+    ) as HTMLButtonElement | null,
     toastContainer: document.getElementById("toast-container"),
-    newReleasesBtn: document.getElementById("new-releases-btn") as HTMLButtonElement | null,
+    newReleasesBtn: document.getElementById(
+      "new-releases-btn",
+    ) as HTMLButtonElement | null,
     hotBtn: document.getElementById("hot-btn") as HTMLButtonElement | null,
-    genreSearch: document.getElementById("genre-search") as HTMLInputElement | null,
+    genreSearch: document.getElementById(
+      "genre-search",
+    ) as HTMLInputElement | null,
     genreDropdown: document.getElementById("genre-dropdown"),
     loadingSpinner: document.getElementById("loading-spinner"),
     coverContainer: document.querySelector(".cover-container"),
     errorOverlay: document.getElementById("error-overlay"),
     retryBtn: document.getElementById("retry-btn") as HTMLButtonElement | null,
-    copyLinkFab: document.getElementById("copy-link-fab") as HTMLButtonElement | null,
+    copyLinkFab: document.getElementById(
+      "copy-link-fab",
+    ) as HTMLButtonElement | null,
   };
 
   // Map of preloaded images keyed by album index so we can explicitly dereference them
@@ -271,7 +324,7 @@ const createUIManager = (state: AppState, audioController?: AudioController): UI
       genreSearch: elements.genreSearch,
       genreDropdown: elements.genreDropdown,
     },
-    () => window.appState?.getCurrentTag() || ""
+    () => window.appState?.getCurrentTag() || "",
   );
 
   /**
@@ -279,9 +332,11 @@ const createUIManager = (state: AppState, audioController?: AudioController): UI
    */
   const announceAlbumChange = (album: Album) => {
     const announcement = `Now playing: ${album.title} by ${album.artist}${
-      album.featured_track ? `. Featured track: ${album.featured_track.title}` : ""
+      album.featured_track
+        ? `. Featured track: ${album.featured_track.title}`
+        : ""
     }`;
-    
+
     if (elements.toastContainer) {
       const liveRegion = elements.toastContainer;
       liveRegion.textContent = announcement;
@@ -293,19 +348,25 @@ const createUIManager = (state: AppState, audioController?: AudioController): UI
 
   const showAlbum = (album: Album | undefined) => {
     if (!album) {
-      if (elements.loadingSpinner) elements.loadingSpinner.classList.add("hidden");
-      if (elements.coverContainer) elements.coverContainer.classList.remove("loading");
+      if (elements.loadingSpinner)
+        elements.loadingSpinner.classList.add("hidden");
+      if (elements.coverContainer)
+        elements.coverContainer.classList.remove("loading");
       return;
     }
 
-    if (elements.loadingSpinner) elements.loadingSpinner.classList.remove("hidden");
-    if (elements.coverContainer) elements.coverContainer.classList.add("loading");
+    if (elements.loadingSpinner)
+      elements.loadingSpinner.classList.remove("hidden");
+    if (elements.coverContainer)
+      elements.coverContainer.classList.add("loading");
 
     const tempImg = new Image();
     tempImg.onload = () => {
       if (elements.cover) elements.cover.src = tempImg.src;
-      if (elements.loadingSpinner) elements.loadingSpinner.classList.add("hidden");
-      if (elements.coverContainer) elements.coverContainer.classList.remove("loading");
+      if (elements.loadingSpinner)
+        elements.loadingSpinner.classList.add("hidden");
+      if (elements.coverContainer)
+        elements.coverContainer.classList.remove("loading");
     };
     tempImg.src = album.img;
 
@@ -316,9 +377,9 @@ const createUIManager = (state: AppState, audioController?: AudioController): UI
       span.textContent = album.title;
       elements.title.appendChild(span);
       if (span.scrollWidth > span.clientWidth) {
-        elements.title.setAttribute('data-tooltip', album.title);
+        elements.title.setAttribute("data-tooltip", album.title);
       } else {
-        elements.title.removeAttribute('data-tooltip');
+        elements.title.removeAttribute("data-tooltip");
       }
     }
 
@@ -330,9 +391,9 @@ const createUIManager = (state: AppState, audioController?: AudioController): UI
       span.textContent = artistText;
       elements.artist.appendChild(span);
       if (span.scrollWidth > span.clientWidth) {
-        elements.artist.setAttribute('data-tooltip', album.artist);
+        elements.artist.setAttribute("data-tooltip", album.artist);
       } else {
-        elements.artist.removeAttribute('data-tooltip');
+        elements.artist.removeAttribute("data-tooltip");
       }
     }
 
@@ -348,7 +409,7 @@ const createUIManager = (state: AppState, audioController?: AudioController): UI
     if (!elements.trackInfo) return;
     if (!album.featured_track) {
       elements.trackInfo.textContent = "";
-      elements.trackInfo.removeAttribute('data-tooltip');
+      elements.trackInfo.removeAttribute("data-tooltip");
       return;
     }
 
@@ -361,11 +422,11 @@ const createUIManager = (state: AppState, audioController?: AudioController): UI
     span.appendChild(strong);
     span.appendChild(document.createTextNode(trackText));
     elements.trackInfo.appendChild(span);
-    
+
     if (span.scrollWidth > span.clientWidth) {
-      elements.trackInfo.setAttribute('data-tooltip', trackText);
+      elements.trackInfo.setAttribute("data-tooltip", trackText);
     } else {
-      elements.trackInfo.removeAttribute('data-tooltip');
+      elements.trackInfo.removeAttribute("data-tooltip");
     }
   };
 
@@ -373,10 +434,10 @@ const createUIManager = (state: AppState, audioController?: AudioController): UI
     if (!elements.labelInfo) return;
     if (!album.band_name) {
       elements.labelInfo.textContent = "";
-      elements.labelInfo.removeAttribute('data-tooltip');
+      elements.labelInfo.removeAttribute("data-tooltip");
       return;
     }
-    
+
     elements.labelInfo.textContent = "";
     const span = document.createElement("span");
     span.className = "truncate-text";
@@ -385,11 +446,11 @@ const createUIManager = (state: AppState, audioController?: AudioController): UI
     span.appendChild(strong);
     span.appendChild(document.createTextNode(album.band_name));
     elements.labelInfo.appendChild(span);
-    
+
     if (span.scrollWidth > span.clientWidth) {
-      elements.labelInfo.setAttribute('data-tooltip', album.band_name);
+      elements.labelInfo.setAttribute("data-tooltip", album.band_name);
     } else {
-      elements.labelInfo.removeAttribute('data-tooltip');
+      elements.labelInfo.removeAttribute("data-tooltip");
     }
   };
 
@@ -400,7 +461,9 @@ const createUIManager = (state: AppState, audioController?: AudioController): UI
       const strong = document.createElement("strong");
       strong.textContent = "Track Count: ";
       elements.trackCount.appendChild(strong);
-      elements.trackCount.appendChild(document.createTextNode(album.track_count.toString()));
+      elements.trackCount.appendChild(
+        document.createTextNode(album.track_count.toString()),
+      );
     }
   };
 
@@ -435,12 +498,16 @@ const createUIManager = (state: AppState, audioController?: AudioController): UI
         } else {
           const audioEl = audioController.getAudioElement();
           if (audioEl) {
-            const source = audioEl.querySelector('source');
+            const source = audioEl.querySelector("source");
             if (source) {
-              (source as HTMLSourceElement).setAttribute('src', '');
-              (source as HTMLSourceElement).src = '';
+              (source as HTMLSourceElement).setAttribute("src", "");
+              (source as HTMLSourceElement).src = "";
             }
-            try { audioEl.load(); } catch (e) { /* ignore */ }
+            try {
+              audioEl.load();
+            } catch (e) {
+              /* ignore */
+            }
           }
         }
       }
@@ -452,7 +519,7 @@ const createUIManager = (state: AppState, audioController?: AudioController): UI
   // Deferred genre rendering: use requestIdleCallback when available to avoid jank
   const renderGenreDropdown = (filter?: string): boolean => {
     const fn = () => genreDropdownManager.renderGenreDropdown(filter);
-    if ('requestIdleCallback' in window) {
+    if ("requestIdleCallback" in window) {
       (window as any).requestIdleCallback(fn);
     } else {
       setTimeout(fn, 50);
@@ -485,7 +552,9 @@ const createUIManager = (state: AppState, audioController?: AudioController): UI
       if (!desired.has(idx)) {
         if (img) {
           try {
-            img.onload = null as unknown as ((this: GlobalEventHandlers, ev: Event) => any) | null;
+            img.onload = null as unknown as
+              | ((this: GlobalEventHandlers, ev: Event) => any)
+              | null;
             // dereference to help the GC
             (img as any).src = "";
           } catch (e) {
@@ -532,6 +601,8 @@ export const createAppController = (): AppController => {
   const keyboardController = createKeyboardController();
   const paginationController = createPaginationController(state);
   const urlStateManager = createURLStateManager();
+  // Serialize navigation so rapid keyboard presses can't race past a fetch
+  let navigationQueue: Promise<void> = Promise.resolve();
 
   // Create UI manager with a reference to the audio controller so its
   // internal showAlbum/updateAudioPlayer behavior can call into the
@@ -591,18 +662,24 @@ export const createAppController = (): AppController => {
       const { data, error } = await service.fetchAlbums(
         page,
         state.getCurrentMode(),
-        state.getCurrentTag()
+        state.getCurrentTag(),
       );
 
       if (error) {
-        if (error.type === 'network') {
-          throw new Error("Network error. Please check your connection and try again.");
-        } else if (error.type === 'timeout') {
-          throw new Error("Request timed out. The server is taking too long to respond.");
-        } else if (error.type === 'http' && error.status === 400) {
+        if (error.type === "network") {
+          throw new Error(
+            "Network error. Please check your connection and try again.",
+          );
+        } else if (error.type === "timeout") {
+          throw new Error(
+            "Request timed out. The server is taking too long to respond.",
+          );
+        } else if (error.type === "http" && error.status === 400) {
           throw new Error("Invalid request. Please try a different genre.");
-        } else if (error.type === 'http' && error.status === 502) {
-          throw new Error("Upstream service (Bandcamp) is temporarily unavailable.");
+        } else if (error.type === "http" && error.status === 502) {
+          throw new Error(
+            "Upstream service (Bandcamp) is temporarily unavailable.",
+          );
         } else {
           throw new Error(`Error loading albums: ${error.message}`);
         }
@@ -621,12 +698,19 @@ export const createAppController = (): AppController => {
       state.setLastError(null);
 
       if (validAlbums.length === 0 && state.getAlbums().length === 0) {
-        ui.showError(`No results found for "${state.getCurrentTag() || state.getCurrentMode()}". Try a different genre.`);
+        ui.showError(
+          `No results found for "${state.getCurrentTag() || state.getCurrentMode()}". Try a different genre.`,
+        );
       }
     } catch (error: unknown) {
       // eslint-disable-next-line no-console
       console.error("Error fetching albums:", error);
-      const errMsg = error instanceof Error ? error.message : (typeof error === 'object' && error !== null && 'message' in error ? String((error as Record<string, unknown>)['message']) : 'Failed to load albums');
+      const errMsg =
+        error instanceof Error
+          ? error.message
+          : typeof error === "object" && error !== null && "message" in error
+            ? String((error as Record<string, unknown>)["message"])
+            : "Failed to load albums";
       state.setLastError(error instanceof Error ? error : new Error(errMsg));
 
       if (state.getAlbums().length === 0) {
@@ -670,14 +754,27 @@ export const createAppController = (): AppController => {
     ui.preloadNextImages();
   };
 
+  const enqueueNavigation = (work: () => Promise<void>): Promise<void> => {
+    navigationQueue = navigationQueue.then(work).catch(() => {
+      // keep the queue alive after a failure
+    });
+    return navigationQueue;
+  };
+
   const nextAlbum = async () => {
-    await paginationController.nextAlbum(() => fetchAlbums(state.getCurrentPage()));
-    await showCurrentAlbum();
+    await enqueueNavigation(async () => {
+      await paginationController.nextAlbum(() =>
+        fetchAlbums(state.getCurrentPage()),
+      );
+      await showCurrentAlbum();
+    });
   };
 
   const prevAlbum = async () => {
-    paginationController.prevAlbum();
-    await showCurrentAlbum();
+    await enqueueNavigation(async () => {
+      paginationController.prevAlbum();
+      await showCurrentAlbum();
+    });
   };
 
   const switchMode = async (mode: DiscoveryMode) => {
@@ -750,7 +847,7 @@ export const createAppController = (): AppController => {
         if (
           url.protocol === "https:" &&
           (url.hostname === "bandcamp.com" ||
-          url.hostname.endsWith(".bandcamp.com"))
+            url.hostname.endsWith(".bandcamp.com"))
         ) {
           window.open(album.link, "_blank");
           ui.showToast("Opening album page in new tab", "success");
@@ -798,7 +895,9 @@ export const createAppController = (): AppController => {
     ui.elements.copyLinkFab?.addEventListener("click", () => copyAlbumLink());
 
     // Mode switching
-    ui.elements.newReleasesBtn?.addEventListener("click", () => switchMode("new"));
+    ui.elements.newReleasesBtn?.addEventListener("click", () =>
+      switchMode("new"),
+    );
     ui.elements.hotBtn?.addEventListener("click", () => switchMode("hot"));
 
     // Modal backdrop click to close
@@ -816,20 +915,38 @@ export const createAppController = (): AppController => {
     keyboardController.registerShortcut("q", () => prevAlbum());
     keyboardController.registerShortcut("w", () => copyAlbumLink());
     keyboardController.registerShortcut("s", () => openAlbumPage());
-    keyboardController.registerShortcut(" ", () => toggleAudio(), { preventDefault: true });
-    keyboardController.registerShortcut("arrowleft", () => seekAudio(-10), { preventDefault: true });
-    keyboardController.registerShortcut("arrowright", () => seekAudio(10), { preventDefault: true });
-    keyboardController.registerShortcut("arrowup", () => debouncedAdjustVolume(0.1), { preventDefault: true });
-    keyboardController.registerShortcut("arrowdown", () => debouncedAdjustVolume(-0.1), { preventDefault: true });
+    keyboardController.registerShortcut(" ", () => toggleAudio(), {
+      preventDefault: true,
+    });
+    keyboardController.registerShortcut("arrowleft", () => seekAudio(-10), {
+      preventDefault: true,
+    });
+    keyboardController.registerShortcut("arrowright", () => seekAudio(10), {
+      preventDefault: true,
+    });
+    keyboardController.registerShortcut(
+      "arrowup",
+      () => debouncedAdjustVolume(0.1),
+      { preventDefault: true },
+    );
+    keyboardController.registerShortcut(
+      "arrowdown",
+      () => debouncedAdjustVolume(-0.1),
+      { preventDefault: true },
+    );
     keyboardController.registerShortcut("escape", () => {
       ui.closeModal();
       ui.toggleDropdown(false);
     });
-    keyboardController.registerShortcut("/", () => {
-      if (ui.elements.genreSearch) {
-        ui.elements.genreSearch.focus();
-      }
-    }, { preventDefault: true });
+    keyboardController.registerShortcut(
+      "/",
+      () => {
+        if (ui.elements.genreSearch) {
+          ui.elements.genreSearch.focus();
+        }
+      },
+      { preventDefault: true },
+    );
     keyboardController.setupListener();
 
     // Search dropdown events
@@ -854,10 +971,10 @@ export const createAppController = (): AppController => {
           searchInput.blur();
         } else if (e.key === "ArrowDown") {
           e.preventDefault();
-          ui.navigateDropdown('down');
+          ui.navigateDropdown("down");
         } else if (e.key === "ArrowUp") {
           e.preventDefault();
-          ui.navigateDropdown('up');
+          ui.navigateDropdown("up");
         } else if (e.key === "Enter") {
           e.preventDefault();
           const highlightedGenre = ui.getHighlightedGenre();
@@ -882,9 +999,11 @@ export const createAppController = (): AppController => {
       });
 
       dropdown.addEventListener("click", (e) => {
-        const item = (e.target as HTMLElement).closest(".genre-item") as HTMLElement;
-        if (item && item.dataset['genre'] !== undefined) {
-          selectGenre(item.dataset['genre']);
+        const item = (e.target as HTMLElement).closest(
+          ".genre-item",
+        ) as HTMLElement;
+        if (item && item.dataset["genre"] !== undefined) {
+          selectGenre(item.dataset["genre"]);
         }
       });
     }
@@ -947,16 +1066,22 @@ declare global {
   }
 }
 
-if (typeof window !== 'undefined') {
-  window.addEventListener('error', (event) => {
+if (typeof window !== "undefined") {
+  window.addEventListener("error", (event) => {
     if (window.appController?.ui) {
-      window.appController.ui.showToast(`An error occurred: ${event.message}`, 'error');
+      window.appController.ui.showToast(
+        `An error occurred: ${event.message}`,
+        "error",
+      );
     }
   });
 
-  window.addEventListener('unhandledrejection', (event) => {
+  window.addEventListener("unhandledrejection", (event) => {
     if (window.appController?.ui) {
-      window.appController.ui.showToast(`An error occurred: ${event.reason?.message || 'Unknown promise rejection'}`, 'error');
+      window.appController.ui.showToast(
+        `An error occurred: ${event.reason?.message || "Unknown promise rejection"}`,
+        "error",
+      );
     }
   });
 
@@ -964,7 +1089,7 @@ if (typeof window !== 'undefined') {
   window.appController = null;
 }
 
-if (typeof document !== 'undefined') {
+if (typeof document !== "undefined") {
   document.addEventListener("DOMContentLoaded", () => {
     const controller = createAppController();
     window.appController = controller;
