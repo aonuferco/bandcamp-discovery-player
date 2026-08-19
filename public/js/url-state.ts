@@ -24,8 +24,24 @@ export interface URLStateManager {
 /**
  * Validates that a mode string is a valid DiscoveryMode.
  */
-const isValidMode = (mode: string | null | undefined): mode is DiscoveryMode =>
+export const isValidMode = (mode: string | null | undefined): mode is DiscoveryMode =>
   mode === "new" || mode === "hot";
+
+/**
+ * Pure helper to parse URL params from window.location.search.
+ * Exported for unit tests and small utilities that need the parsing logic
+ * without instantiating the full URLStateManager.
+ */
+export function parseUrlParams(): { genre: Genre | ""; mode: DiscoveryMode } {
+  const params = new URLSearchParams(window.location.search);
+  const genreParam = params.get("genre") || "";
+  const modeParam = params.get("mode") || "new";
+
+  return {
+    genre: isValidGenre(genreParam) ? (genreParam as Genre) : "",
+    mode: isValidMode(modeParam) ? (modeParam as DiscoveryMode) : "new",
+  };
+}
 
 /**
  * Creates and returns a URLStateManager instance.
@@ -33,14 +49,7 @@ const isValidMode = (mode: string | null | undefined): mode is DiscoveryMode =>
 export function createURLStateManager(): URLStateManager {
   return {
     parseUrlParams(): { genre: Genre | ""; mode: DiscoveryMode } {
-      const params = new URLSearchParams(window.location.search);
-      const genreParam = params.get("genre") || "";
-      const modeParam = params.get("mode") || "new";
-
-      return {
-        genre: isValidGenre(genreParam) ? genreParam : "",
-        mode: isValidMode(modeParam) ? modeParam : "new",
-      };
+      return parseUrlParams();
     },
 
     updateUrl(genre: string, mode: DiscoveryMode): void {

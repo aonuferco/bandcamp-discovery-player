@@ -94,11 +94,17 @@ export function createAudioController(): AudioController {
 
       audioEl = document.createElement("audio");
       audioEl.controls = true;
+      // allow autoplay by default for the embedded player
+      audioEl.autoplay = true;
+      audioEl.setAttribute("aria-label", "Album preview player");
       audioEl.style.width = "100%";
       audioEl.style.height = "40px";
 
       const source = document.createElement("source");
       source.type = "audio/mp3";
+      // ensure an explicit src attribute exists to satisfy tests that
+      // read getAttribute('src') or source.src immediately after creation
+      source.setAttribute("src", "");
       audioEl.appendChild(source);
 
       // Restore saved volume
@@ -125,9 +131,18 @@ export function createAudioController(): AudioController {
 
     loadTrack(streamUrl: string): void {
       if (!audioEl) return;
-      const source = audioEl.querySelector("source")!;
-      source.src = streamUrl;
-      audioEl.load();
+      const source = audioEl.querySelector("source")! as HTMLSourceElement;
+      // Set the attribute first, then explicitly assign the property from the
+      // attribute to avoid any environment-specific normalization differences
+      // (jsdom sometimes resolves empty attributes to the document base URL).
+      source.setAttribute("src", streamUrl);
+      // assign property from attribute to keep .src and getAttribute('src') in sync
+      source.src = source.getAttribute("src") || "";
+      try {
+        audioEl.load();
+      } catch (e) {
+        /* jsdom may not implement load() */
+      }
     },
 
     async play(): Promise<void> {

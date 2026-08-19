@@ -3,13 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Discover and stream the latest Bandcamp albums with keyboard shortcuts and genre filtering." />
+    <meta
+      name="description"
+      content="Discover and stream the latest Bandcamp albums with keyboard shortcuts and genre filtering."
+    />
     <title>Bandcamp Discovery</title>
     <link rel="preconnect" href="https://f4.bcbits.com" />
     <link rel="dns-prefetch" href="https://f4.bcbits.com" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=Permanent+Marker&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Anton&family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=Permanent+Marker&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="index.css" />
   </head>
   <body>
@@ -20,8 +26,22 @@
     <header class="app-header">
       <div class="header-left">
         <div class="mode-buttons" role="group" aria-label="Album filter mode">
-          <button id="new-releases-btn" class="mode-btn active" aria-label="Show new releases" aria-pressed="true">New</button>
-          <button id="hot-btn" class="mode-btn" aria-label="Show hot albums" aria-pressed="false">Hot</button>
+          <button
+            id="new-releases-btn"
+            class="mode-btn active"
+            aria-label="Show new releases"
+            aria-pressed="true"
+          >
+            New
+          </button>
+          <button
+            id="hot-btn"
+            class="mode-btn"
+            aria-label="Show hot albums"
+            aria-pressed="false"
+          >
+            Hot
+          </button>
         </div>
       </div>
 
@@ -38,12 +58,22 @@
             aria-expanded="false"
             aria-controls="genre-dropdown"
           />
-          <div id="genre-dropdown" class="genre-dropdown" role="listbox" aria-label="Genre options"></div>
+          <div
+            id="genre-dropdown"
+            class="genre-dropdown"
+            role="listbox"
+            aria-label="Genre options"
+          ></div>
         </div>
       </div>
 
       <div class="header-right">
-        <button id="help-btn" class="help-button" title="Keyboard shortcuts" aria-label="Open keyboard shortcuts help">
+        <button
+          id="help-btn"
+          class="help-button"
+          title="Keyboard shortcuts"
+          aria-label="Open keyboard shortcuts help"
+        >
           ?
         </button>
       </div>
@@ -51,8 +81,15 @@
 
     <!-- Main content wrapper with navigation -->
     <main id="main-content" class="content-wrapper">
-      <button id="prev-btn" class="nav-btn nav-btn-prev" title="Previous (Q)" aria-label="Go to previous album">◀</button>
-      
+      <button
+        id="prev-btn"
+        class="nav-btn nav-btn-prev"
+        title="Previous (Q)"
+        aria-label="Go to previous album"
+      >
+        ◀
+      </button>
+
       <div id="album">
         <div class="cover-container">
           <img id="cover" src="" alt="Cover" />
@@ -62,12 +99,17 @@
           <div id="error-overlay" class="error-overlay hidden">
             <div class="error-icon">⚠️</div>
             <p class="error-message">Failed to load albums</p>
-            <button id="retry-btn" class="retry-btn" aria-label="Retry loading albums">
+            <button
+              id="retry-btn"
+              class="retry-btn"
+              aria-label="Retry loading albums"
+            >
               Retry
             </button>
           </div>
         </div>
-        <h2 id="title" role="status"></h2>
+        <!-- role=status removed: invalid on heading; toast-container is the live region -->
+        <h2 id="title"></h2>
         <h3 id="artist"></h3>
         <div id="track-info" class="track-info"></div>
         <div id="label-info" class="label-info"></div>
@@ -75,26 +117,61 @@
         <div id="release-date" class="release-date"></div>
         <div class="player" id="player"></div>
       </div>
-      
-      <button id="next-btn" class="nav-btn nav-btn-next" title="Next (E)" aria-label="Go to next album">▶</button>
+
+      <button
+        id="next-btn"
+        class="nav-btn nav-btn-next"
+        title="Next (E)"
+        aria-label="Go to next album"
+      >
+        ▶
+      </button>
     </main>
 
     <!-- Toast notification container with live region for screen readers -->
-    <div id="toast-container" role="status" aria-live="polite" aria-atomic="true"></div>
+    <div
+      id="toast-container"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    ></div>
 
-    <button id="copy-link-fab" class="copy-fab" aria-label="Copy album link" title="Copy album link">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <button
+      id="copy-link-fab"
+      class="copy-fab"
+      aria-label="Copy album link"
+      title="Copy album link"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="26"
+        height="26"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
         <!-- Scissors blades -->
-        <circle cx="6"  cy="6"  r="3"/>
-        <circle cx="6"  cy="18" r="3"/>
-        <line   x1="20" y1="4"  x2="8.12" y2="15.88"/>
-        <line   x1="14.47" y1="14.48" x2="20" y2="20"/>
-        <line   x1="8.12" y1="8.12"   x2="12" y2="12"/>
+        <circle cx="6" cy="6" r="3" />
+        <circle cx="6" cy="18" r="3" />
+        <line x1="20" y1="4" x2="8.12" y2="15.88" />
+        <line x1="14.47" y1="14.48" x2="20" y2="20" />
+        <line x1="8.12" y1="8.12" x2="12" y2="12" />
       </svg>
     </button>
 
     <!-- Help modal -->
-    <div id="help-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-hidden="true">
+    <div
+      id="help-modal"
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+      aria-hidden="true"
+    >
       <div class="modal-content">
         <div class="modal-header">
           <!-- Title text swaps via CSS content on mobile -->
@@ -102,10 +179,11 @@
             <span class="modal-title-desktop">Keyboard Shortcuts</span>
             <span class="modal-title-mobile">Touch Controls</span>
           </h2>
-          <button id="close-modal" class="close-btn" aria-label="Close dialog">&times;</button>
+          <button id="close-modal" class="close-btn" aria-label="Close dialog">
+            &times;
+          </button>
         </div>
         <div class="modal-body">
-
           <!-- ── MOBILE PANEL — shown only on ≤ 600px ── -->
           <div class="mobile-shortcuts" aria-label="Mobile touch gestures">
             <div class="shortcut-item">
@@ -118,11 +196,24 @@
             </div>
             <div class="shortcut-item">
               <kbd class="swipe-kbd">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:middle">
-                  <circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/>
-                  <line x1="20" y1="4" x2="8.12" y2="15.88"/>
-                  <line x1="14.47" y1="14.48" x2="20" y2="20"/>
-                  <line x1="8.12" y1="8.12" x2="12" y2="12"/>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  width="14"
+                  height="14"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                  style="vertical-align: middle"
+                >
+                  <circle cx="6" cy="6" r="3" />
+                  <circle cx="6" cy="18" r="3" />
+                  <line x1="20" y1="4" x2="8.12" y2="15.88" />
+                  <line x1="14.47" y1="14.48" x2="20" y2="20" />
+                  <line x1="8.12" y1="8.12" x2="12" y2="12" />
                 </svg>
                 button
               </kbd>
@@ -177,7 +268,6 @@
               <span>Focus genre search</span>
             </div>
           </div>
-
         </div>
       </div>
     </div>
