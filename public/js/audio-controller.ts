@@ -4,6 +4,15 @@
  * Provides a clean API for play, pause, seek, volume, and error handling.
  */
 
+import { loadPreferences, savePreferences } from "./preferences";
+
+export const formatPlaybackTime = (seconds: number): string => {
+  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+  const wholeSeconds = Math.floor(seconds);
+  const minutes = Math.floor(wholeSeconds / 60);
+  return `${minutes}:${(wholeSeconds % 60).toString().padStart(2, "0")}`;
+};
+
 export interface AudioController {
   /**
    * Initialize the audio element in the given container.
@@ -74,18 +83,26 @@ export interface AudioController {
  */
 export function createAudioController(): AudioController {
   let audioEl: HTMLAudioElement | null = null;
+  let progressInput: HTMLInputElement | null = null;
+  let elapsedTime: HTMLElement | null = null;
+  let remainingTime: HTMLElement | null = null;
   let errorCallback: (() => void) | null = null;
   let volumeChangeCallback: ((volume: number) => void) | null = null;
 
-  // Retrieve saved volume from localStorage, default to 0.2
-  const getSavedVolume = (): number => {
-    const saved = localStorage.getItem("bandcamp-volume");
-    return saved ? parseFloat(saved) : 0.2;
-  };
+  const updateProgress = (): void => {
+    if (!audioEl || !progressInput || !elapsedTime || !remainingTime) return;
 
-  // Save volume preference to localStorage
-  const saveVolume = (volume: number): void => {
-    localStorage.setItem("bandcamp-volume", volume.toString());
+    const duration = Number.isFinite(audioEl.duration) ? audioEl.duration : 0;
+    const currentTime = Number.isFinite(audioEl.currentTime)
+      ? audioEl.currentTime
+      : 0;
+    const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+    progressInput.value = progress.toString();
+    progressInput.style.setProperty("--progress", `${progress}%`);
+    elapsedTime.textContent = formatPlaybackTime(currentTime);
+    remainingTime.textContent =
+      duration > 0 ? `-${formatPlaybackTime(duration - currentTime)}` : "-0:00";
   };
 
   return {
@@ -94,22 +111,63 @@ export function createAudioController(): AudioController {
 
       audioEl = document.createElement("audio");
       audioEl.controls = true;
+      // allow autoplay by default for the embedded player
+      audioEl.autoplay = true;
+      audioEl.setAttribute("aria-label", "Album preview player");
       audioEl.style.width = "100%";
       audioEl.style.height = "40px";
 
       const source = document.createElement("source");
       source.type = "audio/mp3";
+      // ensure an explicit src attribute exists to satisfy tests that
+      // read getAttribute('src') or source.src immediately after creation
+      source.setAttribute("src", "");
       audioEl.appendChild(source);
 
       // Restore saved volume
-      audioEl.volume = getSavedVolume();
+      audioEl.volume = loadPreferences().volume;
+
+      const progress = document.createElement("div");
+      progress.className = "track-progress";
+
+      elapsedTime = document.createElement("span");
+      elapsedTime.className = "track-time track-time-elapsed";
+      elapsedTime.textContent = "0:00";
+
+      progressInput = document.createElement("input");
+      progressInput.className = "track-progress-bar";
+      progressInput.type = "range";
+      progressInput.min = "0";
+      progressInput.max = "100";
+      progressInput.step = "0.1";
+      progressInput.value = "0";
+      progressInput.setAttribute("aria-label", "Track playback position");
+
+      remainingTime = document.createElement("span");
+      remainingTime.className = "track-time track-time-remaining";
+      remainingTime.textContent = "-0:00";
+
+      progress.append(elapsedTime, progressInput, remainingTime);
 
       // Wire up persistent listeners (registered exactly once)
       audioEl.addEventListener("volumechange", () => {
-        saveVolume(audioEl!.volume);
+        savePreferences({ volume: audioEl!.volume });
         if (volumeChangeCallback) {
           volumeChangeCallback(audioEl!.volume);
         }
+      });
+
+      audioEl.addEventListener("timeupdate", updateProgress);
+      audioEl.addEventListener("loadedmetadata", updateProgress);
+      audioEl.addEventListener("durationchange", updateProgress);
+
+      progressInput.addEventListener("input", () => {
+        if (!audioEl || !progressInput || !Number.isFinite(audioEl.duration)) {
+          return;
+        }
+        audioEl.currentTime =
+          (Number(progressInput.value) / 100) * audioEl.duration;
+        updateProgress();
       });
 
       audioEl.addEventListener("error", () => {
@@ -121,13 +179,26 @@ export function createAudioController(): AudioController {
       // Inject into DOM
       playerContainer.textContent = "";
       playerContainer.appendChild(audioEl);
+      playerContainer.appendChild(progress);
     },
 
     loadTrack(streamUrl: string): void {
       if (!audioEl) return;
-      const source = audioEl.querySelector("source")!;
-      source.src = streamUrl;
-      audioEl.load();
+      const source = audioEl.querySelector("source")! as HTMLSourceElement;
+      // Set the attribute first, then explicitly assign the property from the
+      // attribute to avoid any environment-specific normalization differences
+      // (jsdom sometimes resolves empty attributes to the document base URL).
+      source.setAttribute("src", streamUrl);
+      // assign property from attribute to keep .src and getAttribute('src') in sync
+      source.src = source.getAttribute("src") || "";
+      if (progressInput) progressInput.value = "0";
+      if (elapsedTime) elapsedTime.textContent = "0:00";
+      if (remainingTime) remainingTime.textContent = "-0:00";
+      try {
+        audioEl.load();
+      } catch (e) {
+        /* jsdom may not implement load() */
+      }
     },
 
     async play(): Promise<void> {

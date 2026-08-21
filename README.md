@@ -46,7 +46,7 @@ bandcamp-discovery-player/
 │   └── index.ts                # Vercel serverless entry point
 ├── public/                     # Frontend static assets
 │   ├── index.html              # Main HTML entry point
-│   ├── css/                    # Stylesheets
+│   ├── index.css               # Frontend styles
 │   └── js/                     # Frontend TypeScript modules
 │       ├── app.ts              # Main frontend controller
 │       ├── api.ts              # API client
@@ -73,6 +73,25 @@ bandcamp-discovery-player/
 └── README.md
 ```
 
+## Architecture
+
+```mermaid
+flowchart LR
+    User[Browser] --> UI[Static UI<br/>Vite + TypeScript]
+    UI --> State[App state, URL state<br/>and local preferences]
+    UI --> Player[Audio controller<br/>and progress UI]
+    UI --> APIClient[Album API client]
+    APIClient --> Server[Express / Vercel API]
+    Server --> Bandcamp[Bandcamp Discover API]
+    Server --> Middleware[Validation, security,<br/>rate limiting and errors]
+```
+
+The frontend is a small set of framework-free TypeScript modules. `app.ts`
+coordinates state, UI managers, pagination, keyboard controls, preferences, and
+audio playback. The Express backend validates album requests and translates
+Bandcamp's response into the shared `Album` model. The same Express app runs
+locally and through the Vercel serverless entry point.
+
 ## Getting Started
 
 ### Prerequisites
@@ -83,27 +102,32 @@ bandcamp-discovery-player/
 ### Installation
 
 1. Clone the repository:
+
    ```bash
    git clone <repository-url>
    cd bandcamp-discovery-player
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
 
 3. Build the project:
+
    ```bash
    npm run build
    ```
 
 4. Start the development server (Concurrent Mode):
+
    ```bash
    npm run dev
    ```
 
-5. Open your browser and navigate to `http://localhost:3000`
+5. Open the Vite frontend at `http://localhost:5173`. The API runs at
+   `http://localhost:3000` and is proxied by Vite during development.
 
 ### Available Scripts
 
@@ -115,6 +139,20 @@ bandcamp-discovery-player/
 - `npm run test:coverage`: Run unit tests with coverage reporting
 - `npm run lint`: Run ESLint checks
 - `npm run format`: Format code with Prettier
+
+## Environment Variables
+
+No environment variables are required for local development.
+
+| Variable   | Required | Default       | Purpose                                                           |
+| ---------- | -------- | ------------- | ----------------------------------------------------------------- |
+| `PORT`     | No       | `3000`        | Port used by the Express API server                               |
+| `NODE_ENV` | No       | `development` | Controls whether server errors include development details        |
+| `VERCEL`   | No       | unset         | Selects Vercel's serverless static-asset path when deployed       |
+| `CI`       | No       | unset         | Makes Playwright start a fresh test server; set by GitHub Actions |
+
+The Bandcamp API endpoint, request headers, and timeout are currently defined
+as constants in `src/server/config.ts`.
 
 ## API Endpoints
 
@@ -139,13 +177,55 @@ bandcamp-discovery-player/
 - Safari
 - Edge
 
+## Continuous Integration
+
+GitHub Actions runs `.github/workflows/ci.yml` for pull requests and pushes to
+`main`. The pipeline:
+
+1. Uses Node.js 20.19.
+2. Installs dependencies from `package-lock.json`.
+3. Runs ESLint.
+4. Runs TypeScript type checking.
+5. Runs the Vitest unit suite.
+6. Builds the backend and Vite frontend.
+7. Installs Playwright's browser and system dependencies.
+8. Runs the Playwright end-to-end and accessibility suites.
+
+`.github/workflows/dependency-audit.yml` also performs the scheduled dependency
+security audit. Run the same primary checks locally before opening a pull
+request:
+
+```bash
+npm run lint
+npx tsc --noEmit
+npm run test:unit
+npm run build
+npm run test:e2e
+```
+
 ## Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests and linting
-5. Submit a pull request
+2. Create a focused feature branch from `main`
+3. Install dependencies with `npm ci`
+4. Make your changes and add or update tests
+5. Run lint, type checking, unit tests, build, and relevant E2E tests
+6. Format changed files with Prettier
+7. Submit a pull request describing the behavior change and test coverage
+
+### Code Style
+
+- Use TypeScript with explicit public interfaces and avoid `any`.
+- Prefer `const`, strict equality, and immutable updates.
+- Keep DOM construction and event handling in focused UI/controller modules;
+  keep `app.ts` limited to orchestration.
+- Use shared types from `src/shared/types.ts`.
+- Treat user-provided and remote values as untrusted and validate them before
+  using them in URLs, API requests, or the DOM.
+- Preserve keyboard and screen-reader support for all interactive features.
+- Use Prettier for formatting and follow the ESLint configuration.
+- Include unit coverage for pure logic and Playwright coverage for user-facing
+  workflows.
 
 ## License
 

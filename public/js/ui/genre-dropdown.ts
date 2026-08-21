@@ -1,5 +1,42 @@
 import { GENRES, ALL_GENRES } from "../genres";
 
+const normalizeSearchValue = (value: string): string =>
+  value
+    .toLowerCase()
+    .replace(/[\s_]+/g, "-")
+    .trim();
+
+const fuzzyScore = (genre: string, query: string): number | null => {
+  const normalizedGenre = normalizeSearchValue(genre);
+  const normalizedQuery = normalizeSearchValue(query);
+  if (!normalizedQuery) return 0;
+  if (normalizedGenre === normalizedQuery) return 0;
+  if (normalizedGenre.startsWith(normalizedQuery)) return 1;
+  if (normalizedGenre.includes(normalizedQuery)) return 2;
+
+  let queryIndex = 0;
+  let gapCount = 0;
+  let lastMatchIndex = -1;
+  for (let genreIndex = 0; genreIndex < normalizedGenre.length; genreIndex++) {
+    if (normalizedGenre[genreIndex] === normalizedQuery[queryIndex]) {
+      if (lastMatchIndex >= 0) gapCount += genreIndex - lastMatchIndex - 1;
+      lastMatchIndex = genreIndex;
+      queryIndex++;
+      if (queryIndex === normalizedQuery.length) return 3 + gapCount;
+    }
+  }
+
+  return null;
+};
+
+export const findMatchingGenres = (query: string): string[] =>
+  ALL_GENRES.flatMap((genre) => {
+    const score = fuzzyScore(genre, query);
+    return score === null ? [] : [{ genre, score }];
+  })
+    .sort((a, b) => a.score - b.score || a.genre.localeCompare(b.genre))
+    .map(({ genre }) => genre);
+
 export interface GenreDropdownElements {
   genreSearch: HTMLInputElement | null;
   genreDropdown: HTMLElement | null;
@@ -55,7 +92,6 @@ export const createGenreDropdownManager = (
 
     genreDropdown.textContent = "";
 
-    const filterLower = filter.toLowerCase();
     let hasResults = false;
 
     /**
@@ -89,9 +125,12 @@ export const createGenreDropdownManager = (
 
     // If filtering, show flat list
     if (filter) {
-      const matches = ALL_GENRES.filter((g) =>
-        g.toLowerCase().includes(filterLower),
-      );
+      const matches = findMatchingGenres(filter);
+      const count = document.createElement("div");
+      count.className = "genre-match-count";
+      count.setAttribute("role", "status");
+      count.textContent = `${matches.length} ${matches.length === 1 ? "match" : "matches"}`;
+      genreDropdown.appendChild(count);
 
       if (matches.length > 0) {
         matches.forEach((genre) => {
@@ -124,7 +163,9 @@ export const createGenreDropdownManager = (
       hasResults = true;
     }
 
-    const selectedItem = genreDropdown.querySelector(".selected") as HTMLElement | null;
+    const selectedItem = genreDropdown.querySelector(
+      ".selected",
+    ) as HTMLElement | null;
     if (selectedItem) {
       if (typeof requestAnimationFrame !== "undefined") {
         requestAnimationFrame(() => {
