@@ -20,6 +20,7 @@ import {
 } from "./pagination-controller";
 import { createURLStateManager, type URLStateManager } from "./url-state";
 import type { Album, DiscoveryMode } from "../../src/shared/types";
+import { loadPreferences, savePreferences } from "./preferences.js";
 
 // ============================================================================
 // Types & Interfaces
@@ -781,6 +782,7 @@ export const createAppController = (): AppController => {
     if (mode === state.getCurrentMode()) return;
 
     state.setCurrentMode(mode);
+    savePreferences({ mode });
     state.resetState();
     urlStateManager.updateUrl(state.getCurrentTag(), mode);
     applyGenreTheme(state.getCurrentTag(), mode);
@@ -809,6 +811,7 @@ export const createAppController = (): AppController => {
     if (genre === state.getCurrentTag()) return;
 
     state.setCurrentTag(genre);
+    savePreferences({ genre });
     state.resetState();
     urlStateManager.updateUrl(genre, state.getCurrentMode());
     applyGenreTheme(genre, state.getCurrentMode());
@@ -1010,7 +1013,11 @@ export const createAppController = (): AppController => {
   };
 
   const init = async () => {
-    const { genre, mode } = urlStateManager.parseUrlParams();
+    const parsedUrl = urlStateManager.parseUrlParams();
+    const params = new URLSearchParams(window.location.search);
+    const preferences = loadPreferences();
+    const genre = params.has("genre") ? parsedUrl.genre : preferences.genre;
+    const mode = params.has("mode") ? parsedUrl.mode : preferences.mode;
 
     if (mode !== "new") {
       state.setCurrentMode(mode);
@@ -1029,6 +1036,8 @@ export const createAppController = (): AppController => {
       ui.updateSearchInput(genre);
     }
 
+    savePreferences({ genre, mode });
+    urlStateManager.updateUrl(genre, mode);
     applyGenreTheme(genre, state.getCurrentMode());
 
     await fetchAlbums(state.getCurrentPage());
