@@ -1,3 +1,5 @@
+import { loadPreferences, savePreferences } from "./preferences.js";
+
 /**
  * audio-controller.ts
  * Manages audio element lifecycle, playback, and event handling.
@@ -77,17 +79,6 @@ export function createAudioController(): AudioController {
   let errorCallback: (() => void) | null = null;
   let volumeChangeCallback: ((volume: number) => void) | null = null;
 
-  // Retrieve saved volume from localStorage, default to 0.2
-  const getSavedVolume = (): number => {
-    const saved = localStorage.getItem("bandcamp-volume");
-    return saved ? parseFloat(saved) : 0.2;
-  };
-
-  // Save volume preference to localStorage
-  const saveVolume = (volume: number): void => {
-    localStorage.setItem("bandcamp-volume", volume.toString());
-  };
-
   return {
     initialize(playerContainer: HTMLElement): void {
       if (audioEl) return; // Already initialized
@@ -108,11 +99,11 @@ export function createAudioController(): AudioController {
       audioEl.appendChild(source);
 
       // Restore saved volume
-      audioEl.volume = getSavedVolume();
+      audioEl.volume = loadPreferences().volume;
 
       // Wire up persistent listeners (registered exactly once)
       audioEl.addEventListener("volumechange", () => {
-        saveVolume(audioEl!.volume);
+        savePreferences({ volume: audioEl!.volume });
         if (volumeChangeCallback) {
           volumeChangeCallback(audioEl!.volume);
         }
