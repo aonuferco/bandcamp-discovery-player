@@ -91,11 +91,19 @@
       </button>
 
       <div id="album">
+        <div
+          id="loading-skeleton"
+          class="loading-skeleton hidden"
+          aria-hidden="true"
+        >
+          <div class="skeleton-art"></div>
+          <div class="skeleton-line skeleton-line-title"></div>
+          <div class="skeleton-line skeleton-line-artist"></div>
+          <div class="skeleton-line skeleton-line-meta"></div>
+          <span class="visually-hidden">Loading albums</span>
+        </div>
         <div class="cover-container">
           <img id="cover" src="" alt="Cover" />
-          <div id="loading-spinner" class="loading-spinner hidden">
-            <div class="ascii-loader"></div>
-          </div>
           <div id="error-overlay" class="error-overlay hidden">
             <div class="error-icon">⚠️</div>
             <p class="error-message">Failed to load albums</p>

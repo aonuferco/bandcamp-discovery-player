@@ -297,7 +297,7 @@ const createUIManager = (
       "genre-search",
     ) as HTMLInputElement | null,
     genreDropdown: document.getElementById("genre-dropdown"),
-    loadingSpinner: document.getElementById("loading-spinner"),
+    loadingSpinner: document.getElementById("loading-skeleton"),
     coverContainer: document.querySelector(".cover-container"),
     errorOverlay: document.getElementById("error-overlay"),
     retryBtn: document.getElementById("retry-btn") as HTMLButtonElement | null,
