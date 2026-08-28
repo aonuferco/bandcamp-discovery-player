@@ -6,6 +6,18 @@ import { loadPreferences, savePreferences } from "./preferences.js";
  * Provides a clean API for play, pause, seek, volume, and error handling.
  */
 
+/**
+ * Formats seconds as m:ss. Duration is NaN until a stream's metadata
+ * arrives, which renders as 0:00 rather than leaking NaN into the UI.
+ */
+export const formatTime = (seconds: number): string => {
+  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+  const whole = Math.floor(seconds);
+  const minutes = Math.floor(whole / 60);
+  const secs = whole % 60;
+  return `${minutes}:${String(secs).padStart(2, "0")}`;
+};
+
 export interface AudioController {
   /**
    * Initialize the audio element in the given container.
@@ -79,17 +91,143 @@ export function createAudioController(): AudioController {
   let errorCallback: (() => void) | null = null;
   let volumeChangeCallback: ((volume: number) => void) | null = null;
 
+  let playToggle: HTMLButtonElement | null = null;
+  let scrubber: HTMLInputElement | null = null;
+  let elapsedEl: HTMLElement | null = null;
+  let remainingEl: HTMLElement | null = null;
+  // While a drag is in progress the thumb owns the position, so timeupdate
+  // must not write back over it.
+  let isScrubbing = false;
+
+  const playAudio = async (): Promise<void> => {
+    const el = audioEl;
+    if (!el) return;
+    try {
+      await el.play();
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("Failed to play audio", err);
+    }
+  };
+
+  const syncProgress = (): void => {
+    const el = audioEl;
+    if (!el || !scrubber || !elapsedEl || !remainingEl) return;
+
+    const duration = Number.isFinite(el.duration) ? el.duration : 0;
+    const current = Number.isFinite(el.currentTime) ? el.currentTime : 0;
+
+    scrubber.max = String(duration);
+    scrubber.disabled = duration === 0;
+    if (!isScrubbing) {
+      scrubber.value = String(duration > 0 ? Math.min(current, duration) : 0);
+    }
+
+    const shown = Number(scrubber.value);
+    // WebKit has no ::-moz-range-progress equivalent, so the elapsed fill is
+    // painted by the track's gradient off this custom property.
+    const percent = duration > 0 ? (shown / duration) * 100 : 0;
+    scrubber.style.setProperty("--progress", `${percent}%`);
+
+    elapsedEl.textContent = formatTime(shown);
+    remainingEl.textContent = `-${formatTime(Math.max(0, duration - shown))}`;
+    scrubber.setAttribute(
+      "aria-valuetext",
+      `${formatTime(shown)} elapsed of ${formatTime(duration)}`,
+    );
+  };
+
+  const syncPlayState = (): void => {
+    const el = audioEl;
+    if (!el || !playToggle) return;
+    playToggle.textContent = el.paused ? "▶" : "❚❚";
+    playToggle.setAttribute(
+      "aria-label",
+      el.paused ? "Play track" : "Pause track",
+    );
+  };
+
+  const buildTransport = (): HTMLElement => {
+    const transport = document.createElement("div");
+    transport.className = "track-progress";
+    transport.setAttribute("role", "group");
+    transport.setAttribute("aria-label", "Track playback");
+
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "play-toggle";
+    toggle.textContent = "▶";
+    toggle.setAttribute("aria-label", "Play track");
+    toggle.addEventListener("click", () => {
+      const el = audioEl;
+      if (!el) return;
+      if (el.paused) {
+        void playAudio();
+      } else {
+        el.pause();
+      }
+    });
+
+    const elapsed = document.createElement("span");
+    elapsed.className = "track-time track-time-elapsed";
+    elapsed.textContent = "0:00";
+
+    const range = document.createElement("input");
+
+    range.type = "range";
+    range.className = "track-scrubber";
+    range.min = "0";
+    range.max = "0";
+    range.step = "0.1";
+    range.value = "0";
+    range.disabled = true;
+    range.setAttribute("aria-label", "Seek track position");
+
+    // `input` only previews the new position; the seek is committed on
+    // `change` so dragging does not re-request the stream on every frame.
+    range.addEventListener("input", () => {
+      isScrubbing = true;
+      syncProgress();
+    });
+
+    range.addEventListener("change", () => {
+      isScrubbing = false;
+      const el = audioEl;
+      if (!el) return;
+      const target = Number(range.value);
+      if (Number.isFinite(target)) {
+        el.currentTime = target;
+      }
+      syncProgress();
+    });
+
+    const remaining = document.createElement("span");
+    remaining.className = "track-time track-time-remaining";
+    remaining.textContent = "-0:00";
+
+    transport.appendChild(toggle);
+    transport.appendChild(elapsed);
+    transport.appendChild(range);
+    transport.appendChild(remaining);
+
+    playToggle = toggle;
+    elapsedEl = elapsed;
+    scrubber = range;
+    remainingEl = remaining;
+
+    return transport;
+  };
+
   return {
     initialize(playerContainer: HTMLElement): void {
       if (audioEl) return; // Already initialized
 
       audioEl = document.createElement("audio");
-      audioEl.controls = true;
+      // Native chrome is replaced by the custom transport built below.
+      audioEl.controls = false;
       // allow autoplay by default for the embedded player
       audioEl.autoplay = true;
       audioEl.setAttribute("aria-label", "Album preview player");
-      audioEl.style.width = "100%";
-      audioEl.style.height = "40px";
 
       const source = document.createElement("source");
       source.type = "audio/mp3";
@@ -115,9 +253,23 @@ export function createAudioController(): AudioController {
         }
       });
 
+      audioEl.addEventListener("loadedmetadata", syncProgress);
+      audioEl.addEventListener("durationchange", syncProgress);
+      audioEl.addEventListener("timeupdate", syncProgress);
+      audioEl.addEventListener("emptied", syncProgress);
+      audioEl.addEventListener("play", syncPlayState);
+      audioEl.addEventListener("pause", syncPlayState);
+      audioEl.addEventListener("ended", syncPlayState);
+
+      const transport = buildTransport();
+
       // Inject into DOM
       playerContainer.textContent = "";
       playerContainer.appendChild(audioEl);
+      playerContainer.appendChild(transport);
+
+      syncProgress();
+      syncPlayState();
     },
 
     loadTrack(streamUrl: string): void {
@@ -134,16 +286,20 @@ export function createAudioController(): AudioController {
       } catch (e) {
         /* jsdom may not implement load() */
       }
+
+      // A new track starts from zero with an unknown duration
+      isScrubbing = false;
+      if (scrubber) {
+        scrubber.max = "0";
+        scrubber.value = "0";
+        scrubber.disabled = true;
+      }
+      syncProgress();
+      syncPlayState();
     },
 
     async play(): Promise<void> {
-      if (!audioEl) return;
-      try {
-        await audioEl.play();
-      } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error("Failed to play audio", err);
-      }
+      await playAudio();
     },
 
     pause(): void {
@@ -164,6 +320,7 @@ export function createAudioController(): AudioController {
       if (!audioEl || !isFinite(audioEl.duration)) return;
       const newTime = audioEl.currentTime + offsetSeconds;
       audioEl.currentTime = Math.max(0, Math.min(newTime, audioEl.duration));
+      syncProgress();
     },
 
     setVolume(volume: number): void {
