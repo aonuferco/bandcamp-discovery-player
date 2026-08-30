@@ -43,6 +43,7 @@ export interface UIElements {
   helpModal: HTMLElement | null;
   closeModal: HTMLButtonElement | null;
   toastContainer: HTMLElement | null;
+  srAnnouncer: HTMLElement | null;
   newReleasesBtn: HTMLButtonElement | null;
   hotBtn: HTMLButtonElement | null;
   genreSearch: HTMLInputElement | null;
@@ -289,6 +290,7 @@ const createUIManager = (
       "close-modal",
     ) as HTMLButtonElement | null,
     toastContainer: document.getElementById("toast-container"),
+    srAnnouncer: document.getElementById("sr-announcer"),
     newReleasesBtn: document.getElementById(
       "new-releases-btn",
     ) as HTMLButtonElement | null,
@@ -338,12 +340,10 @@ const createUIManager = (
         : ""
     }`;
 
-    if (elements.toastContainer) {
-      const liveRegion = elements.toastContainer;
-      liveRegion.textContent = announcement;
-      setTimeout(() => {
-        liveRegion.textContent = "";
-      }, 100);
+    // Must not be the toast container: writing text there renders it on
+    // screen and wipes any toast currently showing.
+    if (elements.srAnnouncer) {
+      elements.srAnnouncer.textContent = announcement;
     }
   };
 
