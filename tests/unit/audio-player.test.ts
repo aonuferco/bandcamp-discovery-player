@@ -151,6 +151,43 @@ describe("Audio Player", () => {
     );
   });
 
+  it("renders elapsed and remaining time once duration is known", () => {
+    controller.ui.showAlbum(mockAlbum);
+    const audioEl = getAudioEl();
+    const scrubber = document.querySelector(
+      ".track-scrubber",
+    ) as HTMLInputElement;
+    Object.defineProperty(audioEl, "duration", {
+      value: 125,
+      configurable: true,
+    });
+    audioEl.currentTime = 5;
+    audioEl.dispatchEvent(new Event("timeupdate"));
+    expect(scrubber.max).toBe("125");
+    expect(scrubber.disabled).toBe(false);
+    expect(document.querySelector(".track-time-elapsed")!.textContent).toBe(
+      "0:05",
+    );
+    expect(document.querySelector(".track-time-remaining")!.textContent).toBe(
+      "-2:00",
+    );
+  });
+  it("seeks to the scrubber position on change", () => {
+    controller.ui.showAlbum(mockAlbum);
+    const audioEl = getAudioEl();
+    const scrubber = document.querySelector(
+      ".track-scrubber",
+    ) as HTMLInputElement;
+    Object.defineProperty(audioEl, "duration", {
+      value: 200,
+      configurable: true,
+    });
+    audioEl.dispatchEvent(new Event("durationchange"));
+    scrubber.value = "80";
+    scrubber.dispatchEvent(new Event("change"));
+    expect(audioEl.currentTime).toBe(80);
+  });
+
   it("handles track error correctly", () => {
     controller.ui.showAlbum(mockAlbum);
     const audioEl = getAudioEl();

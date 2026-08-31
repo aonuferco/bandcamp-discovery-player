@@ -238,9 +238,23 @@ test.describe("Accessibility Compliance (WCAG 2.1 AA)", () => {
   });
 
   test("audio element is accessible", async ({ page }) => {
+    // Native controls are replaced by the custom transport, so the media
+    // element itself is no longer rendered.
     const audio = page.locator("audio");
-    await expect(audio).toBeVisible();
+    await expect(audio).toBeAttached();
     await expect(audio).toHaveAttribute("aria-label", "Album preview player");
+  });
+
+  test("track transport controls are accessible", async ({ page }) => {
+    await expect(page.locator(".play-toggle")).toBeVisible();
+    await expect(page.locator(".play-toggle")).toHaveAttribute(
+      "aria-label",
+      /Play track|Pause track/,
+    );
+
+    const scrubber = page.locator(".track-scrubber");
+    await expect(scrubber).toBeVisible();
+    await expect(scrubber).toHaveAttribute("aria-label", "Seek track position");
   });
 
   test("color contrast is sufficient for text elements", async ({ page }) => {
