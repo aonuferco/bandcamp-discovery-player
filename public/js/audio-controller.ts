@@ -90,6 +90,7 @@ export function createAudioController(): AudioController {
   let audioEl: HTMLAudioElement | null = null;
   let errorCallback: (() => void) | null = null;
   let volumeChangeCallback: ((volume: number) => void) | null = null;
+  let volumeSlider: HTMLInputElement | null = null;
 
   let playToggle: HTMLButtonElement | null = null;
   let scrubber: HTMLInputElement | null = null;
@@ -147,6 +148,17 @@ export function createAudioController(): AudioController {
     );
   };
 
+  const syncVolume = (): void => {
+    const el = audioEl;
+    if (!el || !volumeSlider) return;
+    volumeSlider.value = String(el.volume);
+    volumeSlider.style.setProperty("--progress", `${el.volume * 100}%`);
+    volumeSlider.setAttribute(
+      "aria-valuetext",
+      `Volume ${Math.round(el.volume * 100)}%`,
+    );
+  };
+
   const buildTransport = (): HTMLElement => {
     const transport = document.createElement("div");
     transport.className = "track-progress";
@@ -175,7 +187,7 @@ export function createAudioController(): AudioController {
     const range = document.createElement("input");
 
     range.type = "range";
-    range.className = "track-scrubber";
+    range.className = "track-scrubber zine-range";
     range.min = "0";
     range.max = "0";
     range.step = "0.1";
@@ -201,6 +213,30 @@ export function createAudioController(): AudioController {
       syncProgress();
     });
 
+    const volumeControl = document.createElement("div");
+    volumeControl.className = "volume-control";
+
+    const volumeIcon = document.createElement("span");
+    volumeIcon.className = "volume-icon";
+    volumeIcon.textContent = "VOL";
+    volumeIcon.setAttribute("aria-hidden", "true");
+
+    const volume = document.createElement("input");
+    volume.type = "range";
+    volume.className = "volume-slider zine-range";
+    volume.min = "0";
+    volume.max = "1";
+    volume.step = "0.01";
+    volume.setAttribute("aria-label", "Volume");
+    volume.addEventListener("input", () => {
+      const el = audioEl;
+      if (!el) return;
+      el.volume = Number(volume.value);
+    });
+
+    volumeControl.appendChild(volumeIcon);
+    volumeControl.appendChild(volume);
+
     const remaining = document.createElement("span");
     remaining.className = "track-time track-time-remaining";
     remaining.textContent = "-0:00";
@@ -209,11 +245,13 @@ export function createAudioController(): AudioController {
     transport.appendChild(elapsed);
     transport.appendChild(range);
     transport.appendChild(remaining);
+    transport.appendChild(volumeControl);
 
     playToggle = toggle;
     elapsedEl = elapsed;
     scrubber = range;
     remainingEl = remaining;
+    volumeSlider = volume;
 
     return transport;
   };
@@ -242,6 +280,8 @@ export function createAudioController(): AudioController {
       // Wire up persistent listeners (registered exactly once)
       audioEl.addEventListener("volumechange", () => {
         savePreferences({ volume: audioEl!.volume });
+        // Keeps the slider in step with the keyboard shortcuts
+        syncVolume();
         if (volumeChangeCallback) {
           volumeChangeCallback(audioEl!.volume);
         }
@@ -270,6 +310,7 @@ export function createAudioController(): AudioController {
 
       syncProgress();
       syncPlayState();
+      syncVolume();
     },
 
     loadTrack(streamUrl: string): void {
