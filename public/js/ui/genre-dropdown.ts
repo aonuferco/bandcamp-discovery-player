@@ -14,6 +14,62 @@ export interface GenreDropdownManager {
   resetHighlight(): void;
 }
 
+/** Lowercase and strip hyphens/spaces/punctuation so "indie rock" matches "indie-rock" */
+export const normalizeSearchValue = (value: string): string =>
+  value.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+const editDistance = (a: string, b: string): number => {
+  if (a == b) return 0;
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+
+  const row: number[] = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    let prev = i - 1;
+    row[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const current = row[j];
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      row[j] = Math.min(row[j] + 1, row[j - 1] + 1, prev + cost);
+      prev = current;
+    }
+  }
+  return row[b.length];
+};
+
+/**
+ * Higher is better. 'null' means "not a match".
+ * Prefix/substring beat one-chracter typos so "pop" still ranks above a near-miss.
+ */
+export const fuzzyScore = (query: string, genre: string): number | null => {
+  const q = normalizeSearchValue(query);
+  const g = normalizeSearchValue(genre);
+  if (q.length === 0) return null;
+  if (g === q) return 100;
+  if (g.startsWith(q)) return 90;
+  if (g.includes(q)) return 60;
+  if (
+    q.length >= 3 &&
+    Math.abs(q.length - g.length) <= 1 &&
+    editDistance(q, g) <= 1
+  )
+    return 25;
+  return null;
+};
+
+export const findMatchingGenres = (filter: string): string[] => {
+  const scored = ALL_GENRES.map((genre) => {
+    const score = fuzzyScore(filter, genre);
+    return score === null ? null : { genre, score };
+  }).filter(
+    (row): row is { genre: (typeof ALL_GENRES)[number]; score: number } =>
+      row !== null,
+  );
+
+  scored.sort((a, b) => b.score - a.score || a.genre.localeCompare(b.genre));
+  return scored.map((row) => row.genre);
+};
+
 /**
  * Creates the genre dropdown manager for handling genre selection
  * @param elements - DOM elements for dropdown
@@ -89,9 +145,14 @@ export const createGenreDropdownManager = (
 
     // If filtering, show flat list
     if (filter) {
-      const matches = ALL_GENRES.filter((g) =>
-        g.toLowerCase().includes(filterLower),
-      );
+      const matches = findMatchingGenres(filter);
+
+      const count = document.createElement("div");
+      count.className = "genre-match-count";
+      count.setAttribute("aria-live", "polite");
+      count.textContent =
+        matches.length === 1 ? "1 match" : `${matches.length} matches`;
+      genreDropdown.appendChild(count);
 
       if (matches.length > 0) {
         matches.forEach((genre) => {
@@ -124,7 +185,9 @@ export const createGenreDropdownManager = (
       hasResults = true;
     }
 
-    const selectedItem = genreDropdown.querySelector(".selected") as HTMLElement | null;
+    const selectedItem = genreDropdown.querySelector(
+      ".selected",
+    ) as HTMLElement | null;
     if (selectedItem) {
       if (typeof requestAnimationFrame !== "undefined") {
         requestAnimationFrame(() => {

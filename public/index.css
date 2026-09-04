@@ -172,6 +172,15 @@ body {
   letter-spacing: 1px;
 }
 
+.genre-match-count {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 6px 15px 4px;
+  color: var(--text-secondary);
+  border-bottom: 2px dashed #ccc;
+  letter-spacing: 0.5px;
+}
+
 .genre-item {
   padding: 8px 15px;
   border-bottom: 2px dashed #ccc;
