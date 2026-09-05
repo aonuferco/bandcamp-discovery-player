@@ -604,23 +604,19 @@ export const createAppController = (): AppController => {
   const urlStateManager = createURLStateManager();
   // Serialize navigation so rapid keyboard presses can't race past a fetch
   let navigationQueue: Promise<void> = Promise.resolve();
+  let trackRecoveryTimer: number | null = null;
 
   // Create UI manager with a reference to the audio controller so its
   // internal showAlbum/updateAudioPlayer behavior can call into the
   // audio controller synchronously.
   const ui = createUIManager(state, audioController);
 
-  // Initialize audio on first use
-  if (ui.elements.player) {
-    audioController.initialize(ui.elements.player);
-    audioController.onError(() => {
-      if (ui.elements.trackInfo) {
-        ui.elements.trackInfo.textContent = "Track unavailable";
-        ui.elements.trackInfo.removeAttribute("data-tooltip");
-      }
-      ui.showToast("Track unavailable", "error");
-    });
-  }
+  const cancelTrackRecovery = (): void => {
+    if (trackRecoveryTimer !== null) {
+      window.clearTimeout(trackRecoveryTimer);
+      trackRecoveryTimer = null;
+    }
+  };
 
   // Debounce helpers to avoid flooding the audio API for rapid key presses
   const debounce = <T extends (...args: any[]) => void>(fn: T, wait = 100) => {
@@ -725,6 +721,7 @@ export const createAppController = (): AppController => {
   };
 
   const showCurrentAlbum = async () => {
+    cancelTrackRecovery();
     const album = state.getCurrentAlbum();
     ui.showAlbum(album);
 
@@ -763,6 +760,7 @@ export const createAppController = (): AppController => {
   };
 
   const nextAlbum = async () => {
+    cancelTrackRecovery();
     await enqueueNavigation(async () => {
       await paginationController.nextAlbum(() =>
         fetchAlbums(state.getCurrentPage()),
@@ -772,14 +770,49 @@ export const createAppController = (): AppController => {
   };
 
   const prevAlbum = async () => {
+    cancelTrackRecovery();
     await enqueueNavigation(async () => {
       paginationController.prevAlbum();
       await showCurrentAlbum();
     });
   };
 
+  // Initialize audio after navigation is defined so playback failures can
+  // safely schedule recovery through the serialized navigation path.
+  if (ui.elements.player) {
+    audioController.initialize(ui.elements.player);
+
+    audioController.onError(() => {
+      if (ui.elements.trackInfo) {
+        ui.elements.trackInfo.textContent = "Track unavailable";
+        ui.elements.trackInfo.removeAttribute("data-tooltip");
+      }
+
+      // Prevent duplicate browser error events from scheduling multiple skips.
+      if (trackRecoveryTimer !== null) return;
+
+      // Avoid repeatedly reloading the same broken final track.
+      if (!paginationController.canGoNext()) {
+        ui.showToast("Track unavailable", "error");
+        return;
+      }
+
+      ui.showToast(
+        "Track unavailable - skipping to the next album...",
+        "error",
+      );
+
+      trackRecoveryTimer = window.setTimeout(() => {
+        trackRecoveryTimer = null;
+        void nextAlbum();
+      }, 2000);
+    });
+  }
+
   const switchMode = async (mode: DiscoveryMode) => {
     if (mode === state.getCurrentMode()) return;
+
+    cancelTrackRecovery();
 
     state.setCurrentMode(mode);
     savePreferences({ mode });
@@ -809,6 +842,8 @@ export const createAppController = (): AppController => {
 
   const selectGenre = async (genre: string) => {
     if (genre === state.getCurrentTag()) return;
+
+    cancelTrackRecovery();
 
     state.setCurrentTag(genre);
     savePreferences({ genre });
