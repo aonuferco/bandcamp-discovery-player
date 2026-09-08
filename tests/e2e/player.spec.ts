@@ -327,7 +327,7 @@ test.describe("Bandcamp Discovery Player - extended E2E", () => {
 
     await page.locator("#retry-btn").click();
 
-    await expect(page.locator("#error-overlay")).not.toBeHidden();
+    await expect(page.locator("#error-overlay")).toBeHidden();
     await expect(page.locator("#title")).toHaveText("Page1 Album A");
     expect(requestCount).toBe(2);
   });
