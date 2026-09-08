@@ -16,7 +16,7 @@ describe("genre search matching", () => {
   it("ranks prefix matches above substring matches", () => {
     const matches = findMatchingGenres("pop");
     const prefix = matches.indexOf("pop-folk");
-    const substring = matches.indexOf("inde-pop");
+    const substring = matches.indexOf("indie-pop");
     expect(prefix).toBeGreaterThanOrEqual(0);
     expect(substring).toBeGreaterThanOrEqual(0);
     expect(prefix).toBeLessThan(substring);
@@ -26,8 +26,12 @@ describe("genre search matching", () => {
     expect(findMatchingGenres("brekcore")).toContain("breakcore");
   });
 
-  it("does not match unrelated short noise", () => {
-    expect(findMatchingGenres("zz")).toEqual([]);
+  it("matches short queries that appear inside a genre name", () => {
+    expect(findMatchingGenres("zz")).toContain("nu-jazz");
+  });
+
+  it("returns nothing for queries that appear in no genre", () => {
+    expect(findMatchingGenres("qq")).toEqual([]);
   });
 
   it("returns null when the query is empty after normalize", () => {

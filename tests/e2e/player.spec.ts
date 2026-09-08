@@ -299,4 +299,63 @@ test.describe("Bandcamp Discovery Player - extended E2E", () => {
     await page.keyboard.press("Escape");
     await expect(page.locator("#help-modal")).not.toHaveClass(/show/);
   });
+
+  test("retry reloads albums after an API failure", async ({ page }) => {
+    let requestCount = 0;
+
+    await page.route("**/api/albums**", (route) => {
+      requestCount += 1;
+
+      if (requestCount === 1) {
+        route.fulfill({
+          status: 500,
+          contentType: "application/json",
+          body: "{}",
+        });
+        return;
+      }
+
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(page1),
+      });
+    });
+
+    await page.goto("/");
+    await expect(page.locator("#error-overlay")).toBeVisible();
+
+    await page.locator("#retry-btn").click();
+
+    await expect(page.locator("#error-overlay")).toBeHidden();
+    await expect(page.locator("#title")).toHaveText("Page1 Album A");
+    expect(requestCount).toBe(2);
+  });
+
+  test("track failure announces recovery and skips to the next album", async ({
+    page,
+  }) => {
+    await page.route("**/api/albums**", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(page1),
+      }),
+    );
+
+    await page.goto("/");
+    await expect(page.locator("#title")).toHaveText("Page1 Album A");
+
+    await page
+      .locator("#player audio")
+      .evaluate((audio) => audio.dispatchEvent(new Event("error")));
+
+    await expect(page.locator("#toast-container")).toContainText(
+      "Track unavailable - skipping to the next album",
+    );
+
+    await expect(page.locator("#title")).toHaveText("Page1 Album B", {
+      timeout: 4000,
+    });
+  });
 });
