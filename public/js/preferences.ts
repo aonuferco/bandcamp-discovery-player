@@ -1,10 +1,13 @@
 import type { DiscoveryMode } from "../../src/shared/types";
 import { isValidGenre } from "./genres";
 
+export type ColorTheme = "light" | "dark";
+
 export interface UserPreferences {
   volume: number;
   mode: DiscoveryMode;
   genre: string;
+  theme: ColorTheme;
 }
 
 const STORAGE_KEY = "bandcamp-discovery-preferences";
@@ -14,6 +17,7 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   volume: 0.2,
   mode: "new",
   genre: "",
+  theme: "light",
 };
 
 const clampVolume = (value: unknown): number => {
@@ -40,6 +44,7 @@ export const loadPreferences = (): UserPreferences => {
         typeof parsed.genre === "string" && isValidGenre(parsed.genre)
           ? parsed.genre
           : "",
+      theme: parsed.theme === "dark" ? "dark" : "light",
     };
   } catch (error) {
     return { ...DEFAULT_PREFERENCES };
@@ -57,6 +62,7 @@ export const savePreferences = (
     volume: clampVolume(preferences.volume),
     mode: preferences.mode === "hot" ? "hot" : "new",
     genre: isValidGenre(preferences.genre) ? preferences.genre : "",
+    theme: preferences.theme === "dark" ? "dark" : "light",
   };
 
   try {

@@ -21,6 +21,7 @@ import {
 import { createURLStateManager, type URLStateManager } from "./url-state";
 import type { Album, DiscoveryMode } from "../../src/shared/types";
 import { loadPreferences, savePreferences } from "./preferences.js";
+import { applyColorTheme, getNextColorTheme } from "./theme.js";
 
 // ============================================================================
 // Types & Interfaces
@@ -39,6 +40,7 @@ export interface UIElements {
   player: HTMLElement | null;
   nextBtn: HTMLButtonElement | null;
   prevBtn: HTMLButtonElement | null;
+  themeBtn: HTMLButtonElement | null;
   helpBtn: HTMLButtonElement | null;
   helpModal: HTMLElement | null;
   closeModal: HTMLButtonElement | null;
@@ -284,6 +286,7 @@ const createUIManager = (
     player: document.getElementById("player"),
     nextBtn: document.getElementById("next-btn") as HTMLButtonElement | null,
     prevBtn: document.getElementById("prev-btn") as HTMLButtonElement | null,
+    themeBtn: document.getElementById("theme-btn") as HTMLButtonElement | null,
     helpBtn: document.getElementById("help-btn") as HTMLButtonElement | null,
     helpModal: document.getElementById("help-modal"),
     closeModal: document.getElementById(
@@ -929,6 +932,11 @@ export const createAppController = (): AppController => {
     ui.elements.prevBtn?.addEventListener("click", () => prevAlbum());
     ui.elements.helpBtn?.addEventListener("click", () => ui.openModal());
     ui.elements.closeModal?.addEventListener("click", () => ui.closeModal());
+    ui.elements.themeBtn?.addEventListener("click", () => {
+      const theme = getNextColorTheme(loadPreferences().theme);
+      applyColorTheme(theme, ui.elements.themeBtn);
+      savePreferences({ theme });
+    });
     ui.elements.retryBtn?.addEventListener("click", () => retryFetch());
     ui.elements.copyLinkFab?.addEventListener("click", () => copyAlbumLink());
 
@@ -1053,6 +1061,7 @@ export const createAppController = (): AppController => {
     const preferences = loadPreferences();
     const genre = params.has("genre") ? parsedUrl.genre : preferences.genre;
     const mode = params.has("mode") ? parsedUrl.mode : preferences.mode;
+    applyColorTheme(preferences.theme, ui.elements.themeBtn);
 
     if (mode !== "new") {
       state.setCurrentMode(mode);
