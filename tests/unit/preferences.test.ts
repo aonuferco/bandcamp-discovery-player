@@ -17,13 +17,13 @@ describe("user preferences", () => {
 
   it("defaults to the light theme", () => {
     expect(loadPreferences()).toEqual(DEFAULT_PREFERENCES);
-    expect(loadPreferences()).toBe("light");
+    expect(loadPreferences().theme).toBe("light");
   });
 
   it("loads a saved dark theme", () => {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ ...DEFAULT_PREFERENCES, theme: "dark " }),
+      JSON.stringify({ ...DEFAULT_PREFERENCES, theme: "dark" }),
     );
 
     expect(loadPreferences().theme).toBe("dark");
