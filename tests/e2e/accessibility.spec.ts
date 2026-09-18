@@ -106,6 +106,7 @@ test.describe("Accessibility Compliance (WCAG 2.1 AA)", () => {
     const buttons = [
       "#new-releases-btn",
       "#hot-btn",
+      "#theme-btn",
       "#help-btn",
       "#next-btn",
       "#prev-btn",
@@ -124,6 +125,7 @@ test.describe("Accessibility Compliance (WCAG 2.1 AA)", () => {
 
   test("all icon-only buttons have aria-labels", async ({ page }) => {
     const iconButtons = [
+      "#theme-btn",
       "#help-btn",
       "#next-btn",
       "#prev-btn",
@@ -284,5 +286,22 @@ test.describe("Accessibility Compliance (WCAG 2.1 AA)", () => {
     await page.goto("/?mode=hot");
     await expect(page.locator("#title")).toContainText("A11y Album");
     await expectNoAxeViolations(page);
+  });
+
+  test("dark theme toggle is accessible and persists", async ({ page }) => {
+    const toggle = page.locator("#theme-btn");
+    await expect(toggle).toHaveAttribute("aria-pressed", "false");
+    await expect(toggle).toHaveAttribute("aria-label", "Switch to dark theme");
+
+    await toggle.click();
+
+    await expect(page.locator("body")).toHaveClass(/theme-dark/);
+    await expect(toggle).toHaveAttribute("aria-pressed", "true");
+    await expect(toggle).toHaveAttribute("aria-label", "Switch to light theme");
+    await expectNoAxeViolations(page);
+
+    await page.reload();
+    await expect(page.locator("#title")).toContainText("A11y Album");
+    await expect(page.locator("body")).toHaveClass(/theme-dark/);
   });
 });

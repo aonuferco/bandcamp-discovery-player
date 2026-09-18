@@ -232,6 +232,46 @@ body {
   color: var(--accent-neon-yellow) !important;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.theme-toggle {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  color: var(--accent-neon-yellow);
+  border: var(--rough-border);
+  border-radius: 0;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 var(--accent-cyan);
+  transform: rotate(-6deg);
+  transition:
+    transform 0.1s,
+    box-shadow 0.1s;
+}
+.theme-toggle:hover {
+  transform: rotate(3deg) scale(1.06);
+  box-shadow: 4px 4px 0 var(--accent-neon-pink);
+}
+.theme-icon {
+  display: block;
+  flex-shrink: 0;
+}
+.theme-icon-sun,
+body.theme-dark .theme-icon-moon {
+  display: none;
+}
+body.theme-dark .theme-icon-sun {
+  display: block;
+}
+
 .help-button {
   font-family: var(--font-title);
   font-size: 1.5rem;
@@ -1594,4 +1634,131 @@ body.genre-theme-rock-new {
       rgba(17, 17, 17, 0.03) 19px
     );
   --genre-bg-size: 22px 19px, 22px 19px, 100% 100%, 100% 100%;
+}
+
+/* ============================================================================
+   Dark Theme — "newsprint at night"
+   Genre-specific dark artwork is layered in a separate follow-up.
+   ============================================================================ */
+body.theme-dark {
+  --bg-color: #0f0d0c;
+  --text-primary: #f4f0e6;
+  --text-secondary: #c9c1b1;
+  --rough-border: 3px solid #f4f0e6;
+  --tape-color: rgba(244, 240, 230, 0.18);
+  --paper-shadow: 6px 6px 0 var(--accent-neon-pink);
+}
+body.theme-dark .app-header,
+body.theme-dark #album,
+body.theme-dark .genre-dropdown,
+body.theme-dark .modal-content {
+  background: #191512;
+}
+body.theme-dark .app-header {
+  box-shadow: 0 4px 0 var(--accent-cyan);
+}
+body.theme-dark .mode-btn {
+  box-shadow: 3px 3px 0 #f4f0e6;
+}
+body.theme-dark .mode-btn.active,
+body.theme-dark .help-button,
+body.theme-dark .theme-toggle,
+body.theme-dark .play-toggle {
+  background: #f4f0e6;
+  color: #0f0d0c;
+}
+body.theme-dark .theme-toggle {
+  box-shadow: 3px 3px 0 var(--accent-neon-pink);
+}
+body.theme-dark .theme-toggle:hover {
+  box-shadow: 4px 4px 0 var(--accent-cyan);
+}
+
+body.theme-dark #genre-search,
+body.theme-dark .label-info,
+body.theme-dark .player {
+  background: #221d19;
+  color: var(--text-primary);
+}
+body.theme-dark #genre-search {
+  box-shadow: 4px 4px 0 #f4f0e6;
+}
+body.theme-dark #genre-search::placeholder {
+  color: var(--text-secondary);
+}
+body.theme-dark #genre-search:focus {
+  background: var(--accent-cyan);
+  color: #0f0d0c;
+}
+body.theme-dark .genre-dropdown {
+  box-shadow: 5px 5px 0 #f4f0e6;
+}
+body.theme-dark .genre-item,
+body.theme-dark .genre-match-count {
+  border-bottom-color: #4a423a;
+}
+body.theme-dark .genre-item:hover,
+body.theme-dark .genre-item.highlighted {
+  color: #0f0d0c;
+  border-bottom-color: #f4f0e6;
+}
+body.theme-dark .genre-item.selected {
+  background: var(--accent-neon-yellow);
+  color: #0f0d0c;
+}
+body.theme-dark .genre-item-all:hover,
+body.theme-dark .genre-item-all.highlighted,
+body.theme-dark .genre-item-all.selected {
+  background: #f4f0e6 !important;
+  color: #0f0d0c !important;
+}
+body.theme-dark .nav-btn,
+body.theme-dark #artist {
+  color: var(--text-primary);
+}
+body.theme-dark #title {
+  background: var(--accent-neon-pink);
+  color: #0f0d0c;
+  box-shadow: 3px 3px 0 var(--accent-cyan);
+}
+body.theme-dark .track-info,
+body.theme-dark .track-count,
+body.theme-dark .release-date {
+  color: #0f0d0c;
+}
+body.theme-dark .label-info {
+  border-color: #f4f0e6;
+}
+body.theme-dark .loading-spinner,
+body.theme-dark .error-overlay {
+  background: rgba(15, 13, 12, 0.92);
+}
+body.theme-dark .player {
+  box-shadow: inset 2px 2px 0 rgba(244, 240, 230, 0.07);
+}
+body.theme-dark .play-toggle:hover {
+  background: var(--accent-neon-pink);
+  color: #0f0d0c;
+}
+body.theme-dark .zine-range::-webkit-slider-runnable-track {
+  background: linear-gradient(
+    to right,
+    var(--accent-neon-pink) 0 var(--progress, 0%),
+    #3a332c var(--progress, 0%) 100%
+  );
+}
+body.theme-dark .zine-range::-moz-range-track {
+  background: #3a332c;
+}
+body.theme-dark .modal-header {
+  border-bottom-color: #f4f0e6;
+}
+
+body.theme-dark.genre-theme-hot {
+  --genre-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50' viewBox='0 0 50 50'%3E%3Cpolygon points='25,5 30,20 45,25 30,30 25,45 20,30 5,25 20,20' fill='none' stroke='%23ff2f95' stroke-width='2.4' stroke-opacity='0.85'/%3E%3Ccircle cx='25' cy='25' r='3' fill='%23eaff00' fill-opacity='0.9'/%3E%3C/svg%3E");
+  --genre-bg-size: 50px 50px;
+}
+body.theme-dark.genre-theme-new {
+  --genre-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cpath d='M10 10 L20 20 M20 10 L10 20' stroke='%2300ffff' stroke-width='2.2' stroke-opacity='0.8'/%3E%3Cpath d='M40 40 L50 50 M50 40 L40 50' stroke='%23ff2f95' stroke-width='2.2' stroke-opacity='0.85'/%3E%3Ccircle cx='40' cy='15' r='3' fill='%23eaff00' fill-opacity='0.9'/%3E%3Ccircle cx='15' cy='45' r='2' fill='%23f4f0e6' fill-opacity='0.55'/%3E%3C/svg%3E");
+  --genre-bg-size: 60px 60px;
 }
