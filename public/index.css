@@ -1754,6 +1754,14 @@ body.theme-dark .modal-header {
   border-bottom-color: #f4f0e6;
 }
 
+/* Toasts are a black sticker on light paper; on dark paper they invert to cream
+   so they stay legible and keep their torn-edge outline. */
+body.theme-dark .toast {
+  background: #f4f0e6;
+  color: #0f0d0c;
+  border-color: #0f0d0c;
+}
+
 body.theme-dark.genre-theme-hot {
   --genre-bg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50' viewBox='0 0 50 50'%3E%3Cpolygon points='25,5 30,20 45,25 30,30 25,45 20,30 5,25 20,20' fill='none' stroke='%23ff2f95' stroke-width='2.4' stroke-opacity='0.85'/%3E%3Ccircle cx='25' cy='25' r='3' fill='%23eaff00' fill-opacity='0.9'/%3E%3C/svg%3E");
   --genre-bg-size: 50px 50px;
