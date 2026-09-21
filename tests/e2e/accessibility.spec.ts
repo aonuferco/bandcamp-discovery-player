@@ -304,4 +304,20 @@ test.describe("Accessibility Compliance (WCAG 2.1 AA)", () => {
     await expect(page.locator("#title")).toContainText("A11y Album");
     await expect(page.locator("body")).toHaveClass(/theme-dark/);
   });
+
+  test("toasts follow the active theme", async ({ page }) => {
+    const toastBackground = () =>
+      page
+        .locator(".toast")
+        .first()
+        .evaluate((el) => window.getComputedStyle(el).backgroundColor);
+    await page.locator("#hot-btn").click();
+    await expect(page.locator(".toast").first()).toBeVisible();
+    expect(await toastBackground()).toBe("rgb(0, 0, 0)");
+    await page.locator("#theme-btn").click();
+    await expect(page.locator("body")).toHaveClass(/theme-dark/);
+    await page.locator("#new-releases-btn").click();
+    await expect(page.locator(".toast").first()).toBeVisible();
+    expect(await toastBackground()).toBe("rgb(244, 240, 230)");
+  });
 });
