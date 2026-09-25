@@ -12,7 +12,7 @@ const mockAlbums = [
 ];
 test.describe("Jazz dark theme", () => {
   test.beforeEach(async ({ page }) => {
-    await page.route("/api/albums", (route) =>
+    await page.route("**/api/albums**", (route) =>
       route.fulfill({
         status: 200,
         contentType: "application/json",
