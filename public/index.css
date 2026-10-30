@@ -2045,3 +2045,43 @@ body.theme-dark.genre-theme-hip-hop-new {
     );
   --genre-bg-size: 110px 70px, 100% 100%;
 }
+
+/* Metal dark theme
+   HOT keeps the xerox sawtooth, stamp X, and photocopier grain. Black ink
+   flips to cream so the teeth still read, and the crimson stamps get hotter. */
+body.theme-dark.genre-theme-metal-hot {
+  --genre-bg:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60'%3E%3Cpath d='M0 55 L8 5 L16 55 L24 5 L32 55 L40 5 L48 55 L56 5 L64 55 L72 5 L80 55 L88 5 L96 55 L104 5 L112 55 L120 55' fill='none' stroke='%23f2ebe0' stroke-width='3.2' stroke-opacity='0.82'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='70' height='70'%3E%3Cline x1='0' y1='0' x2='70' y2='70' stroke='%23ff2a2a' stroke-width='2.8' stroke-opacity='0.62'/%3E%3Cline x1='70' y1='0' x2='0' y2='70' stroke='%23ff2a2a' stroke-width='2.8' stroke-opacity='0.62'/%3E%3Crect x='25' y='25' width='20' height='20' fill='none' stroke='%23f2ebe0' stroke-width='1.6' stroke-opacity='0.5'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Ccircle cx='5' cy='5' r='1.1' fill='%23f2ebe0' fill-opacity='0.5'/%3E%3Ccircle cx='18' cy='12' r='0.9' fill='%23f2ebe0' fill-opacity='0.38'/%3E%3Ccircle cx='33' cy='3' r='1.3' fill='%23f2ebe0' fill-opacity='0.45'/%3E%3Ccircle cx='8' cy='28' r='1' fill='%23f2ebe0' fill-opacity='0.42'/%3E%3Ccircle cx='28' cy='22' r='0.8' fill='%23ff2a2a' fill-opacity='0.5'/%3E%3Ccircle cx='38' cy='35' r='1.1' fill='%23f2ebe0' fill-opacity='0.38'/%3E%3Ccircle cx='15' cy='38' r='0.9' fill='%23ff2a2a' fill-opacity='0.45'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(242, 235, 224, 0.1) 3px,
+      rgba(242, 235, 224, 0.1) 4px
+    );
+  --genre-bg-size: 120px 60px, 70px 70px, 40px 40px, 100% 100%;
+}
+/* NEW keeps the PCB traces and registration grid. Oxidized steel and
+   bile-olive lift to pale steel and toxic chartreuse. */
+body.theme-dark.genre-theme-metal-new {
+  --genre-bg:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cpath d='M10 10 L10 40 L50 40 L50 10' fill='none' stroke='%23d0ccc0' stroke-width='1.4' stroke-opacity='0.58'/%3E%3Ccircle cx='10' cy='10' r='3' fill='none' stroke='%23d0ccc0' stroke-width='1.2' stroke-opacity='0.55'/%3E%3Ccircle cx='50' cy='10' r='3' fill='none' stroke='%23d0ccc0' stroke-width='1.2' stroke-opacity='0.55'/%3E%3Ccircle cx='50' cy='40' r='2.5' fill='%23d6e04a' fill-opacity='0.55'/%3E%3Cpath d='M60 60 L60 80 L90 80' fill='none' stroke='%23d6e04a' stroke-width='1.4' stroke-opacity='0.58'/%3E%3Ccircle cx='90' cy='80' r='3' fill='none' stroke='%23d6e04a' stroke-width='1.2' stroke-opacity='0.52'/%3E%3Ccircle cx='60' cy='60' r='2' fill='%23d0ccc0' fill-opacity='0.5'/%3E%3Cline x1='0' y1='55' x2='100' y2='55' stroke='%23d0ccc0' stroke-width='0.7' stroke-opacity='0.32'/%3E%3Cline x1='55' y1='0' x2='55' y2='100' stroke='%23d6e04a' stroke-width='0.7' stroke-opacity='0.32'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect x='5' y='5' width='12' height='12' fill='none' stroke='%23d0ccc0' stroke-width='0.9' stroke-opacity='0.4'/%3E%3Crect x='42' y='42' width='12' height='12' fill='none' stroke='%23d6e04a' stroke-width='0.9' stroke-opacity='0.42'/%3E%3Cline x1='17' y1='11' x2='43' y2='11' stroke='%23d0ccc0' stroke-width='0.8' stroke-opacity='0.34'/%3E%3Cline x1='17' y1='49' x2='42' y2='49' stroke='%23d6e04a' stroke-width='0.8' stroke-opacity='0.34'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 9px,
+      rgba(208, 204, 192, 0.08) 9px,
+      rgba(208, 204, 192, 0.08) 10px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 9px,
+      rgba(214, 224, 74, 0.1) 9px,
+      rgba(214, 224, 74, 0.1) 10px
+    );
+  --genre-bg-size: 100px 100px, 60px 60px, 100% 100%, 100% 100%;
+}
