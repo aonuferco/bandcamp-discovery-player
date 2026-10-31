@@ -676,6 +676,13 @@ export const createAppController = (): AppController => {
           );
         } else if (error.type === "http" && error.status === 400) {
           throw new Error("Invalid request. Please try a different genre.");
+        } else if (
+          error.type === "http" &&
+          (error.status === 429 || error.status === 503)
+        ) {
+          throw new Error(
+            "Bandcamp is rate limiting us right now. Please try again in a moment.",
+          );
         } else if (error.type === "http" && error.status === 502) {
           throw new Error(
             "Upstream service (Bandcamp) is temporarily unavailable.",
