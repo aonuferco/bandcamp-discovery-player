@@ -5,6 +5,12 @@ export const BANDCAMP_API_URL =
 
 export const API_HEADERS: Record<string, string> = {
   "Content-Type": "application/json",
+  Accept: "application/json, text/javascript, */*; q=0.01",
+  "Accept-Language": "en-US,en;q=0.9",
+  // Node fetch sends no User-Agent. From a hosting IP, Bandcamp's edge then
+  // answers the discover API with an HTML challenge page instead of JSON.
+  "User-Agent":
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
   Origin: "https://bandcamp.com",
   Referer: "https://bandcamp.com/discover",
 };
