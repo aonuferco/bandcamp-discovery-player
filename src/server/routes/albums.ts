@@ -232,9 +232,19 @@ async function requestBandcampPage(
     );
   }
 
+  const raw = await response.text();
+  const trimmed = raw.trimStart();
+  if (trimmed.startsWith("<")) {
+    const snippet = trimmed.slice(0, 80).replace(/\s+/g, " ");
+    const contentType = response.headers.get("content-type") ?? "unknown";
+    throw new Error(
+      `[UpstreamBlockedError] Bandcamp returned HTML (${response.status}, ${contentType}) instead of JSON: ${snippet}`,
+    );
+  }
+
   let data: unknown;
   try {
-    data = await response.json();
+    data = JSON.parse(raw) as unknown;
   } catch (error) {
     throw new Error(
       `[ParseError] Failed to parse Bandcamp API response: ${(error as Error).message}`,
@@ -332,7 +342,7 @@ router.get(
       let pageAlbums: Album[] = [];
 
       for (let p = 1; p <= page; p++) {
-        const data = await requestBandcampPage(
+        const data = await fetchFromBandcamp(
           cursor,
           slice as "new" | "hot",
           tag,
@@ -375,6 +385,8 @@ router.get(
           category = message.substring(1, endIdx);
           if (category === "RateLimitError") {
             status = 503; // Upstream throttled us; the request is worth retrying
+          } else if (category === "UpstreamBlockedError") {
+            status = 502; // Edge served an HTML challenge instead of the API
           } else if (category === "HttpError") {
             status = 502; // Upstream failure
           } else if (category === "ParseError") {
