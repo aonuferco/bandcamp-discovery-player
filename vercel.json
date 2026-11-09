@@ -4,6 +4,10 @@
   "outputDirectory": "dist/public",
   "rewrites": [
     {
+      "source": "/api/albums",
+      "destination": "https://discovery.hackshed.dev/api/albums"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api"
     },
